@@ -38,6 +38,8 @@ public class SecurityConfig {
                                 // 로그인, 회원가입, 비밀번호 찾기는 비로그인 접근 허용
                                .requestMatchers("/api/v1/auth/**").permitAll()
                        .requestMatchers("/error").permitAll()
+                                // 회원가입 단계의 이메일/닉네임 중복 확인은 비로그인 접근 허용
+                       .requestMatchers(HttpMethod.GET, "/api/v1/users/check-email", "/api/v1/users/check-nickname").permitAll()
                                 // 공지 목록과 상세 조회는 모든 사용자에게 공개
                        .requestMatchers("/api/v1/notices", "/api/v1/notices/**").permitAll()
 

@@ -47,7 +47,7 @@ export default function LoginPage() {
         throw new Error('응답에 회원 정보가 없습니다.')
        }
 
-       login(response.member)
+       login(response.member, response.accessToken)
 
        navigate('/')
 

@@ -10,4 +10,5 @@ import lombok.NoArgsConstructor;
 public class MailRequest {
     String email;
     Integer authCode;
+    String purpose;
 }

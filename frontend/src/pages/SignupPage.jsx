@@ -237,14 +237,27 @@ export default function SignupPage() {
     }
   }
 
-  const checkNickname = () => {
+  const checkNickname = async () => {
     if (form.nickname.trim().length < 2) {
       window.alert('닉네임은 2자 이상 입력해 주세요.')
       return
     }
 
-    // check-nickname 응답의 available 값이 true일 때만 nicknameChecked를 true로 설정합니다.
-    setNicknameChecked(true)
+    try {
+      const data = await apiClient.get(
+        `/api/v1/users/check-nickname?nickname=${encodeURIComponent(form.nickname.trim())}`
+      )
+
+      if (!data.available) {
+        window.alert('이미 사용 중인 닉네임입니다.')
+        return
+      }
+
+      setNicknameChecked(true)
+      window.alert('사용 가능한 닉네임입니다.')
+    } catch (error) {
+      window.alert(error.message || '닉네임 중복확인 중 문제가 발생했습니다.')
+    }
   }
 
   const moveToTerms = event => {
