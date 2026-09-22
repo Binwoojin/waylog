@@ -125,7 +125,7 @@ export default function SignupPage() {
         `/api/v1/users/check-email?email=${encodeURIComponent(form.email)}`
       )
 
-      if (data.email!==null) {
+      if (!data.available) {
         window.alert('이미 사용 중인 이메일입니다.')
         return
       }
