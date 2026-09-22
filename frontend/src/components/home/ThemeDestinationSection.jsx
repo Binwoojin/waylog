@@ -141,11 +141,7 @@ export default function ThemeDestinationSection({
       <div className="enjoy-grid">
         {filteredItems.map((item) => (
           <article className="enjoy-card" key={item.contentId}>
-            {/*
-              * 상세 API가 완성되면 contentId를 이용해
-              * 상세 화면으로 이동할 수 있습니다.
-            */}
-            <Link to={`/destinations/detail/${item.contentId}`}>
+            <Link to={`/destinations/detail/${item.contentId}?contentTypeId=${item.contentTypeId}`}>
               <img src={item.image || fallbackImages[item.category] || stay} alt={item.title} />
               <div>
                 <h3>{item.title}</h3>

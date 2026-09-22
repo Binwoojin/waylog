@@ -1,0 +1,11 @@
+.mypage{min-height:100vh;color:#27364b;background:#fff}
+.mypage__inner{width:min(720px,calc(100% - 48px));margin:0 auto;padding:126px 0 96px}
+.mypage__inner h1{margin:0 0 28px;color:#17263a;font-size:32px;font-weight:750}
+.mypage__profile{display:flex;align-items:center;gap:18px;padding:28px;border:1px solid #e1e8ef;border-radius:20px;box-shadow:0 10px 35px #1f354e12}
+.mypage__avatar{display:grid;flex:none;width:56px;height:56px;place-items:center;border-radius:50%;color:#fff;background:#2878ed;font-size:22px;font-weight:700}
+.mypage__profile strong{display:block;font-size:18px}
+.mypage__profile p{margin:4px 0 0;color:#7d8999;font-size:14px}
+.mypage__menu{display:flex;flex-direction:column;margin-top:24px;border:1px solid #e1e8ef;border-radius:20px;overflow:hidden}
+.mypage__menu a,.mypage__menu button{display:block;width:100%;padding:18px 24px;border:0;border-bottom:1px solid #eef1f5;color:#27364b;background:#fff;font:inherit;font-size:15px;font-weight:650;text-align:left;text-decoration:none;cursor:pointer}
+.mypage__menu a:last-child,.mypage__menu button:last-child{border-bottom:0}
+.mypage__menu a:hover,.mypage__menu button:hover{background:#f6f9fc}
