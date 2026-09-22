@@ -45,14 +45,20 @@ async function refreshAccessToken() {
 }
 
 async function request(path, { method = 'GET', body, credentials, headers, retryOn401 = true } = {}) {
+  /*
+   * FormData(멀티파트 업로드)는 JSON으로 변환하지 않고 그대로 전달하며,
+   * Content-Type도 직접 지정하지 않습니다. 브라우저가 boundary를 포함한
+   * 값을 자동으로 설정해야 서버가 파트를 올바르게 구분할 수 있습니다.
+   */
+  const isFormData = typeof FormData !== 'undefined' && body instanceof FormData
   const authHeaders = accessToken ? { Authorization: `Bearer ${accessToken}` } : {}
-  const contentHeaders = body !== undefined ? { 'Content-Type': 'application/json' } : {}
+  const contentHeaders = body !== undefined && !isFormData ? { 'Content-Type': 'application/json' } : {}
 
   const response = await fetch(`${BASE_URL}${path}`, {
     method,
     credentials,
     headers: { ...contentHeaders, ...authHeaders, ...headers },
-    body: body !== undefined ? JSON.stringify(body) : undefined,
+    body: body === undefined ? undefined : isFormData ? body : JSON.stringify(body),
   })
 
   const data = await response.json().catch(() => ({}))
@@ -77,4 +83,6 @@ export const apiClient = {
   get: (path, options) => request(path, { ...options, method: 'GET' }),
   post: (path, body, options) => request(path, { ...options, method: 'POST', body }),
   put: (path, body, options) => request(path, { ...options, method: 'PUT', body }),
+  patch: (path, body, options) => request(path, { ...options, method: 'PATCH', body }),
+  delete: (path, options) => request(path, { ...options, method: 'DELETE' }),
 }

@@ -1,0 +1,22 @@
+.feed-page{min-height:100vh;color:#27364b;background:#fff}
+.feed-page__inner{width:min(720px,calc(100% - 48px));margin:0 auto;padding:126px 0 96px}
+.feed-page__header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px}
+.feed-page__header h1{margin:0;color:#17263a;font-size:32px;font-weight:750}
+.feed-page__write{display:inline-flex;height:44px;align-items:center;padding:0 20px;border-radius:12px;color:#fff;background:#2878ed;font-size:14px;font-weight:700;text-decoration:none}
+.feed-page__status{padding:60px 0;color:#8a96a5;text-align:center}
+.feed-page__list{display:flex;flex-direction:column;gap:20px}
+.feed-card{overflow:hidden;border:1px solid #e2e8ee;border-radius:20px;box-shadow:0 8px 24px #25394f12}
+.feed-card__link{display:block;color:#26364a;text-decoration:none}
+.feed-card__image{width:100%;height:320px;object-fit:cover;background:#e8eef5}
+.feed-card__body{padding:18px 20px}
+.feed-card__author{display:flex;align-items:center;gap:10px;margin-bottom:10px;font-size:14px}
+.feed-card__author span{display:flex;align-items:center;gap:4px;color:#8a96a5;font-size:13px;font-weight:400}
+.feed-card__content{margin:0;line-height:1.6;white-space:pre-wrap}
+.feed-card__tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.feed-card__tags span{color:#4d84c3;font-size:13px;font-weight:600}
+.feed-card__actions{display:flex;gap:18px;padding:14px 20px;border-top:1px solid #eef1f5}
+.feed-card__actions button,.feed-card__actions a{display:inline-flex;align-items:center;gap:6px;border:0;background:none;color:#526174;font:inherit;font-size:14px;font-weight:650;text-decoration:none;cursor:pointer}
+.feed-card__actions button.active{color:#e0245e}
+.feed-page__pagination{display:flex;align-items:center;justify-content:center;gap:16px;margin-top:40px}
+.feed-page__pagination button{height:38px;padding:0 16px;border:1px solid #d8e0e8;border-radius:10px;background:#fff;font:inherit;cursor:pointer}
+.feed-page__pagination button:disabled{opacity:.4;cursor:default}

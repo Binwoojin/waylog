@@ -9,3 +9,20 @@
 .mypage__menu a,.mypage__menu button{display:block;width:100%;padding:18px 24px;border:0;border-bottom:1px solid #eef1f5;color:#27364b;background:#fff;font:inherit;font-size:15px;font-weight:650;text-align:left;text-decoration:none;cursor:pointer}
 .mypage__menu a:last-child,.mypage__menu button:last-child{border-bottom:0}
 .mypage__menu a:hover,.mypage__menu button:hover{background:#f6f9fc}
+.mypage__handle{display:flex;align-items:center;gap:10px;color:#4d84c3!important;font-weight:600}
+.mypage__handle button{border:0;background:none;color:#8a96a5;font:inherit;font-size:12px;font-weight:650;cursor:pointer}
+.mypage__handle-form{display:flex;gap:8px;margin-top:6px}
+.mypage__handle-form input{padding:6px 10px;border:1px solid #d8e0e8;border-radius:8px;font:inherit;font-size:13px}
+.mypage__handle-form button{border:0;background:none;color:#2878ed;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.mypage__feed{margin-top:32px}
+.mypage__feed-stats{display:flex;gap:32px;margin-bottom:24px;padding:20px 0;border-top:1px solid #eef1f5;border-bottom:1px solid #eef1f5}
+.mypage__feed-stats div{display:flex;flex-direction:column;align-items:center;flex:1}
+.mypage__feed-stats strong{font-size:22px}
+.mypage__feed-stats span{color:#8a96a5;font-size:13px}
+.mypage__status{padding:40px 0;color:#8a96a5;text-align:center}
+.mypage__feed-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.mypage__feed-card{position:relative;display:block;aspect-ratio:1;overflow:hidden;border-radius:14px;color:#fff;text-decoration:none;background:#e8eef5}
+.mypage__feed-card img{width:100%;height:100%;object-fit:cover}
+.mypage__feed-card__placeholder{width:100%;height:100%;background:#dde6ef}
+.mypage__feed-card p{position:absolute;inset:auto 0 0 0;margin:0;padding:10px;background:linear-gradient(0deg,#00000099,transparent);font-size:12px;line-height:1.4;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+@media(max-width:600px){.mypage__feed-grid{grid-template-columns:repeat(2,1fr)}}

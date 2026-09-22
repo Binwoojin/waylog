@@ -26,6 +26,9 @@ import EnjoySearchResultsPage from './pages/EnjoySearchResultsPage'
 import BookmarksPage from './pages/BookmarksPage'
 import MyPage from './pages/MyPage'
 import NotFoundPage from './pages/NotFoundPage'
+import FeedPage from './pages/FeedPage'
+import FeedCreatePage from './pages/FeedCreatePage'
+import FeedDetailPage from './pages/FeedDetailPage'
 
 /**
  * 홈 API 요청 Promise를 저장합니다.
@@ -287,6 +290,10 @@ function App() {
 
             <Route path="/bookmarks" element={<BookmarksPage />} />
             <Route path="/mypage" element={<MyPage />} />
+
+            <Route path="/feed" element={<FeedPage />} />
+            <Route path="/feed/new" element={<FeedCreatePage />} />
+            <Route path="/feed/:id" element={<FeedDetailPage />} />
           </Route>
 
           <Route path="*" element={<NotFoundPage />} />

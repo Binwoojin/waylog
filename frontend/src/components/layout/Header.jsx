@@ -57,7 +57,6 @@ function Header({ forceLight = false, activePage = '' }) {
       </Link>
 
       <nav className="site-header__nav" aria-label="주요 메뉴">
-        {/* 실제 하위 페이지가 구현된 메뉴는 경로로, 미구현 SNS는 임시 앵커로 연결합니다. */}
         <ul className="site-header__nav-list">
           <li>
             <Link className={activePage === 'destinations' ? 'is-active' : ''} to="/destinations">여행지</Link>
@@ -66,7 +65,7 @@ function Header({ forceLight = false, activePage = '' }) {
             <Link className={activePage === 'enjoy' ? 'is-active' : ''} to="/enjoy">여행 즐기기</Link>
           </li>
           <li>
-            <a href="/#feed">여행 피드</a>
+            <Link className={activePage === 'feed' ? 'is-active' : ''} to="/feed">여행 피드</Link>
           </li>
         </ul>
       </nav>
