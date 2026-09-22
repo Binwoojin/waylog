@@ -178,6 +178,14 @@ public class FeedPost {
         likeCount = Math.max(0, likeCount - 1);
     }
 
+    public void increaseCommentCount() {
+        commentCount++;
+    }
+
+    public void decreaseCommentCount() {
+        commentCount = Math.max(0, commentCount - 1);
+    }
+
     @PrePersist
     private void prePresent() {
         LocalDateTime now = LocalDateTime.now();

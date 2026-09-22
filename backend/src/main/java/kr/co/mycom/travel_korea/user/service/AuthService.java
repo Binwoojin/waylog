@@ -39,8 +39,22 @@ public class AuthService {
     private final Cache<String, Integer> emailVerificationCache;
     private final Cache<String, String> emailVerificationTicketCache;
 
+    private static final String SIGNUP_PURPOSE = "SIGNUP";
+    private static final String RESET_PASSWORD_PURPOSE = "RESET_PASSWORD";
+
     public UserEntity signup(UserRequest userInput) {
-        consumeVerificationTicket(userInput.getEmail(), userInput.getVerificationToken());
+        consumeVerificationTicket(userInput.getEmail(), SIGNUP_PURPOSE, userInput.getVerificationToken());
+
+        /*
+         * 프런트엔드 중복 확인은 우회될 수 있으므로 저장 직전에 서버에서도 검증합니다.
+         */
+        if (repo.existsByEmail(userInput.getEmail())) {
+            throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+        }
+        if (repo.existsByNickname(userInput.getNickname())) {
+            throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
+        }
+
         UserEntity rep = new UserEntity(
                 userInput.getEmail(),
                 passwordEncoder.encode(userInput.getPassword()),
@@ -131,40 +145,59 @@ public class AuthService {
 
     public ResponseEntity emailVerificationConfirm(MailRequest request) {
 //        이메일 인증번호 확인
+        String purpose = normalizePurpose(request.getPurpose());
         Integer verifiedCode = emailVerificationCache.getIfPresent(request.getEmail());
         if (verifiedCode != null && verifiedCode.equals(request.getAuthCode())) {
             emailVerificationCache.invalidate(request.getEmail());
             /*
              * 인증 성공 시 일회용 티켓을 발급합니다.
-             * signup/changePassword는 이 티켓을 제시해야만 처리되며,
+             * signup/changePassword는 같은 목적(purpose)의 티켓을 제시해야만 처리되며,
              * 한 번 사용된 티켓은 즉시 무효화됩니다.
              */
             String verificationToken = UUID.randomUUID().toString();
-            emailVerificationTicketCache.put(request.getEmail(), verificationToken);
+            emailVerificationTicketCache.put(ticketKey(request.getEmail(), purpose), verificationToken);
             return ResponseEntity.ok(Map.of("verificationToken", verificationToken));
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
 
     public void changePassword(UserRequest request) {
-        consumeVerificationTicket(request.getEmail(), request.getVerificationToken());
+        consumeVerificationTicket(request.getEmail(), RESET_PASSWORD_PURPOSE, request.getVerificationToken());
         UserEntity user = repo.findByEmail(request.getEmail()).orElseThrow(() -> new IllegalArgumentException("해당 이메일의 회원을 찾을 수 없습니다."));
         user.changePassword(passwordEncoder.encode(request.getPassword()));
         repo.save(user);
     }
 
+    private String normalizePurpose(String purpose) {
+        if (!SIGNUP_PURPOSE.equals(purpose) && !RESET_PASSWORD_PURPOSE.equals(purpose)) {
+            throw new IllegalArgumentException("올바르지 않은 인증 목적입니다.");
+        }
+        return purpose;
+    }
+
+    private String ticketKey(String email, String purpose) {
+        return email + ":" + purpose;
+    }
+
     /**
-     * 이메일 인증 티켓을 검증하고 1회성으로 소모합니다.
+     * 이메일 인증 티켓을 검증과 동시에 소모합니다.
      *
-     * 티켓이 없거나 일치하지 않으면 signup/changePassword를 진행할 수 없습니다.
-     * 검증에 성공한 티켓은 재사용을 막기 위해 즉시 무효화합니다.
+     * 이메일뿐 아니라 발급 당시의 목적(purpose)까지 일치해야 하며
+     * (SIGNUP 티켓으로 changePassword를 통과할 수 없습니다),
+     * 검증과 삭제를 asMap().remove(key, value)로 원자적으로 처리해
+     * 동시 요청이 같은 티켓을 중복 통과시키지 못하게 합니다.
      */
-    private void consumeVerificationTicket(String email, String verificationToken) {
-        String ticket = emailVerificationTicketCache.getIfPresent(email);
-        if (ticket == null || verificationToken == null || !ticket.equals(verificationToken)) {
+    private void consumeVerificationTicket(String email, String purpose, String verificationToken) {
+        if (verificationToken == null) {
             throw new IllegalArgumentException("이메일 인증이 필요합니다.");
         }
-        emailVerificationTicketCache.invalidate(email);
+
+        boolean consumed = emailVerificationTicketCache.asMap()
+                .remove(ticketKey(email, purpose), verificationToken);
+
+        if (!consumed) {
+            throw new IllegalArgumentException("이메일 인증이 필요합니다.");
+        }
     }
 
     public void sendCodeToEmail(String email) {

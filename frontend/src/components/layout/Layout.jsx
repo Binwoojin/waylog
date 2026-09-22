@@ -5,6 +5,7 @@ import Footer from './Footer'
 function resolveActivePage(pathname) {
   if (pathname.startsWith('/destinations')) return 'destinations'
   if (pathname.startsWith('/enjoy')) return 'enjoy'
+  if (pathname.startsWith('/feed')) return 'feed'
   return ''
 }
 

@@ -23,6 +23,12 @@ import TravelDetailPage from './pages/TravelDetailPage'
 import EnjoyCategoryPage from './pages/EnjoyCategoryPage'
 import EnjoyDetailPage from './pages/EnjoyDetailPage'
 import EnjoySearchResultsPage from './pages/EnjoySearchResultsPage'
+import BookmarksPage from './pages/BookmarksPage'
+import MyPage from './pages/MyPage'
+import NotFoundPage from './pages/NotFoundPage'
+import FeedPage from './pages/FeedPage'
+import FeedCreatePage from './pages/FeedCreatePage'
+import FeedDetailPage from './pages/FeedDetailPage'
 
 /**
  * 홈 API 요청 Promise를 저장합니다.
@@ -281,7 +287,16 @@ function App() {
             <Route path="/destinations/attractions" element={<DestinationCatalogPage kind="attraction" />} />
             <Route path="/destinations/culture" element={<DestinationCatalogPage kind="culture" />} />
             <Route path="/destinations/courses" element={<DestinationCatalogPage kind="course" />} />
+
+            <Route path="/bookmarks" element={<BookmarksPage />} />
+            <Route path="/mypage" element={<MyPage />} />
+
+            <Route path="/feed" element={<FeedPage />} />
+            <Route path="/feed/new" element={<FeedCreatePage />} />
+            <Route path="/feed/:id" element={<FeedDetailPage />} />
           </Route>
+
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
