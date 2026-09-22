@@ -1,0 +1,40 @@
+.hero-section { position: relative; min-height: 1080px; overflow: hidden; color: #fff; background-position: center; background-size: cover; }
+.hero-section__overlay { position: absolute; inset: 0; background: rgba(20, 30, 36, .42); }
+.hero-section__content { position: relative; z-index: 1; width: min(1480px, calc(100% - 48px)); height: 1080px; margin: 0 auto; padding-top: 90px; }
+.hero-section__intro { position: absolute; top: 275px; right: 0; left: 0; opacity: 0; text-align: center; transform: translateY(34px); transition: opacity .7s ease, transform .75s cubic-bezier(.22, 1, .36, 1); }
+.hero-section__content--intro-visible .hero-section__intro { opacity: 1; transform: translateY(0); }
+.hero-section__content--intro-shifted .hero-section__intro,
+.hero-section__content--complete .hero-section__intro { opacity: 1; transform: translateY(-115px); }
+.hero-section__eyebrow { margin: 0 0 18px; font-size: 28px; font-weight: 600; letter-spacing: 5.6px; }
+.hero-section__title { margin: 0; color: #fff; font-size: clamp(42px, 4vw, 64px); font-weight: 600; line-height: 1.2; letter-spacing: -3px; }
+.hero-section__finder { position: absolute; top: 400px; left: 50%; width: min(1180px, calc(100% - 84px)); padding: 28px 30px 24px; border: 1px solid rgba(255,255,255,.24); border-radius: 28px; opacity: 0; background: rgba(15,35,48,.28); box-shadow: 0 18px 44px rgba(0,0,0,.14); pointer-events: none; backdrop-filter: blur(7px); transform: translate(-50%, 80px); transition: opacity .7s ease, transform .8s cubic-bezier(.22, 1, .36, 1); }
+.hero-section__content--complete .hero-section__finder { opacity: 1; pointer-events: auto; transform: translate(-50%, 0); }
+.hero-section__finder-main { display: flex; align-items: center; justify-content: space-between; gap: 60px; }
+.hero-section__finder h2 { margin: 0 0 14px; color: #fff; font-size: 34px; font-weight: 600; letter-spacing: -1.4px; }
+.hero-section__finder p { margin: 0; color: rgba(255,255,255,.82); font-size: 19px; }
+.hero-section__finder-button { display: inline-flex; align-items: center; justify-content: center; gap: 28px; min-width: 230px; height: 70px; border: 0; border-radius: 35px; color: #fff; background: #3b82f6; font: inherit; font-size: 20px; font-weight: 600; text-decoration: none; cursor: pointer; transition: background .18s ease, transform .18s ease; }
+.hero-section__finder-button:hover { background: #2563eb; transform: translateY(-2px); }
+.hero-section__quick-links { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,.2); }
+.hero-section__quick-links a { display: flex; align-items: center; justify-content: center; gap: 5px; min-height: 44px; padding: 0 12px; border: 1px solid rgba(255,255,255,.34); border-radius: 22px; color: rgba(255,255,255,.9); background: rgba(255,255,255,.08); font-size: 14px; font-weight: 500; text-decoration: none; white-space: nowrap; transition: border-color .18s ease, background .18s ease, transform .18s ease; }
+.hero-section__quick-links a:hover { border-color: rgba(255,255,255,.7); background: rgba(255,255,255,.18); transform: translateY(-2px); }
+@media (max-width: 768px) {
+  .hero-section, .hero-section__content { min-height: 760px; height: 760px; }
+  .hero-section__content { width: calc(100% - 32px); }
+  .hero-section__intro { top: 205px; }
+  .hero-section__content--intro-shifted .hero-section__intro,
+  .hero-section__content--complete .hero-section__intro { transform: translateY(-95px); }
+  .hero-section__eyebrow { font-size: 19px; }
+  .hero-section__title { font-size: 38px; letter-spacing: -1.5px; }
+  .hero-section__finder { top: 340px; width: calc(100% - 24px); padding: 24px 18px 20px; text-align: center; transform: translate(-50%, 65px); }
+  .hero-section__finder-main { display: block; }
+  .hero-section__finder h2 { font-size: 27px; }
+  .hero-section__finder p { font-size: 15px; }
+  .hero-section__finder-button { min-width: 190px; height: 58px; margin-top: 28px; }
+  .hero-section__quick-links { display: flex; overflow-x: auto; justify-content: flex-start; gap: 8px; margin-top: 20px; padding-bottom: 5px; }
+  .hero-section__quick-links a { flex: 0 0 auto; padding: 0 17px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-section__intro,
+  .hero-section__finder { transition-duration: .01ms; }
+}

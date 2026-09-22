@@ -1,0 +1,62 @@
+.login-page { display: grid; grid-template-columns: 1fr 1fr; min-height: 100vh; color: #1f1f1f; background: #f3f7ff; }
+.login-page__visual { position: relative; min-height: 100vh; overflow: hidden; color: #fff; background-position: center; background-size: cover; }
+.login-page__visual-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(20,28,35,.34) 0%, rgba(20,28,35,.22) 48%, rgba(30,30,30,.9) 100%); }
+.login-page__brand { position: absolute; top: 44px; left: 54px; z-index: 1; display: flex; align-items: center; gap: 18px; color: #fff; text-decoration: none; }
+.login-page__brand img { width: 80px; height: 62px; object-fit: contain; }
+.login-page__brand strong { font-size: 30px; }
+.login-page__visual-copy { position: absolute; right: 72px; bottom: 88px; left: 74px; z-index: 1; }
+.login-page__visual-copy h2 { margin: 0 0 14px; color: #fff; font-size: clamp(34px, 2.5vw, 48px); line-height: 1.2; letter-spacing: -1.5px; }
+.login-page__visual-copy p { margin: 0; color: #fff; font-size: clamp(18px, 1.45vw, 28px); font-weight: 600; }
+.login-page__form-panel { position: relative; display: flex; min-height: 100vh; align-items: center; justify-content: center; padding: 90px 60px 78px; background: #f3f7ff; }
+.login-page__home-link { position: absolute; top: 58px; right: 72px; color: #1f1f1f; font-size: 18px; text-decoration: none; }
+.login-page__home-link span { margin-left: 4px; }
+.login-page__form-wrap { width: min(600px, 100%); text-align: center; }
+.login-page__form-logo { width: 120px; height: 93px; object-fit: contain; }
+.login-page__form-wrap h1 { margin: 26px 0 9px; font-size: clamp(38px, 3vw, 54px); line-height: 1.15; letter-spacing: -.8px; }
+.login-page__description { margin: 0 0 48px; color: #666; font-size: 20px; }
+.login-form { text-align: left; }
+.login-form > label { display: block; margin: 0 0 12px; font-size: 20px; font-weight: 600; }
+.login-form__field { position: relative; display: flex; height: 60px; align-items: center; margin-bottom: 28px; border: 1px solid #999; border-radius: 15px; background: #f9f9f9; transition: border-color .18s ease, box-shadow .18s ease; }
+.login-form__field:focus-within { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,.14); }
+.login-form__field-icon { width: 52px; color: #24364b; font-size: 18px; text-align: center; }
+.login-form__field-icon img { display: block; width: 18px; height: 18px; margin: 0 auto; object-fit: contain; }
+.login-form__field input { min-width: 0; flex: 1; height: 100%; padding: 0 18px 0 0; border: 0; outline: 0; color: #1f1f1f; background: transparent; font: inherit; font-size: 17px; }
+.login-form__password-toggle { width: 52px; height: 100%; border: 0; color: #24364b; background: transparent; cursor: pointer; }
+.login-form__password-toggle img { display: block; width: 20px; height: 14px; margin: 0 auto; object-fit: contain; opacity: .72; transition: opacity .18s ease; }
+.login-form__password-toggle img.is-visible { opacity: 1; }
+.login-form__options { display: flex; align-items: center; justify-content: space-between; margin: 0 0 26px; font-size: 16px; }
+.login-form__remember { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.login-form__remember input { width: 24px; height: 24px; margin: 0; accent-color: #3b82f6; }
+.login-form__options a { color: #1f1f1f; text-decoration: none; }
+.login-form__submit { width: 100%; height: 60px; border: 0; border-radius: 20px; color: #fff; background: #3b82f6; font: inherit; font-size: 18px; font-weight: 600; cursor: pointer; transition: background .18s ease, transform .18s ease; }
+.login-form__submit:hover { background: #2563eb; }
+.login-form__submit:active { transform: translateY(1px); }
+.login-page__divider { display: flex; align-items: center; gap: 25px; margin: 27px 0; color: #999; font-size: 15px; }
+.login-page__divider::before, .login-page__divider::after { height: 1px; flex: 1; background: #c5cbd4; content: ''; }
+.login-page__kakao { width: 100%; height: 60px; border: 1px solid #999; border-radius: 15px; color: #1f1f1f; background: #f9f9f9; font: inherit; font-size: 17px; font-weight: 600; cursor: pointer; }
+.login-page__signup-copy { margin: 38px 0 0; color: #666; font-size: 16px; font-weight: 600; }
+.login-page__signup-copy a { margin-left: 5px; color: #3b82f6; text-decoration: none; }
+.login-page__footer { position: absolute; right: 35px; bottom: 24px; left: 35px; display: flex; justify-content: center; gap: 28px; color: #999; font-size: 12px; }
+.login-page__footer a { color: inherit; text-decoration: none; }
+@media (max-width: 1100px) {
+  .login-page { grid-template-columns: minmax(340px, .78fr) 1.22fr; }
+  .login-page__visual-copy { right: 38px; left: 38px; }
+  .login-page__brand { left: 34px; }
+  .login-page__form-panel { padding-right: 42px; padding-left: 42px; }
+}
+@media (max-width: 760px) {
+  .login-page { display: block; min-height: 100vh; }
+  .login-page__visual { min-height: 220px; }
+  .login-page__brand { top: 22px; left: 24px; gap: 10px; }
+  .login-page__brand img { width: 56px; height: 44px; }
+  .login-page__brand strong { font-size: 22px; }
+  .login-page__visual-copy { right: 24px; bottom: 28px; left: 24px; }
+  .login-page__visual-copy h2 { margin-bottom: 8px; font-size: 28px; }
+  .login-page__visual-copy p { font-size: 15px; }
+  .login-page__form-panel { min-height: calc(100vh - 220px); padding: 72px 24px 96px; }
+  .login-page__home-link { top: 24px; right: 24px; font-size: 14px; }
+  .login-page__form-logo { width: 86px; height: 67px; }
+  .login-page__form-wrap h1 { margin-top: 16px; font-size: 34px; }
+  .login-page__description { margin-bottom: 36px; font-size: 16px; }
+  .login-page__footer { flex-wrap: wrap; gap: 8px 18px; }
+}

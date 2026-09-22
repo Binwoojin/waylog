@@ -1,0 +1,117 @@
+/*
+ * WayLog 애플리케이션 전체 영역
+ *
+ * 최소 화면 너비를 설정해 모바일 화면에서
+ * 콘텐츠가 지나치게 좁아지는 것을 방지합니다.
+ */
+.App {
+  min-width: 320px;
+  min-height: 100vh;
+
+  background-color: #ffffff;
+  color: #111111;
+}
+
+/*
+ * HeroSection 아래에 표시되는 주요 콘텐츠 영역
+ *
+ * Figma 디자인의 둥근 흰색 패널을 표현합니다.
+ * 음수 margin을 사용해 Hero 영역 위로 일부 겹치게 배치합니다.
+ */
+.main-content {
+  position: relative;
+  z-index: 2;
+
+  /*
+   * 화면이 넓을 때는 최대 1600px까지만 확장합니다.
+   * 화면이 좁아지면 좌우에 24px씩 여백을 남깁니다.
+   */
+  width: min(1600px, calc(100% - 48px));
+
+  /*
+   * -120px을 적용해 콘텐츠 패널이
+   * Hero 영역 위로 올라오게 합니다.
+   */
+  margin: -120px auto 0;
+
+  /*
+   * 상단 여백을 크게 설정해 둥근 영역 안에서
+   * 첫 번째 섹션이 너무 위에 붙지 않도록 합니다.
+   */
+  padding: 220px 44px 120px;
+
+  background-color: #f9f9f9;
+
+  /*
+   * Figma 디자인에서 보이는 큰 상단 곡선을 표현합니다.
+   * 하단은 Footer와 자연스럽게 연결되도록 둥글게 처리하지 않습니다.
+   */
+  border-radius: 200px 200px 0 0;
+
+  /*
+   * Hero 영역과 콘텐츠 패널 사이에 입체감을 줍니다.
+   */
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.16);
+
+  /* JavaScript가 실제 스크롤 위치에 맞춰 180px에서 0px까지 조정합니다. */
+  --main-scroll-offset: 180px;
+  transform: translateY(var(--main-scroll-offset));
+  will-change: transform;
+}
+
+/*
+ * main-content 내부에서 연속으로 등장하는 섹션 사이에
+ * 공통 세로 간격을 적용합니다.
+ *
+ * 각 섹션에서 margin을 개별 설정하지 않아도
+ * 일관된 간격을 유지할 수 있습니다.
+ */
+.main-content > section + section {
+  margin-top: 160px;
+}
+
+/*
+ * 노트북 및 태블릿 가로 화면 대응
+ *
+ * 콘텐츠 좌우 여백과 둥근 정도를 줄여
+ * 화면 크기에 자연스럽게 맞춥니다.
+ */
+@media (max-width: 1024px) {
+  .main-content {
+    width: calc(100% - 32px);
+    margin-top: -100px;
+    padding: 120px 32px 80px;
+    border-radius: 100px 100px 0 0;
+  }
+
+  .main-content > section + section {
+    margin-top: 100px;
+  }
+}
+
+/*
+ * 모바일 화면 대응
+ *
+ * 콘텐츠 영역을 화면 너비 전체로 사용하고
+ * 여백과 곡선 크기를 더 작게 조정합니다.
+ */
+@media (max-width: 768px) {
+  .main-content {
+    width: 100%;
+    margin-top: -60px;
+    padding: 80px 20px 60px;
+    border-radius: 48px 48px 0 0;
+  }
+
+  .main-content > section + section {
+    margin-top: 72px;
+  }
+}
+
+/* 사용자가 시스템에서 모션 감소를 설정한 경우 즉시 표시합니다. */
+@media (prefers-reduced-motion: reduce) {
+  .main-content {
+    --main-scroll-offset: 0px;
+    transform: none;
+  }
+}

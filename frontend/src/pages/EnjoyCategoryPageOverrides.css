@@ -1,0 +1,11 @@
+.enjoy-catalog-hero h1 { margin: 0 0 22px; }
+.enjoy-catalog-hero p { line-height: 1.65; }
+.enjoy-catalog-toolbar label { position: relative; }
+.enjoy-catalog-toolbar label::after { position: absolute; top: 50%; right: 16px; color: #6b7c8f; content: '⌄'; pointer-events: none; transform: translateY(-55%); }
+.enjoy-catalog-toolbar select { min-width: 170px; padding: 0 44px 0 16px; appearance: none; }
+.enjoy-catalog-pagination { display: flex; justify-content: center; gap: 10px; margin-top: 64px; }
+.enjoy-catalog-pagination button { width: 46px; height: 46px; border: 1px solid transparent; border-radius: 10px; color: #526174; background: #fff; font: inherit; cursor: pointer; }
+.enjoy-catalog-pagination button:first-child,.enjoy-catalog-pagination button:last-child { border-color: #cdd7e1; font-size: 25px; }
+.enjoy-catalog-pagination button.active { color: #fff; background: #3b82f6; }
+.enjoy-catalog-pagination button:disabled { color: #b9c2cc; border-color: #e2e6ea; background: #f4f5f6; cursor: not-allowed; }
+.enjoy-catalog-pagination button:not(:disabled):hover { color: #fff; background: #5b94df; }

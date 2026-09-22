@@ -1,0 +1,14 @@
+.enjoy-search-modal .travel-search-modal__dialog { width: min(1180px, 100%); }
+.enjoy-search-modal #enjoy-search-title { font-weight: 700; }
+.enjoy-search-modal__region-options { display: flex; flex-wrap: wrap; gap: 12px; }
+.enjoy-search-modal__type-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 18px; }
+.enjoy-search-modal__type-grid > button { min-height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; border: 1px solid #aaa; border-radius: 14px; background: #fff; color: #1f1f1f; cursor: pointer; }
+.enjoy-search-modal__type-grid > button > span { font-size: 40px; line-height: 1; }
+.enjoy-search-modal__type-grid > button > strong { font-size: 19px; }
+@media (max-width: 900px) {
+  .enjoy-search-modal__type-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 520px) {
+  .enjoy-search-modal__type-grid { grid-template-columns: 1fr; }
+  .enjoy-search-modal__type-grid > button { min-height: 120px; }
+}

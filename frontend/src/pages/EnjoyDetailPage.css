@@ -1,0 +1,201 @@
+.enjoy-detail-page{color:#27364b}.enjoy-detail-main{width:min(1380px,calc(100% - 64px));margin:auto;padding:126px 0 96px}.enjoy-detail-back{padding:0;border:0;color:#526174;background:none;font:inherit;font-size:14px;font-weight:700}.enjoy-detail-crumb{display:flex;gap:10px;margin:22px 0 45px;color:#8995a4;font-size:14px}.enjoy-detail-crumb a{color:inherit;text-decoration:none}.enjoy-detail-crumb i{font-style:normal}.enjoy-detail-title{display:flex;align-items:flex-end;justify-content:space-between}.enjoy-detail-title>div>span{padding:6px 14px;border:1px solid #cfe0f4;border-radius:99px;color:#35638f;background:#f1f7fd;font-size:13px;font-weight:700}.enjoy-detail-title h1{margin:17px 0 12px;color:#17263a;font-size:54px;font-weight:760}.enjoy-detail-title p{display:flex;align-items:center;gap:7px;color:#7d8999}.enjoy-detail-title>button{display:flex;height:46px;align-items:center;gap:8px;padding:0 20px;border:1px solid #d7e0e9;border-radius:13px;color:#405168;background:#fff;font:inherit;font-weight:700}.enjoy-detail-title>button svg{width:19px;fill:none;stroke:currentColor;stroke-width:1.8}.enjoy-detail-title>button.active{color:#fff;background:#2878ed}.enjoy-detail-title>button.active svg{fill:currentColor}.enjoy-detail-cover{position:relative;height:560px;overflow:hidden;margin-top:30px;border-radius:28px}.enjoy-detail-cover img{width:100%;height:100%;object-fit:cover}.enjoy-detail-cover>div{position:absolute;right:0;bottom:0;left:0;padding:70px 50px 38px;color:#fff;background:linear-gradient(transparent,#102238d9)}.enjoy-detail-cover small{display:block;margin-bottom:8px;font-weight:800;letter-spacing:.12em}.enjoy-detail-cover strong{font-size:19px}.enjoy-detail-facts{display:grid;grid-template-columns:repeat(3,1fr);margin-top:26px;padding:28px;border:1px solid #e1e8ef;border-radius:20px;box-shadow:0 10px 30px #25394f12}.enjoy-detail-facts dl{margin:0;padding:0 30px;border-right:1px solid #e5ebf0;text-align:center}.enjoy-detail-facts dl:last-child{border:0}.enjoy-detail-facts dt{color:#8995a4;font-size:13px}.enjoy-detail-facts dd{margin:7px 0 0;font-weight:750}.enjoy-detail-content{display:grid;grid-template-columns:1fr 340px;gap:90px;margin-top:90px}.enjoy-detail-content article>small,.enjoy-detail-nearby header small{color:#4d8bd4;font-size:12px;font-weight:800;letter-spacing:.14em}.enjoy-detail-content h2,.enjoy-detail-nearby h2{margin:9px 0 25px;color:#17263a;font-size:32px;font-weight:750}.enjoy-detail-content .lead{color:#35485f;font-size:20px;font-weight:650;line-height:1.65}.enjoy-detail-content .lead+p{margin-top:14px;color:#748194;line-height:1.85}.enjoy-detail-guide{margin-top:42px;overflow:hidden;border:1px solid #e0e8ef;border-radius:18px}.enjoy-detail-guide h3{margin:0;padding:19px 22px;background:#f5f8fb}.enjoy-detail-guide p{display:grid;grid-template-columns:150px 1fr;margin:0;padding:16px 22px;border-top:1px solid #e7ecf1;font-size:14px}.enjoy-detail-guide span{color:#7d8999}.enjoy-detail-content aside{height:max-content;padding:30px;border:1px solid #dce7f2;border-radius:22px;background:#f4f9ff}.enjoy-detail-content aside>span{color:#4b85c9;font-size:12px;font-weight:800}.enjoy-detail-content aside h2{font-size:23px}.enjoy-detail-content aside p{color:#78879a;font-size:14px;line-height:1.65}.enjoy-detail-content aside button,.enjoy-detail-map button{width:100%;height:44px;margin-top:15px;border:1px solid #8db9ed;border-radius:11px;color:#286bb9;background:#fff;font:inherit;font-size:14px;font-weight:700}.enjoy-detail-map{display:grid;grid-template-columns:1fr 350px;min-height:380px;overflow:hidden;margin-top:90px;border:1px solid #dce5ed;border-radius:24px}.enjoy-detail-map>div{display:grid;place-content:center;justify-items:center;color:#fff;background:#dfeaf3}.enjoy-detail-map>div svg{box-sizing:content-box;padding:17px;border-radius:50%;background:#3b82f6}.enjoy-detail-map>div p{margin-top:18px;color:#7e8ea0}.enjoy-detail-map aside{padding:40px}.enjoy-detail-map aside span{color:#4b85c9;font-size:13px;font-weight:700}.enjoy-detail-map h3{margin:12px 0;font-size:25px}.enjoy-detail-map aside p{color:#7d8999}.enjoy-detail-map button{color:#fff;background:#347fd6}.enjoy-detail-nearby{margin-top:90px}.enjoy-detail-nearby>div{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}.enjoy-detail-nearby a{overflow:hidden;border:1px solid #e1e7ed;border-radius:20px;color:#27364b;text-decoration:none}.enjoy-detail-nearby img{width:100%;height:190px;object-fit:cover}.enjoy-detail-nearby h3{margin:18px 20px 8px}.enjoy-detail-nearby a p{display:flex;gap:5px;margin:0 20px 20px;color:#8995a4;font-size:13px}@media(max-width:800px){.enjoy-detail-content{grid-template-columns:1fr;gap:35px}.enjoy-detail-map{grid-template-columns:1fr}.enjoy-detail-map>div{min-height:260px}}@media(max-width:620px){.enjoy-detail-main{width:calc(100% - 32px);padding-top:100px}.enjoy-detail-title{display:block}.enjoy-detail-title h1{font-size:40px}.enjoy-detail-title>button{margin-top:22px}.enjoy-detail-cover{height:420px}.enjoy-detail-facts{grid-template-columns:1fr;gap:22px}.enjoy-detail-facts dl{border:0}.enjoy-detail-nearby>div{grid-template-columns:1fr}}
+
+/* 상세페이지 타이포그래피와 오브젝트 간격 보정 */
+.enjoy-detail-title h1 {
+  line-height: 1.2;
+  letter-spacing: -0.035em;
+}
+
+.enjoy-detail-title p {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.enjoy-detail-cover strong {
+  display: block;
+  max-width: 820px;
+  line-height: 1.65;
+}
+
+.enjoy-detail-facts dt,
+.enjoy-detail-facts dd {
+  line-height: 1.5;
+}
+
+.enjoy-detail-content {
+  gap: 72px;
+  margin-top: 82px;
+}
+
+.enjoy-detail-content h2,
+.enjoy-detail-nearby h2 {
+  line-height: 1.3;
+  letter-spacing: -0.025em;
+}
+
+.enjoy-detail-content .lead {
+  margin: 0;
+}
+
+.enjoy-detail-content .lead + p {
+  margin-bottom: 0;
+}
+
+.enjoy-detail-guide h3 {
+  line-height: 1.45;
+}
+
+.enjoy-detail-guide p {
+  align-items: center;
+  column-gap: 24px;
+  line-height: 1.6;
+}
+
+.enjoy-detail-content aside > span {
+  display: block;
+  margin-bottom: 10px;
+  letter-spacing: .08em;
+}
+
+.enjoy-detail-content aside h2 {
+  margin: 0 0 14px;
+  line-height: 1.4;
+}
+
+.enjoy-detail-content aside p {
+  margin: 0 0 22px;
+}
+
+.enjoy-detail-content aside button {
+  margin-top: 10px;
+}
+
+.enjoy-detail-map aside {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.enjoy-detail-map h3 {
+  margin: 12px 0 10px;
+  line-height: 1.35;
+  letter-spacing: -0.02em;
+}
+
+.enjoy-detail-map aside p {
+  margin: 0 0 20px;
+  line-height: 1.65;
+}
+
+.enjoy-detail-map button {
+  margin-top: 8px;
+}
+
+.enjoy-detail-nearby header {
+  margin-bottom: 28px;
+}
+
+.enjoy-detail-nearby header h2 {
+  margin-bottom: 0;
+}
+
+.enjoy-detail-nearby h3 {
+  line-height: 1.4;
+  letter-spacing: -0.02em;
+}
+
+.enjoy-detail-nearby a p {
+  align-items: center;
+  line-height: 1.55;
+}
+
+@media(max-width:800px) {
+  .enjoy-detail-content,
+  .enjoy-detail-map,
+  .enjoy-detail-nearby {
+    margin-top: 68px;
+  }
+
+  .enjoy-detail-content {
+    gap: 32px;
+  }
+}
+
+@media(max-width:620px) {
+  .enjoy-detail-main {
+    padding-bottom: 72px;
+  }
+
+  .enjoy-detail-crumb {
+    margin: 18px 0 34px;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .enjoy-detail-title h1 {
+    margin: 15px 0 10px;
+    font-size: 36px;
+  }
+
+  .enjoy-detail-title > button {
+    margin-top: 20px;
+  }
+
+  .enjoy-detail-cover {
+    height: 360px;
+    margin-top: 24px;
+    border-radius: 20px;
+  }
+
+  .enjoy-detail-cover > div {
+    padding: 60px 24px 26px;
+  }
+
+  .enjoy-detail-facts {
+    gap: 0;
+    padding: 8px 22px;
+  }
+
+  .enjoy-detail-facts dl {
+    padding: 18px 0;
+    border-bottom: 1px solid #e5ebf0;
+  }
+
+  .enjoy-detail-facts dl:last-child {
+    border-bottom: 0;
+  }
+
+  .enjoy-detail-content,
+  .enjoy-detail-map,
+  .enjoy-detail-nearby {
+    margin-top: 56px;
+  }
+
+  .enjoy-detail-content h2,
+  .enjoy-detail-nearby h2 {
+    margin-bottom: 20px;
+    font-size: 28px;
+  }
+
+  .enjoy-detail-content .lead {
+    font-size: 18px;
+  }
+
+  .enjoy-detail-guide {
+    margin-top: 32px;
+  }
+
+  .enjoy-detail-guide p {
+    grid-template-columns: 110px 1fr;
+    padding: 15px 18px;
+  }
+
+  .enjoy-detail-content aside,
+  .enjoy-detail-map aside {
+    padding: 26px 22px;
+  }
+
+  .enjoy-detail-nearby header {
+    margin-bottom: 22px;
+  }
+}

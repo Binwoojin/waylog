@@ -1,0 +1,224 @@
+.home-section { max-width: 1440px; margin: 0 auto; }
+.section-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 42px; }
+.section-heading h2 { margin: 0 0 12px; color: #1f1f1f; font-size: 36px; font-weight: 700; letter-spacing: -1.4px; }
+.section-heading p { margin: 0; color: #777; font-size: 18px; }
+.section-heading > a { flex: 0 0 auto; color: #1f1f1f; font-size: 18px; font-weight: 600; text-decoration: none; }
+.section-heading > a span { margin-left: 10px; font-size: 24px; }
+.destination-grid, .course-grid, .news-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 30px; }
+.destination-card, .course-card, .news-card { overflow: hidden; border: 1px solid #e8e8e8; border-radius: 20px; background: #fff; box-shadow: 0 8px 28px rgba(20,30,40,.07); transition: transform .2s ease, box-shadow .2s ease; }
+.destination-card:hover, .course-card:hover, .news-card:hover, .enjoy-card:hover { transform: translateY(-6px); box-shadow: 0 16px 34px rgba(20,30,40,.13); }
+
+/*
+ * 이미지가 카드 바로 아래에 있거나 링크 안에 있는 경우를
+ * 모두 지원합니다.
+ */
+.destination-card > img,
+.destination-card > a > img {
+  display: block;
+  width: 100%;
+  height: 260px;
+  object-fit: cover;
+}
+
+.destination-card__body { padding: 27px 28px 30px; }
+.destination-card h3, .course-card h3, .news-card h3, .enjoy-card h3 { margin: 0; color: #1f1f1f; font-size: 24px; letter-spacing: -.7px; }
+
+/*
+ * 추천 여행코스 제목은 한 줄로 표시합니다.
+ *
+ * 제목이 카드 너비보다 길면 줄바꿈하지 않고
+ * 말줄임표(...)로 표시합니다.
+ */
+.course-card h3 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+.destination-card p { margin: 14px 0 0; color: #666; font-size: 16px; line-height: 1.65; }
+.destination-card .card-location { display: flex; align-items: center; gap: 5px; color: #3b82f6; font-size: 15px; }
+.card-location svg, .location-with-pin svg { flex: 0 0 auto; }
+.location-with-pin { display: flex; align-items: center; gap: 5px; }
+.course-card__image { display: block; width: 100%; height: 185px; object-fit: cover; }
+.course-card__body { padding: 22px 24px 26px; }
+.course-tags { display: flex; gap: 8px; margin-bottom: 13px; }
+.course-tags span, .news-card__badge { padding: 6px 12px; border-radius: 15px; color: #2563eb; background: #eaf2ff; font-size: 13px; font-weight: 600; }
+.course-card__body > p { min-height: 46px; margin: 11px 0 20px; color: #666; font-size: 15px; line-height: 1.55; }
+.course-route { position: relative; height: 38px; padding-top: 22px; }
+.course-route > img { position: absolute; top: 3px; left: 5%; width: 90%; height: 18px; }
+.course-route small { position: absolute; top: 22px; width: 25%; overflow: hidden; color: #555; font-size: 11px; text-align: center; text-overflow: ellipsis; white-space: nowrap; transform: translateX(-50%); }
+.course-route small:nth-of-type(1) { left: 5%; }
+.course-route small:nth-of-type(2) { left: 35%; }
+.course-route small:nth-of-type(3) { left: 65%; }
+.course-route small:nth-of-type(4) { left: 95%; }
+.enjoy-filters { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; margin-bottom: 26px; padding-bottom: 1px; }
+.enjoy-filters button { min-height: 52px; padding: 0 18px; border: 1px solid #e2e8f0; border-radius: 14px; color: #555; background: #fff; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer; transition: color .18s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease; }
+.enjoy-filters button:hover { color: #3b82f6; border-color: #93c5fd; background: #f8fbff; }
+.enjoy-filters button.is-active { color: #fff; border-color: #3b82f6; background: #3b82f6; box-shadow: 0 7px 18px rgba(59,130,246,.22); }
+.enjoy-filters button:focus-visible { outline: 3px solid rgba(59,130,246,.3); outline-offset: 2px; }
+.enjoy-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 18px; }
+.enjoy-card { position: relative; overflow: hidden; border-radius: 18px; background: #fff; box-shadow: 0 8px 24px rgba(20,30,40,.08); transition: transform .2s ease, box-shadow .2s ease; }
+/*
+ * 즐길거리 카드 이미지 크기를 고정합니다.
+ *
+ * 이미지가 링크 안에 있기 때문에 a > img까지 지정합니다.
+ */
+.enjoy-card > img,
+.enjoy-card > a > img {
+  display: block;
+  width: 100%;
+  height: 170px;
+  object-fit: cover;
+}
+.enjoy-card > a > div:lanpst-child { padding: 19px 18px 22px; }
+.enjoy-card h3 { font-size: 18px; }
+/*
+ * 즐길거리 카드의 주소 영역입니다.
+ *
+ * 긴 주소가 두 줄로 줄바꿈되면 카드 내부 배치가 달라지므로
+ * 주소는 한 줄로 제한하고 넘치는 부분은 말줄임표로 표시합니다.
+ */
+.enjoy-card p {
+  margin: 10px 0 0;
+  color: #777;
+  font-size: 13px;
+}
+
+/*
+ * 위치 아이콘과 주소를 한 줄에 배치합니다.
+ *
+ * min-width: 0은 flex 내부 텍스트가 카드 너비에 맞게
+ * 줄어들면서 말줄임표가 작동하도록 해줍니다.
+ */
+.enjoy-card .location-with-pin {
+  min-width: 0;
+  white-space: nowrap;
+}
+
+/*
+ * 주소 텍스트에만 말줄임표를 적용하기 위해서는
+ * 주소를 별도의 span으로 감싸야 합니다.
+ */
+.enjoy-card .location-with-pin span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.travel-record-banner { max-width: 1440px; min-height: 260px; margin-right: auto; margin-left: auto; padding: 56px 70px; display: flex; align-items: center; justify-content: space-between; gap: 30px; border-radius: 24px; color: #fff; background-position: center; background-size: cover; }
+.travel-record-banner p { margin: 0 0 13px; color: rgba(255,255,255,.82); font-size: 17px; }
+.travel-record-banner h2 { margin: 0; color: #fff; font-size: 34px; }
+.travel-record-banner button { min-width: 210px; height: 64px; border: 1px solid rgba(255,255,255,.8); border-radius: 32px; color: #2563eb; background: #fff; font: inherit; font-size: 18px; font-weight: 700; cursor: pointer; }
+.travel-record-banner button span { margin-left: 14px; }
+/*
+ * 축제 카드 이미지가 article 바로 아래에 있거나
+ * 링크 내부에 있는 경우를 모두 지원합니다.
+ */
+.news-card > img,
+.news-card > a > img {
+  display: block;
+  width: 100%;
+  height: 230px;
+  object-fit: cover;
+}
+
+/*
+ * 축제 카드 본문이 article 바로 아래에 있거나
+ * 링크 내부에 있는 경우를 모두 지원합니다.
+ */
+.news-card > div,
+.news-card > a > .news-card__body {
+  padding: 24px 25px 28px;
+}
+.news-card h3 { margin-top: 18px; }
+.news-card p { margin: 12px 0 0; color: #666; font-size: 14px; }
+.notice-section ul { margin: 0; padding: 0; border-top: 2px solid #333; list-style: none; }
+.notice-section li { display: grid; grid-template-columns: 72px 1fr auto; align-items: center; gap: 22px; min-height: 76px; padding: 0 18px; border-bottom: 1px solid #ddd; }
+.notice-section li a { color: #333; text-decoration: none; }
+.notice-section time { color: #999; font-size: 14px; }
+.notice-badge { padding: 6px 10px; border-radius: 14px; background: #edf3ff; color: #3b82f6; font-size: 13px; text-align: center; }
+.notice-badge--중요 { color: #e05252; background: #fff0f0; }
+.notice-badge--정책 { color: #666; background: #eee; }
+.footer { padding: 72px max(24px, calc((100vw - 1480px) / 2)) 26px; color: rgba(255,255,255,.74); background: #14345f; }
+.footer__inner { display: flex; justify-content: space-between; gap: 70px; padding-bottom: 54px; }
+.footer__brand img { width: 70px; height: 54px; object-fit: contain; }
+.footer__brand p { margin: 20px 0 0; font-size: 17px; }
+.footer__links { display: flex; gap: clamp(50px, 7vw, 120px); }
+.footer__links div { display: flex; flex-direction: column; gap: 12px; min-width: 115px; }
+.footer__links strong { margin-bottom: 7px; color: #fff; font-size: 17px; }
+.footer__links a { color: rgba(255,255,255,.68); font-size: 14px; text-decoration: none; }
+.footer__bottom { display: flex; justify-content: space-between; gap: 20px; padding-top: 25px; border-top: 1px solid rgba(255,255,255,.15); font-size: 13px; }
+
+/*
+ * API 로딩, 빈 결과 등의 상태를 표시합니다.
+ */
+.home-section__status {
+  margin: 32px 0;
+  padding: 28px;
+  border-radius: 16px;
+  color: #666;
+  background: #f7f8fa;
+  font-size: 16px;
+  text-align: center;
+}
+
+/*
+ * API 요청 실패 상태를 표시합니다.
+ */
+.home-section__status--error {
+  color: #b42318;
+  background: #fef3f2;
+}
+
+.destination-card > a {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.course-card__link {
+  display: block;
+  height: 100%;
+  color: inherit;
+  text-decoration: none;
+}
+
+.enjoy-card > a {
+  display: block;
+  height: 100%;
+  color: inherit;
+  text-decoration: none;
+}
+
+.news-card > a {
+  display: block;
+  height: 100%;
+  color: inherit;
+  text-decoration: none;
+}
+
+
+
+
+@media (max-width: 1050px) { 
+  .enjoy-filters {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .enjoy-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .footer__inner {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 760px) {
+  .section-heading { align-items: flex-start; margin-bottom: 26px; } .section-heading h2 { font-size: 27px; } .section-heading p { font-size: 15px; } .section-heading > a { font-size: 14px; }
+  .destination-grid, .course-grid, .news-grid { grid-template-columns: 1fr; } .enjoy-filters { display: flex; overflow-x: auto; gap: 8px; padding-bottom: 8px; } .enjoy-filters button { flex: 0 0 auto; min-height: 44px; padding: 0 20px; } .enjoy-grid { grid-template-columns: repeat(2, 1fr); }
+  .travel-record-banner { display: block; padding: 40px 25px; text-align: center; } .travel-record-banner h2 { font-size: 27px; } .travel-record-banner button { margin-top: 28px; }
+  .notice-section li { grid-template-columns: 58px 1fr; gap: 12px; padding: 10px 4px; } .notice-section time { grid-column: 2; }
+  .footer__links { flex-wrap: wrap; gap: 36px; } .footer__bottom { flex-direction: column; }
+}

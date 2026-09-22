@@ -1,0 +1,21 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="368" height="20" viewBox="0 0 368 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Group 50">
+<line id="Line 13" x1="10" y1="10.5" x2="126" y2="10.5" stroke="#3B82F6"/>
+<line id="Line 16" x1="126" y1="10.5" x2="242" y2="10.5" stroke="#3B82F6"/>
+<line id="Line 17" x1="242" y1="10.5" x2="358" y2="10.5" stroke="#3B82F6"/>
+<g id="Group 51">
+<circle id="Ellipse 18" cx="10" cy="10" r="10" fill="#3B82F6"/>
+<circle id="Ellipse 22" cx="10" cy="10" r="7" fill="#F9F9F9"/>
+</g>
+<g id="Group 52">
+<circle id="Ellipse 19" cx="126" cy="10" r="10" fill="#3B82F6"/>
+<circle id="Ellipse 22_2" cx="126" cy="10" r="7" fill="#F9F9F9"/>
+</g>
+<g id="Group 53">
+<circle id="Ellipse 20" cx="242" cy="10" r="10" fill="#3B82F6"/>
+<circle id="Ellipse 22_3" cx="242" cy="10" r="7" fill="#F9F9F9"/>
+</g>
+<circle id="Ellipse 21" cx="358" cy="10" r="10" fill="#3B82F6"/>
+<circle id="Ellipse 22_4" cx="358" cy="10" r="7" fill="white"/>
+</g>
+</svg>

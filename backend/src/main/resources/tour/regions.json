@@ -1,0 +1,66 @@
+[
+  {
+    "lDongRegnCd": "11",
+    "name": "서울"
+  },
+  {
+    "lDongRegnCd": "12",
+    "name": "전남·광주"
+  },
+  {
+    "lDongRegnCd": "26",
+    "name": "부산"
+  },
+  {
+    "lDongRegnCd": "27",
+    "name": "대구"
+  },
+  {
+    "lDongRegnCd": "28",
+    "name": "인천"
+  },
+  {
+    "lDongRegnCd": "30",
+    "name": "대전"
+  },
+  {
+    "lDongRegnCd": "31",
+    "name": "울산"
+  },
+  {
+    "lDongRegnCd": "36110",
+    "name": "세종"
+  },
+  {
+    "lDongRegnCd": "41",
+    "name": "경기"
+  },
+  {
+    "lDongRegnCd": "43",
+    "name": "충북"
+  },
+  {
+    "lDongRegnCd": "44",
+    "name": "충남"
+  },
+  {
+    "lDongRegnCd": "47",
+    "name": "경북"
+  },
+  {
+    "lDongRegnCd": "48",
+    "name": "경남"
+  },
+  {
+    "lDongRegnCd": "50",
+    "name": "제주"
+  },
+  {
+    "lDongRegnCd": "51",
+    "name": "강원"
+  },
+  {
+    "lDongRegnCd": "52",
+    "name": "전북"
+  }
+]
