@@ -39,7 +39,7 @@ let homeDataPromise = null;
  */
 function fetchHomeDataOnce() {
   if (!homeDataPromise) {
-    homeDataPromise = apiClient.get('/api/home')
+    homeDataPromise = apiClient.get('/api/v1/home')
     .catch((error) => {
       /*
          * 요청이 실패했다면 Promise 캐시를 초기화합니다.

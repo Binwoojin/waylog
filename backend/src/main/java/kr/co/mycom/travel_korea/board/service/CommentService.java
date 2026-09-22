@@ -31,21 +31,40 @@ public class CommentService {
     }
 
     @Transactional
-    public CommentResponse create(Long postId, CommentRequest request) {
+    public CommentResponse create(Long postId, String authorEmail, CommentRequest request) {
         Post post = postRepo.findById(postId).orElseThrow(()-> new EntityNotFoundException("게시글을 찾을 수 없습니다."));
-        Comment comment = commentRepo.save(new Comment(post,request.author(),request.content()));
+        Comment comment = commentRepo.save(new Comment(post,authorEmail,request.content()));
         return toResponse(comment);
 
     }
 
-    public CommentResponse update(Long commentId, CommentRequest request) {
+    /*
+     * 댓글 수정/삭제는 작성자 본인 또는 관리자만 허용합니다.
+     * comment.update()는 관리 대상 엔티티 상태에서 호출되어야 실제로 DB에 반영되므로
+     * @Transactional 경계 안에서 조회부터 수정까지 수행합니다.
+     */
+    @Transactional
+    public CommentResponse update(Long commentId, String requesterEmail, boolean isAdmin, CommentRequest request) {
         Comment comment = commentRepo.findById(commentId).orElseThrow(()-> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
-        comment.update(request.author(), request.content());
+        validateOwner(comment, requesterEmail, isAdmin);
+        comment.update(comment.getAuthor(), request.content());
         return toResponse(comment);
     }
 
-    public void delete(Long commentId) {
+    @Transactional
+    public void delete(Long commentId, String requesterEmail, boolean isAdmin) {
         Comment comment = commentRepo.findById(commentId).orElseThrow(()-> new IllegalArgumentException("삭제하려는 댓글이 없습니다."));
+        validateOwner(comment, requesterEmail, isAdmin);
         commentRepo.delete(comment);
+    }
+
+    private void validateOwner(Comment comment, String requesterEmail, boolean isAdmin) {
+        if (isAdmin) {
+            return;
+        }
+
+        if (!comment.getAuthor().equals(requesterEmail)) {
+            throw new IllegalArgumentException("댓글 작성자만 수정하거나 삭제할 수 있습니다.");
+        }
     }
 }

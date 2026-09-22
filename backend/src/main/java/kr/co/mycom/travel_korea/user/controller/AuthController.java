@@ -15,6 +15,8 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequiredArgsConstructor
 @Slf4j
@@ -24,8 +26,18 @@ public class AuthController {
     private final UserService userService;
 
     @PostMapping("/signup")
-    public UserEntity signup(@RequestBody UserRequest request) {
-        return service.signup(request);
+    public ResponseEntity<Map<String, Object>> signup(@RequestBody UserRequest request) {
+        UserEntity user = service.signup(request);
+        /*
+         * 비밀번호 해시가 포함된 UserEntity 전체를 그대로 반환하면 안 되므로
+         * 화면에 필요한 안전한 회원 정보만 전달합니다. (login()과 동일한 방식)
+         */
+        return ResponseEntity.ok(Map.of(
+                "memberId", user.getId(),
+                "email", user.getEmail(),
+                "nickname", user.getNickname(),
+                "role", user.getGrade()
+        ));
     }
 
     @PostMapping("/login")

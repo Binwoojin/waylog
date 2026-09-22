@@ -152,6 +152,7 @@ public class FeedService {
 
     public FeedPostResponse getOne(Long postId, String loginEmail) {
         FeedPost post = findPost(postId);
+        validateVisibility(post, loginEmail);
 
         boolean liked = false;
         boolean bookmarked = false;
@@ -226,6 +227,7 @@ public class FeedService {
     public boolean toggleLike(Long postId, String loginEmail) {
         UserEntity user = findUser(loginEmail);
         FeedPost post = findPost(postId);
+        validateVisibility(post, loginEmail);
 
         FeedLikeId likeId = new FeedLikeId(post.getId(), user.getId());
 
@@ -244,6 +246,7 @@ public class FeedService {
     public boolean toggleBookmark(Long postId, String loginEmail) {
         UserEntity user = findUser(loginEmail);
         FeedPost post = findPost(postId);
+        validateVisibility(post, loginEmail);
 
         FeedBookMarkId bookmarkId = new FeedBookMarkId(post.getId(), user.getId());
 
@@ -285,6 +288,19 @@ public class FeedService {
     private void validateAuthor(FeedPost post, String loginEmail) {
         if (!post.getAuthor().getEmail().equals(loginEmail)) {
             throw new IllegalArgumentException("게시글 작성자만 수정하거나 삭제할 수 있습니다.");
+        }
+    }
+
+    /**
+     * PRIVATE 게시글은 작성자 본인만 조회·좋아요·북마크할 수 있습니다.
+     * 비로그인 사용자나 다른 사용자는 접근할 수 없습니다.
+     */
+    private void validateVisibility(FeedPost post, String loginEmail) {
+        boolean isPrivate = "PRIVATE".equalsIgnoreCase(post.getVisibility());
+        boolean isAuthor = loginEmail != null && post.getAuthor().getEmail().equals(loginEmail);
+
+        if (isPrivate && !isAuthor) {
+            throw new IllegalArgumentException("비공개 게시글에 접근할 수 없습니다.");
         }
     }
 

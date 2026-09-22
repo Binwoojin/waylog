@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
 
 @Service
 @Transactional
@@ -36,8 +37,10 @@ public class AuthService {
     private final UserRepository repo;
     private final JavaMailSender emailSender;
     private final Cache<String, Integer> emailVerificationCache;
+    private final Cache<String, String> emailVerificationTicketCache;
 
     public UserEntity signup(UserRequest userInput) {
+        consumeVerificationTicket(userInput.getEmail(), userInput.getVerificationToken());
         UserEntity rep = new UserEntity(
                 userInput.getEmail(),
                 passwordEncoder.encode(userInput.getPassword()),
@@ -92,24 +95,14 @@ public class AuthService {
                 throw new IllegalArgumentException("Refresh Token이 존재하지 않습니다.");
             }
 
-            // 서명 검증 및 만료 여부 확인
-            JwtConfig.RefreshTokenValidationResult result = jwt.validateRefreshTokenWithExpirationCheck(refreshTokenCookie);
-            String email = result.email();
+            /*
+             * 서명 검증 및 만료 여부 확인.
+             * 만료된 Refresh Token은 재발급하지 않고 거부해야 하므로
+             * 만료 시 예외를 던지는 validateRefreshToken()을 사용합니다.
+             */
+            String email = jwt.validateRefreshToken(refreshTokenCookie);
 
-            // 1) Refresh Token이 만료된 경우 -> 두 토큰 모두 재발급 후 쿠키 업데이트
-            if (result.isExpired()) {
-                JwtConfig.TokenResponse newTokenPair = jwt.createTokenPair(email);
-                ResponseCookie newCookie = jwt.createRefreshTokenCookie(newTokenPair.refreshToken());
-
-                return ResponseEntity.ok()
-                        .header(HttpHeaders.SET_COOKIE, newCookie.toString())
-                        .body(Map.of(
-                                "accessToken", newTokenPair.accessToken(),
-                                "message", "Refresh Token이 만료되어 전체 토큰이 재발급되었습니다."
-                        ));
-            }
-
-            // 2) Refresh Token이 만료되지 않고 유효한 경우 -> Access Token만 재발급
+            // Refresh Token이 유효한 경우에만 Access Token을 재발급합니다.
             String newAccessToken = jwt.createAccessToken(email);
             return ResponseEntity.ok(Map.of("accessToken", newAccessToken));
 
@@ -141,15 +134,37 @@ public class AuthService {
         Integer verifiedCode = emailVerificationCache.getIfPresent(request.getEmail());
         if (verifiedCode != null && verifiedCode.equals(request.getAuthCode())) {
             emailVerificationCache.invalidate(request.getEmail());
-            return ResponseEntity.ok().build();
+            /*
+             * 인증 성공 시 일회용 티켓을 발급합니다.
+             * signup/changePassword는 이 티켓을 제시해야만 처리되며,
+             * 한 번 사용된 티켓은 즉시 무효화됩니다.
+             */
+            String verificationToken = UUID.randomUUID().toString();
+            emailVerificationTicketCache.put(request.getEmail(), verificationToken);
+            return ResponseEntity.ok(Map.of("verificationToken", verificationToken));
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
 
     public void changePassword(UserRequest request) {
+        consumeVerificationTicket(request.getEmail(), request.getVerificationToken());
         UserEntity user = repo.findByEmail(request.getEmail()).orElseThrow(() -> new IllegalArgumentException("해당 이메일의 회원을 찾을 수 없습니다."));
         user.changePassword(passwordEncoder.encode(request.getPassword()));
         repo.save(user);
+    }
+
+    /**
+     * 이메일 인증 티켓을 검증하고 1회성으로 소모합니다.
+     *
+     * 티켓이 없거나 일치하지 않으면 signup/changePassword를 진행할 수 없습니다.
+     * 검증에 성공한 티켓은 재사용을 막기 위해 즉시 무효화합니다.
+     */
+    private void consumeVerificationTicket(String email, String verificationToken) {
+        String ticket = emailVerificationTicketCache.getIfPresent(email);
+        if (ticket == null || verificationToken == null || !ticket.equals(verificationToken)) {
+            throw new IllegalArgumentException("이메일 인증이 필요합니다.");
+        }
+        emailVerificationTicketCache.invalidate(email);
     }
 
     public void sendCodeToEmail(String email) {

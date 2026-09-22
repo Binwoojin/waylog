@@ -17,4 +17,5 @@ public class UserRequest {
     private String nickname;
     private String grade;
     private LocalDateTime created_at;
+    private String verificationToken;
 }

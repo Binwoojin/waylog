@@ -20,7 +20,7 @@ public class HomeTourController {
     /**
      * 메인 페이지 데이터를 반환합니다.
      *
-     * GET http://localhost:8080/api/home
+     * GET http://localhost:8080/api/v1/home
      */
     @GetMapping
     public HomeTourResponse getHomeTours() {

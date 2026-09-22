@@ -48,7 +48,7 @@ export default function SignupPage() {
   const [verificationSent, setVerificationSent] = useState(false) // 인증번호 발송 상태 추가
   const [emailVerified, setEmailVerified] = useState(false) // 인증번호 확인 완료 여부
   const [verificationSecondsLeft, setVerificationSecondsLeft] = useState(0) // 인증번호 남은 시간 (초)
-  // const [emailVerificationToken, setEmailVerificationToken] = useState('') // 서버에서 발급한 이메일 인증 토큰 (백엔드 API 연결 시 사용해야함)
+  const [emailVerificationToken, setEmailVerificationToken] = useState('') // 서버에서 발급한 이메일 인증 토큰
   const [nicknameChecked, setNicknameChecked] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false)
@@ -161,7 +161,7 @@ export default function SignupPage() {
 
       setVerificationSent(true) // 인증번호 발송 상태 설정
       setEmailVerified(false) // 인증번호 확인 상태 초기화
-      // setEmailVerificationToken('') // 인증 토큰 초기화
+      setEmailVerificationToken('') // 인증 토큰 초기화
       
       // 3분 설정
       setVerificationSecondsLeft(180)
@@ -216,7 +216,7 @@ export default function SignupPage() {
       * 실제 백엔드 연결 예시
       */
 
-     await apiClient.post(
+     const response = await apiClient.post(
        '/api/v1/auth/email-verification/confirm',
        {
          email: form.email,
@@ -226,12 +226,12 @@ export default function SignupPage() {
      )
 
       setEmailVerified(true) // 인증번호 확인 완료 상태 설정
-      console.log("emailVerified : "+emailVerified)
+      setEmailVerificationToken(response.verificationToken) // 서버가 발급한 인증 토큰 저장
       setVerificationSecondsLeft(0) // 인증번호 남은 시간 초기화
       window.alert('이메일 인증이 완료되었습니다.')
     } catch (error) {
       setEmailVerified(false) // 인증번호 확인 실패 시 상태 초기화
-      // setEmailVerificationToken('') // 인증 토큰 초기화
+      setEmailVerificationToken('') // 인증 토큰 초기화
 
       window.alert(error.message || '인증번호 확인에 실패했습니다.')
     }
@@ -293,16 +293,15 @@ export default function SignupPage() {
       return
     }
 
-    // if (!emailVerificationToken) {
-    //   window.alert('이메일 인증 정보가 없습니다.')
-    //   setStep(1)
-    //   return
-    // }
+    if (!emailVerificationToken) {
+      window.alert('이메일 인증 정보가 없습니다.')
+      setStep(1)
+      return
+    }
 
-    
     const requestBody = {
     email: form.email,
-    // emailVerificationToken,
+    verificationToken: emailVerificationToken,
     password: form.password,
     // phoneNumber: `${form.phonePrefix}${form.phone}`,
     nickname: form.nickname,
