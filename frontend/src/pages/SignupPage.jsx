@@ -13,11 +13,13 @@ import './SignupPage.css'
  * 1단계에서 계정 정보를 검증하고 2단계에서 약관 동의를 받은 뒤 회원가입을 요청합니다.
  *
  * 백엔드 API 연결 권장 순서
- * - GET  /api/v1/members/check-email?email=...       이메일 중복 확인
- * - POST /api/v1/auth/email-verifications             인증번호 발송 { email, purpose: 'SIGNUP' }
- * - POST /api/v1/auth/email-verifications/confirm     인증번호 확인 { email, code, purpose: 'SIGNUP' }
- * - GET  /api/v1/members/check-nickname?nickname=...  닉네임 중복 확인
- * - POST /api/v1/members                              최종 회원가입
+ * - GET  /api/v1/users/check-email?email=...         이메일 중복 확인 → { available: boolean }
+ * - POST /api/v1/auth/email-verification              인증번호 발송 { email } → 응답 본문 없음
+ * - POST /api/v1/auth/email-verification/confirm      인증번호 확인 { email, authCode } → { verificationToken }, 불일치 시 401
+ * - GET  /api/v1/users/check-nickname?nickname=...    닉네임 중복 확인 → { available: boolean }
+ * - POST /api/v1/auth/signup                          최종 회원가입 { email, password, nickname, verificationToken }
+ *                                                     → { memberId, email, nickname, role }
+ *   (프론트가 함께 보내는 purpose, agreements는 현재 백엔드 DTO에 없는 필드라 서버에서 사용되지 않습니다.)
  *
  * 프론트의 중복확인 boolean만 신뢰하지 말고 최종 POST 시 서버가 이메일·닉네임 중복,
  * 인증 완료 여부, 비밀번호 정책, 필수 약관 동의를 반드시 다시 검사해야 합니다.
@@ -125,7 +127,14 @@ export default function SignupPage() {
         `/api/v1/users/check-email?email=${encodeURIComponent(form.email)}`
       )
 
-      if (data.email!==null) {
+      // 백엔드는 { available: boolean } 형태로 응답합니다. (UserController.checkEmail)
+      // 예상과 다른 응답이면 사용 가능으로 오인하지 않도록 확인 완료 처리를 하지 않습니다.
+      if (typeof data.available !== 'boolean') {
+        window.alert('이메일 중복확인 응답을 확인할 수 없습니다. 잠시 후 다시 시도해 주세요.')
+        return
+      }
+
+      if (!data.available) {
         window.alert('이미 사용 중인 이메일입니다.')
         return
       }
