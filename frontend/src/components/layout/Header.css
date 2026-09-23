@@ -149,6 +149,18 @@
 .site-header--scrolled .site-header__member-button { color: #1f1f1f; border-color: #cbd5e1; background: #fff; }
 .site-header--scrolled .site-header__member-button:hover { color: #2563eb; border-color: #93c5fd; background: #eff6ff; }
 
+/* 세션 복원 중 로그인/회원가입 버튼 자리를 같은 크기로 비워 둡니다. */
+.site-header__placeholder { visibility: hidden; pointer-events: none; }
+
+/* 로그아웃 서버 호출 실패 알림 (회원 메뉴와 같은 카드 스타일) */
+.site-header__actions { position: relative; }
+.site-header__notice { position: absolute; top: calc(100% + 12px); right: 0; z-index: 1; width: min(300px, calc(100vw - 32px)); padding: 14px; border: 1px solid #fecaca; border-radius: 14px; color: #1f1f1f; background: #fff; box-shadow: 0 14px 34px rgba(15,23,42,.2); }
+.site-header__notice p { margin: 0 0 12px; font-size: 14px; line-height: 1.5; }
+.site-header__notice-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.site-header__notice-actions button { min-height: 36px; padding: 0 14px; border: 1px solid #cbd5e1; border-radius: 18px; color: #1f1f1f; background: #fff; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.site-header__notice-actions button:first-child { border-color: transparent; color: #fff; background: #3b82f6; }
+.site-header__notice-actions button:disabled { opacity: .6; cursor: default; }
+
 @media (max-width: 1100px) {
   .site-header { grid-template-columns: 42px 1fr auto; gap: 42px; min-height: 78px; }
   .site-header__logo { width: 42px; height: 33px; }

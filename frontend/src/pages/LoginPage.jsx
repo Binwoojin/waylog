@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { apiClient } from '../api/client'
+import * as authApi from '../api/authApi'
 import logo from '../assets/figma/logo.png'
 import loginBackground from '../assets/auth/login-background.png'
 import mailIcon from '../assets/auth/mail.svg'
@@ -12,16 +12,13 @@ import './LoginPage.css'
 /**
  * 로그인 페이지 /login
  *
- * 백엔드 연결 권장 흐름
- * 1. 별도 src/api/authApi.js에 login({ email, password }) 함수를 작성합니다.
- * 2. POST /api/v1/auth/login 요청 body로 { email, password }를 전송합니다.
- * 3. 서버가 HttpOnly/Secure 쿠키로 refresh token을 내려주도록 구성하는 것이 안전합니다.
- * 4. access token을 응답 body로 받는 구조라면 메모리 상태에 저장하고,
- *    localStorage에 장기 보관하는 방식은 XSS 노출 위험 때문에 피하는 것을 권장합니다.
- * 5. 성공 시 메인 또는 로그인 전 접근 페이지로 이동하고, 401 응답은 폼 오류로 표시합니다.
+ * 로그인 흐름
+ * 1. authApi.login()으로 POST /api/v1/auth/login을 호출합니다. (화면은 URL을 직접 다루지 않습니다)
+ * 2. 서버는 refresh token을 HttpOnly 쿠키로, access token과 회원 정보를 응답 body로 내려줍니다.
+ * 3. AuthContext.login(member, accessToken)이 access token을 메모리(client.js)에만 저장합니다.
+ * 4. 성공 시 메인으로 이동하고, 401 응답은 폼 오류로 표시합니다.
  *
- * 예상 성공 응답 예시
- * { member: { memberId, email, nickname, role }, accessToken, expiresIn }
+ * 성공 응답: { accessToken, member: { memberId, email, nickname, role } }
  */
 export default function LoginPage() {
   const navigate = useNavigate()
@@ -33,40 +30,37 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
 
-  const handleSubmit =  async event => {
+  const handleSubmit = async event => {
     event.preventDefault()
-     setIsLoading(true)
-     setErrorMessage('') // 이전 오류 메시지를 초기화합니다.
+    setIsLoading(true)
+    setErrorMessage('') // 이전 오류 메시지를 초기화합니다.
 
-     try {
-       const response = await apiClient.post('/api/v1/auth/login', { email, password, rememberLogin }, { credentials: 'include' })
+    try {
+      const response = await authApi.login({ email, password, rememberLogin })
 
-
-       if (!response.accessToken ) {
-        console.log(response);
-        throw new Error('응답에 회원 정보가 없습니다.')
-       }
-
-       login(response.member)
-
-       navigate('/')
-
-     } catch (error) {
-        if (error.status === 401) {
-          setErrorMessage('이메일 또는 비밀번호가 올바르지 않습니다.')
-        } else if (error.status === 423) {
-          setErrorMessage('잠긴 계정입니다.')
-        } else if (error.status === 404) {
-          setErrorMessage('로그인 API 주소를 찾을 수 없습니다.')
-        } else {
-          setErrorMessage('서버 오류가 발생했습니다.')
-          console.error(error);
-        }
-      } finally {
-        setIsLoading(false)
+      // Design Ref: §5.3 — 토큰과 회원 정보가 모두 있어야 로그인 상태가 성립합니다.
+      // 하나라도 없으면 헤더에는 로그인으로 보이지만 보호 API가 실패하는 불일치가 생기므로 오류로 처리합니다.
+      if (!response.accessToken || !response.member) {
+        throw new Error('로그인 응답에 토큰 또는 회원 정보가 없습니다.')
       }
 
-
+      login(response.member, response.accessToken)
+      navigate('/')
+    } catch (error) {
+      // /api/v1/auth/** 요청은 client에서 재발급 대상이 아니므로 401이 그대로 전달됩니다.
+      if (error.status === 401) {
+        setErrorMessage('이메일 또는 비밀번호가 올바르지 않습니다.')
+      } else if (error.status === 423) {
+        setErrorMessage('잠긴 계정입니다.')
+      } else if (error.status === 404) {
+        setErrorMessage('로그인 API 주소를 찾을 수 없습니다.')
+      } else {
+        setErrorMessage('서버 오류가 발생했습니다.')
+        console.error(error)
+      }
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
