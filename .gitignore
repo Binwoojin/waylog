@@ -1,0 +1,11 @@
+# Root-level ignores. backend/ and frontend/ keep their own .gitignore files.
+
+# bkit plugin local state (audit logs, runtime, checkpoints)
+.bkit/
+
+# Claude Code personal settings (shared config lives in .claude/agents and .claude/skills)
+.claude/settings.local.json
+
+# OS files
+.DS_Store
+Thumbs.db
