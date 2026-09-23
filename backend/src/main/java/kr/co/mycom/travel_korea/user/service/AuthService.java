@@ -12,6 +12,7 @@ import kr.co.mycom.travel_korea.user.repository.UserRepository;
 import kr.co.mycom.travel_korea.user.dto.MailRequest;
 import kr.co.mycom.travel_korea.user.dto.UserRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -23,14 +24,19 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import java.text.ParseException;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @Transactional
 @RequiredArgsConstructor
 public class AuthService {
+
+    private static final String REFRESH_FAILED_MESSAGE = "로그인이 만료되었습니다. 다시 로그인해 주세요.";
 
     private final JwtConfig jwt;
     private final PasswordEncoder passwordEncoder;
@@ -58,24 +64,18 @@ public class AuthService {
         }
         if (passwordEncoder.matches(request.getPassword(), dbUser.getPassword())) {
             JwtConfig.TokenResponse tokens = jwt.createTokenPair(dbUser.getEmail());
-            ResponseCookie refreshCookie = jwt.createRefreshTokenCookie(tokens.refreshToken());
-
             /*
-             * 헤더에는 닉네임이 필요하지만 비밀번호가 포함된 UserEntity 전체를
-             * 반환하면 안 되므로 화면에 필요한 안전한 회원 정보만 전달합니다.
+             * "로그인 상태 유지"를 끈 경우(false)만 세션 쿠키로 발급합니다.
+             * 값이 없으면(null) 기존 클라이언트와의 호환을 위해 7일 쿠키를 유지합니다.
              */
-            Map<String, Object> member = Map.of(
-                    "memberId", dbUser.getId(),
-                    "email", dbUser.getEmail(),
-                    "nickname", dbUser.getNickname(),
-                    "role", dbUser.getGrade()
-            );
+            boolean rememberLogin = !Boolean.FALSE.equals(request.getRememberLogin());
+            ResponseCookie refreshCookie = jwt.createRefreshTokenCookie(tokens.refreshToken(), rememberLogin);
 
             return ResponseEntity.ok()
                     .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
                     .body(Map.of(
                             "accessToken", tokens.accessToken(),
-                            "member", member
+                            "member", toMemberResponse(dbUser)
                     ));
 
         }
@@ -90,29 +90,119 @@ public class AuthService {
 
     public ResponseEntity<?> refreshToken(String refreshTokenCookie) {
     // 엑세스 토큰 리프레시
-        try {
-            if (refreshTokenCookie == null || refreshTokenCookie.isBlank()) {
-                throw new IllegalArgumentException("Refresh Token이 존재하지 않습니다.");
-            }
+        UserEntity user = findRefreshSessionUser(refreshTokenCookie).orElse(null);
+        if (user == null) {
+            /*
+             * 쿠키 없음, 파싱·서명·타입·만료 오류, 회원 없음은
+             * "다시 로그인해야 해결되는 상태"이므로 401로 통일하고 쿠키를 삭제합니다.
+             *
+             * 예외 메시지는 내부 정보가 담길 수 있고 null이면 Map.of가 NPE를 던지므로
+             * 응답에는 고정 메시지만 내보냅니다.
+             */
+            // Design Ref: §4.2 — 실패 400→401, body는 고정 메시지 (e.getMessage() 비노출)
+            ResponseCookie deleteCookie = jwt.deleteToken();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .header(HttpHeaders.SET_COOKIE, deleteCookie.toString())
+                    .body(Map.of("message", REFRESH_FAILED_MESSAGE));
+        }
 
+        // Refresh Token이 유효한 경우에만 Access Token을 재발급합니다.
+        String newAccessToken = issueAccessToken(user);
+
+        // Design Ref: §4.2 — 새로고침 후 세션 복원 시 헤더 닉네임을 그리도록 login과 같은 member를 함께 반환
+        return ResponseEntity.ok(Map.of(
+                "accessToken", newAccessToken,
+                "member", toMemberResponse(user)
+        ));
+    }
+
+    /*
+     * Refresh Token 쿠키를 검증하고 해당 회원을 찾습니다.
+     *
+     * 토큰·회원 검증 실패만 Optional.empty()로 돌려 401 처리 대상으로 삼습니다.
+     *  - IllegalArgumentException: 쿠키 없음, 서명 불일치, 타입 불일치, 만료, 회원 없음
+     *  - ParseException: JWT 형식 오류 또는 claim 형식 오류
+     *  - JOSEException: 지원하지 않는 서명 알고리즘 등 검증 단계 오류
+     *
+     * DB 장애 같은 그 밖의 예외는 로그인 상태와 무관한 서버 오류이므로
+     * 쿠키를 지우지 않고 전파해 500이 되게 합니다.
+     * (프론트가 네트워크·서버 오류로 보고 로그인 상태를 유지할 수 있어야 합니다.)
+     *
+     * 회원 없음은 repo가 예외를 던지는 대신 빈 Optional로 판단하므로
+     * @Transactional 프록시를 지나는 RuntimeException이 없어 rollback-only가 생기지 않습니다.
+     */
+    // Design Ref: §12 R-5 — 401 + 쿠키 삭제는 토큰·회원 검증 실패에만 한정
+    private Optional<UserEntity> findRefreshSessionUser(String refreshTokenCookie) {
+        if (refreshTokenCookie == null || refreshTokenCookie.isBlank()) {
+            log.debug("Refresh Token 재발급 실패: 쿠키 없음");
+            return Optional.empty();
+        }
+
+        String email;
+        try {
             /*
              * 서명 검증 및 만료 여부 확인.
              * 만료된 Refresh Token은 재발급하지 않고 거부해야 하므로
              * 만료 시 예외를 던지는 validateRefreshToken()을 사용합니다.
              */
-            String email = jwt.validateRefreshToken(refreshTokenCookie);
-
-            // Refresh Token이 유효한 경우에만 Access Token을 재발급합니다.
-            String newAccessToken = jwt.createAccessToken(email);
-            return ResponseEntity.ok(Map.of("accessToken", newAccessToken));
-
+            email = jwt.validateRefreshToken(refreshTokenCookie);
+        } catch (IllegalArgumentException | ParseException | JOSEException e) {
+            log.debug("Refresh Token 재발급 실패: {}", e.toString());
+            return Optional.empty();
+        } catch (RuntimeException e) {
+            log.error("Refresh Token 검증 중 예상하지 못한 오류", e);
+            throw e;
         } catch (Exception e) {
-            // 서명이 조작되었거나 올바르지 않은 타입일 경우 쿠키 삭제 후 에러 반환
-            ResponseCookie deleteCookie = jwt.deleteToken();
-            return ResponseEntity.badRequest()
-                    .header(HttpHeaders.SET_COOKIE, deleteCookie.toString())
-                    .body(Map.of("error", e.getMessage()));
+            // validateRefreshToken()이 throws Exception으로 선언되어 있어 남은 checked 예외를 감쌉니다.
+            log.error("Refresh Token 검증 중 예상하지 못한 오류", e);
+            throw new IllegalStateException("Refresh Token 검증 중 서버 오류가 발생했습니다.", e);
         }
+
+        /*
+         * 토큰이 유효해도 그 사이 탈퇴 등으로 회원이 없을 수 있습니다.
+         * 이 경우 새 Access Token을 발급해도 보호 API에서 다시 401이 되므로
+         * 재발급 실패로 처리해 프론트가 로그인 상태를 바로 해제하게 합니다.
+         * DB 조회 자체의 오류는 잡지 않고 전파합니다(500).
+         */
+        Optional<UserEntity> user = repo.findByEmail(email);
+        if (user.isEmpty()) {
+            log.debug("Refresh Token 재발급 실패: 회원 없음");
+        }
+        return user;
+    }
+
+    /*
+     * 검증을 통과한 회원에게 Access Token을 발급합니다.
+     * 서명 실패는 사용자 토큰 문제가 아니라 서버 설정 문제이므로 500으로 전파합니다.
+     * (IllegalArgumentException으로 감싸면 GlobalExceptionHandler가 400으로 바꾸므로 IllegalStateException 사용)
+     */
+    private String issueAccessToken(UserEntity user) {
+        try {
+            return jwt.createAccessToken(user.getEmail());
+        } catch (JOSEException e) {
+            log.error("Access Token 발급 실패", e);
+            throw new IllegalStateException("Access Token 발급 중 서버 오류가 발생했습니다.", e);
+        }
+    }
+
+    /*
+     * login과 refresh가 같은 회원 정보 형태를 반환하도록 한 곳에서 만듭니다.
+     *
+     * 비밀번호 해시가 포함된 UserEntity 전체를 반환하면 안 되므로
+     * 화면(헤더 닉네임, 권한 분기)에 필요한 안전한 회원 정보만 전달합니다.
+     *
+     * Map.of는 null 값을 허용하지 않으므로 GRADE가 비어 있는 회원도
+     * 응답이 깨지지 않도록 기본값 "user"를 사용합니다.
+     */
+    // Design Ref: §3 — member { memberId, email, nickname, role } 형태를 login·refresh 공통으로 고정
+    private Map<String, Object> toMemberResponse(UserEntity user) {
+        String role = user.getGrade() != null ? user.getGrade() : "user";
+        return Map.of(
+                "memberId", user.getId(),
+                "email", user.getEmail(),
+                "nickname", user.getNickname(),
+                "role", role
+        );
     }
 
     private void createEmailForm(String toEmail,

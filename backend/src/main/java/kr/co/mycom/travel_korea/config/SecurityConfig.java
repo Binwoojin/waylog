@@ -1,15 +1,23 @@
 package kr.co.mycom.travel_korea.config;
 
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.config.Customizer;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import tools.jackson.databind.ObjectMapper;
+
+import java.io.IOException;
+import java.util.Map;
 
 
 @Configuration
@@ -17,6 +25,10 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final ObjectMapper objectMapper;
+
+    private static final String UNAUTHORIZED_MESSAGE = "로그인이 필요합니다.";
+    private static final String FORBIDDEN_MESSAGE = "접근 권한이 없습니다.";
 
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {
@@ -61,10 +73,52 @@ public class SecurityConfig {
                        .anyRequest().authenticated()
                )
                /*
+                * 인증·인가 실패 응답을 프론트가 구분할 수 있도록 고정합니다.
+                *
+                * 기본 설정에서는 미인증 요청도 403으로 내려가서
+                * 프론트가 "토큰 재발급 후 재시도"와 "권한 부족"을 구분할 수 없었습니다.
+                */
+               // Design Ref: §4.2 — 401은 재인증으로 해결 가능, 403은 권한 부족으로 의미를 고정
+               .exceptionHandling(exception -> exception
+                       .authenticationEntryPoint(authenticationEntryPoint())
+                       .accessDeniedHandler(accessDeniedHandler())
+               )
+               /*
                 * JWT 인증 Filter를 기본 로그인 Filter 이전에 실행합니다.
                 */
                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
             return http.build();
+    }
+
+    /*
+     * 토큰이 없거나 만료·위조되어 인증되지 않은 요청입니다.
+     *
+     * JwtAuthenticationFilter는 잘못된 토큰이면 SecurityContext를 비우고 통과시키므로
+     * permitAll API는 영향이 없고, 보호 API에서만 이 응답이 내려갑니다.
+     * 비로그인 사용자가 /admin/** 에 접근한 경우도 여기서 401로 처리됩니다.
+     */
+    private AuthenticationEntryPoint authenticationEntryPoint() {
+        return (request, response, authException) ->
+                writeErrorResponse(response, HttpStatus.UNAUTHORIZED, UNAUTHORIZED_MESSAGE);
+    }
+
+    /*
+     * 로그인은 했지만 권한이 부족한 요청입니다. (예: 일반 회원의 /admin/**)
+     *
+     * 프론트는 403을 받으면 토큰 재발급을 시도하지 않습니다.
+     */
+    private AccessDeniedHandler accessDeniedHandler() {
+        return (request, response, accessDeniedException) ->
+                writeErrorResponse(response, HttpStatus.FORBIDDEN, FORBIDDEN_MESSAGE);
+    }
+
+    // Design Ref: §6.2 — GlobalExceptionHandler와 같은 { "message": ... } 형식으로 통일
+    private void writeErrorResponse(HttpServletResponse response,
+                                    HttpStatus status,
+                                    String message) throws IOException {
+        response.setStatus(status.value());
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8");
+        objectMapper.writeValue(response.getWriter(), Map.of("message", message));
     }
 }

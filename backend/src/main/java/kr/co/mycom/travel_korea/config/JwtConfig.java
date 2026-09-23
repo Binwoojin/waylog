@@ -84,15 +84,28 @@ public class JwtConfig {
         return new RefreshTokenValidationResult(claims.getSubject(), isExpired);
     }
 
-    // 6. Refresh Token 쿠키 생성
+    // 6. Refresh Token 쿠키 생성 (로그인 상태 유지 = 7일 쿠키)
     public ResponseCookie createRefreshTokenCookie(String refreshToken) {
-        return ResponseCookie.from("refreshToken", refreshToken)
-                .maxAge(refreshExpiration / 1000) // ms -> s 변환
+        return createRefreshTokenCookie(refreshToken, true);
+    }
+
+    /*
+     * persistent가 false면 Max-Age를 넣지 않은 세션 쿠키로 발급합니다.
+     * 브라우저를 닫으면 쿠키가 사라지므로 공용 PC에서 자동 로그인이 이어지지 않습니다.
+     *
+     * 쿠키 수명만 바뀌고 토큰 자체의 만료(refresh-expiration)는 그대로입니다.
+     */
+    // Design Ref: §12 R-1 — rememberLogin=false면 세션 쿠키, 그 외에는 기존 7일 쿠키
+    public ResponseCookie createRefreshTokenCookie(String refreshToken, boolean persistent) {
+        ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from("refreshToken", refreshToken)
                 .path("/")
                 .httpOnly(true)
                 .secure(true)
-                .sameSite("Strict")
-                .build();
+                .sameSite("Strict");
+        if (persistent) {
+            builder.maxAge(refreshExpiration / 1000); // ms -> s 변환
+        }
+        return builder.build();
     }
 
     // 7. Token 삭제 쿠키 생성
