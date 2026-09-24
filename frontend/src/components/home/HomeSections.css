@@ -148,6 +148,10 @@
 .footer__links div { display: flex; flex-direction: column; gap: 12px; min-width: 115px; }
 .footer__links strong { margin-bottom: 7px; color: #fff; font-size: 17px; }
 .footer__links a { color: rgba(255,255,255,.68); font-size: 14px; text-decoration: none; }
+/* 아직 목적지가 없는 푸터 항목: 링크 색보다 흐리게, 커서도 기본값으로 두어 누를 수 없음을 드러냅니다.
+ * 불투명도 .6은 배경 #14345f 위에서 약 5.5:1로 WCAG AA(4.5:1)를 넘기면서, 링크(.68, 약 6.6:1)보다는 흐립니다. */
+.footer__pending { display: inline-flex; align-items: center; gap: 8px; color: rgba(255,255,255,.6); font-size: 14px; }
+.footer__pending-badge { padding: 2px 7px; border: 1px solid rgba(255,255,255,.25); border-radius: 99px; color: rgba(255,255,255,.6); font-size: 11px; line-height: 1.4; white-space: nowrap; }
 .footer__bottom { display: flex; justify-content: space-between; gap: 20px; padding-top: 25px; border-top: 1px solid rgba(255,255,255,.15); font-size: 13px; }
 
 /*

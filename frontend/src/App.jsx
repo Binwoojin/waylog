@@ -23,6 +23,9 @@ import TravelDetailPage from './pages/TravelDetailPage'
 import EnjoyCategoryPage from './pages/EnjoyCategoryPage'
 import EnjoyDetailPage from './pages/EnjoyDetailPage'
 import EnjoySearchResultsPage from './pages/EnjoySearchResultsPage'
+import ComingSoonPage from './pages/ComingSoonPage'
+import NotFoundPage from './pages/NotFoundPage'
+import ErrorBoundary from './components/common/ErrorBoundary'
 
 /**
  * 홈 API 요청 Promise를 저장합니다.
@@ -263,26 +266,45 @@ function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<HomePage mainRef={mainRef} />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/signup" element={<SignupPage />} />
-          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        {/*
+          Design Ref: §2.1 — 최상위 오류 경계입니다. Layout 밖의 홈·로그인 화면이나
+          헤더 자체의 렌더 오류처럼 페이지 영역 경계가 잡지 못하는 오류를 받아 전체 오류 화면을 보여 줍니다.
+          링크를 쓰는 오류 화면이 있으므로 BrowserRouter 안에 둡니다.
+        */}
+        <ErrorBoundary variant="app">
+          <Routes>
+            <Route path="/" element={<HomePage mainRef={mainRef} />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/signup" element={<SignupPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
-          <Route element={<Layout />}>
-            <Route path="/enjoy" element={<TravelEnjoyPage />} />
-            <Route path="/enjoy/search" element={<EnjoySearchResultsPage />} />
-            <Route path="/enjoy/:category/:id" element={<EnjoyDetailPage />} />
-            <Route path="/enjoy/:category" element={<EnjoyCategoryPage />} />
+            <Route element={<Layout />}>
+              <Route path="/enjoy" element={<TravelEnjoyPage />} />
+              <Route path="/enjoy/search" element={<EnjoySearchResultsPage />} />
+              <Route path="/enjoy/:category/:id" element={<EnjoyDetailPage />} />
+              <Route path="/enjoy/:category" element={<EnjoyCategoryPage />} />
 
-            <Route path="/destinations" element={<DestinationsPage />} />
-            <Route path="/destinations/search" element={<DestinationSearchResultsPage />} />
-            <Route path="/destinations/detail/:id" element={<TravelDetailPage />} />
-            <Route path="/destinations/attractions" element={<DestinationCatalogPage kind="attraction" />} />
-            <Route path="/destinations/culture" element={<DestinationCatalogPage kind="culture" />} />
-            <Route path="/destinations/courses" element={<DestinationCatalogPage kind="course" />} />
-          </Route>
-        </Routes>
+              <Route path="/destinations" element={<DestinationsPage />} />
+              <Route path="/destinations/search" element={<DestinationSearchResultsPage />} />
+              <Route path="/destinations/detail/:id" element={<TravelDetailPage />} />
+              <Route path="/destinations/attractions" element={<DestinationCatalogPage kind="attraction" />} />
+              <Route path="/destinations/culture" element={<DestinationCatalogPage kind="culture" />} />
+              <Route path="/destinations/courses" element={<DestinationCatalogPage kind="course" />} />
+
+              {/* Design Ref: §3.2 — 메뉴는 있지만 아직 구현되지 않은 기능은 "준비 중" 화면으로 연결합니다. */}
+              <Route path="/feed" element={<ComingSoonPage title="여행 피드" />} />
+              <Route path="/bookmarks" element={<ComingSoonPage title="북마크" />} />
+              <Route path="/mypage" element={<ComingSoonPage title="마이 페이지" />} />
+              <Route path="/notices" element={<ComingSoonPage title="공지사항" />} />
+
+              {/*
+                Design Ref: §2.2 — 정의되지 않은 경로는 헤더·푸터가 있는 404 화면으로 보냅니다.
+                React Router는 경로 점수로 매칭하므로 명시한 라우트(/login 등 Layout 밖 포함)가 항상 우선합니다.
+              */}
+              <Route path="*" element={<NotFoundPage />} />
+            </Route>
+          </Routes>
+        </ErrorBoundary>
       </BrowserRouter>
     </AuthProvider>
   )

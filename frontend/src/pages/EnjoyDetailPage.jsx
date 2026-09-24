@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import PlacePinIcon from '../components/icons/PlacePinIcon'
 import { enjoyConfigs, findEnjoyItem } from '../data/enjoyMocks'
+import NotFoundPage from './NotFoundPage'
 import './EnjoyDetailPage.css'
 
 const categoryFacts = {
@@ -14,8 +15,19 @@ const categoryFacts = {
 
 export default function EnjoyDetailPage() {
   const { category, id } = useParams()
+  // '__proto__'·'constructor' 같은 프로토타입 키가 통과하지 않도록 두 객체 모두 Object.hasOwn으로 판별합니다.
+  const isKnownCategory = Object.hasOwn(enjoyConfigs, category) && Object.hasOwn(categoryFacts, category)
+
+  // Design Ref: §6 — 없는 카테고리에서는 categoryFacts[category].map이 크래시했으므로 404로 안내합니다.
+  // 있는 카테고리의 없는 항목 id fallback(config.items[0])은 MF-4 범위라 이번에는 바꾸지 않습니다.
+  if (!isKnownCategory) return <NotFoundPage />
+  const config = enjoyConfigs[category]
+
+  return <EnjoyDetailContent category={category} id={id} config={config} />
+}
+
+function EnjoyDetailContent({ category, id, config }) {
   const navigate = useNavigate()
-  const config=enjoyConfigs[category]||enjoyConfigs.festivals
   const item=findEnjoyItem(category,id)||config.items[0]
   const [saved,setSaved]=useState(false)
   const goBack=()=>window.history.length>1?window.history.back():navigate(`/enjoy/${category}`)

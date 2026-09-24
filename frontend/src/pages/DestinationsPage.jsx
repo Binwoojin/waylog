@@ -70,9 +70,10 @@ const newPlaces = [
   { image: woljeongsa, tag: '역사관광지', title: '월정사', location: '강원특별자치도 평창군' },
 ]
 
-function SectionHeading({ title, description, link }) {
-  // link 값이 있는 섹션에만 공통 '더보기 →' 링크를 노출합니다.
-  return <div className="destination-heading"><div><h2>{title}</h2><p>{description}</p></div>{link && <a href="#more">더보기 <span>→</span></a>}</div>
+// moreTo: '더보기'가 이동할 라우트. 없으면 링크를 렌더하지 않습니다.
+// moreLabel: 화면에는 '더보기'만 보이므로, 같은 문구의 링크가 여러 개일 때 스크린리더가 구분할 수 있게 붙이는 접근 가능한 이름입니다.
+function SectionHeading({ title, description, moreTo, moreLabel }) {
+  return <div className="destination-heading"><div><h2>{title}</h2><p>{description}</p></div>{moreTo && <Link to={moreTo} aria-label={moreLabel}>더보기 <span aria-hidden="true">→</span></Link>}</div>
 }
 
 export default function DestinationsPage() {
@@ -87,13 +88,13 @@ export default function DestinationsPage() {
 
       <section><SectionHeading title="지역별로 둘러보기" description="가고 싶은 지역을 선택해 여행지를 확인해 보세요." /><div className="region-grid">{regions.map(item => <article key={item.title}><img src={item.image} alt={`${item.title} 여행 풍경`} /><h3>{item.title}</h3></article>)}</div></section>
 
-      <section><SectionHeading title="주제별로 둘러보기" description="TourAPI 관광 분류를 기준으로 다양한 여행지를 만나보세요." link="관광지 더보기" /><div className="destination-info-grid destination-info-grid--four">{themes.map(item => <article className="destination-info-card" key={item.title}><img src={item.image} alt={item.title} /><div><span>{item.tag}</span><h3>{item.title}</h3><p className="destination-card-location"><PlacePinIcon />{item.location}</p><p>{item.text}</p></div></article>)}</div></section>
+      <section><SectionHeading title="주제별로 둘러보기" description="TourAPI 관광 분류를 기준으로 다양한 여행지를 만나보세요." moreTo="/destinations/attractions" moreLabel="관광지 더보기" /><div className="destination-info-grid destination-info-grid--four">{themes.map(item => <article className="destination-info-card" key={item.title}><img src={item.image} alt={item.title} /><div><span>{item.tag}</span><h3>{item.title}</h3><p className="destination-card-location"><PlacePinIcon />{item.location}</p><p>{item.text}</p></div></article>)}</div></section>
 
-      <section><SectionHeading title="문화와 역사를 만나는 곳" description="박물관, 미술관, 전시관에서 다양한 이야기를 만나보세요." link="문화시설 더보기" /><div className="destination-info-grid destination-info-grid--three">{culturePlaces.map(item => <article className="destination-info-card" key={item.title}><img src={item.image} alt={item.title} /><div><span>문화시설</span><h3>{item.title}</h3><p className="destination-card-location"><PlacePinIcon />{item.location}</p><p>{item.text}</p></div></article>)}</div></section>
+      <section><SectionHeading title="문화와 역사를 만나는 곳" description="박물관, 미술관, 전시관에서 다양한 이야기를 만나보세요." moreTo="/destinations/culture" moreLabel="문화시설 더보기" /><div className="destination-info-grid destination-info-grid--three">{culturePlaces.map(item => <article className="destination-info-card" key={item.title}><img src={item.image} alt={item.title} /><div><span>문화시설</span><h3>{item.title}</h3><p className="destination-card-location"><PlacePinIcon />{item.location}</p><p>{item.text}</p></div></article>)}</div></section>
 
-      <section><SectionHeading title="코스를 따라 떠나는 여행" description="여러 장소를 순서대로 둘러보는 TourAPI 여행코스입니다." link="여행코스 더보기" /><div className="destination-course-grid">{courses.map(item => <article key={item.title}><img className="destination-course-card__photo" src={item.image} alt="" /><div><div className="destination-course-meta"><span>{item.region}</span><small>{item.duration}</small></div><h3>{item.title}</h3><p>{item.text}</p><div className="destination-course-route"><img src={route} alt="" />{item.stops.map(stop => <small key={stop}>{stop}</small>)}</div></div></article>)}</div></section>
+      <section><SectionHeading title="코스를 따라 떠나는 여행" description="여러 장소를 순서대로 둘러보는 TourAPI 여행코스입니다." moreTo="/destinations/courses" moreLabel="여행코스 더보기" /><div className="destination-course-grid">{courses.map(item => <article key={item.title}><img className="destination-course-card__photo" src={item.image} alt="" /><div><div className="destination-course-meta"><span>{item.region}</span><small>{item.duration}</small></div><h3>{item.title}</h3><p>{item.text}</p><div className="destination-course-route"><img src={route} alt="" />{item.stops.map(stop => <small key={stop}>{stop}</small>)}</div></div></article>)}</div></section>
 
-      <section><SectionHeading title="새롭게 만나는 여행지" description="최근 업데이트된 국내 관광정보를 확인해 보세요." link="여행지 더보기" /><div className="destination-new-grid">{newPlaces.map(item => <article key={item.title}><img src={item.image} alt={item.title} /><div><span>{item.tag}</span><h3>{item.title}</h3><p className="location-with-pin"><PlacePinIcon />{item.location}</p></div></article>)}</div></section>
+      <section><SectionHeading title="새롭게 만나는 여행지" description="최근 업데이트된 국내 관광정보를 확인해 보세요." moreTo="/destinations/attractions" moreLabel="여행지 더보기" /><div className="destination-new-grid">{newPlaces.map(item => <article key={item.title}><img src={item.image} alt={item.title} /><div><span>{item.tag}</span><h3>{item.title}</h3><p className="location-with-pin"><PlacePinIcon />{item.location}</p></div></article>)}</div></section>
     </main>
     <TravelSearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
   </div>

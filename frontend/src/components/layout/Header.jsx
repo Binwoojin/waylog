@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { mainNavItems, memberMenuItems } from '../../data/navigation'
+import MobileNav from './MobileNav'
 import logo from '../../assets/figma/logo.png'
 import './Header.css'
 
@@ -73,17 +75,19 @@ function Header({ forceLight = false, activePage = '' }) {
       </Link>
 
       <nav className="site-header__nav" aria-label="주요 메뉴">
-        {/* 실제 하위 페이지가 구현된 메뉴는 경로로, 미구현 SNS는 임시 앵커로 연결합니다. */}
+        {/* Design Ref: §3.1 — 모바일 드로어와 같은 메뉴 데이터를 사용합니다. 미구현 피드는 "준비 중" 페이지(/feed)로 연결됩니다. */}
         <ul className="site-header__nav-list">
-          <li>
-            <Link className={activePage === 'destinations' ? 'is-active' : ''} to="/destinations">여행지</Link>
-          </li>
-          <li>
-            <Link className={activePage === 'enjoy' ? 'is-active' : ''} to="/enjoy">여행 즐기기</Link>
-          </li>
-          <li>
-            <a href="/#feed">여행 피드</a>
-          </li>
+          {mainNavItems.map(item => (
+            <li key={item.key}>
+              <Link
+                className={activePage === item.key ? 'is-active' : ''}
+                to={item.to}
+                aria-current={activePage === item.key ? 'page' : undefined}
+              >
+                {item.label}
+              </Link>
+            </li>
+          ))}
         </ul>
       </nav>
 
@@ -96,8 +100,9 @@ function Header({ forceLight = false, activePage = '' }) {
             </button>
             {isMemberMenuOpen && (
               <div className="site-header__member-menu" role="menu">
-                <Link to="/bookmarks" role="menuitem">북마크</Link>
-                <Link to="/mypage" role="menuitem">마이 페이지</Link>
+                {memberMenuItems.map(item => (
+                  <Link key={item.to} to={item.to} role="menuitem" onClick={() => setIsMemberMenuOpen(false)}>{item.label}</Link>
+                ))}
                 <button type="button" role="menuitem" onClick={handleLogout}>로그아웃</button>
               </div>
             )}
@@ -115,6 +120,12 @@ function Header({ forceLight = false, activePage = '' }) {
             <Link className="site-header__signup" to="/signup">회원가입</Link>
           </>
         )}
+
+        {/*
+          Design Ref: §2.3 — 760px 이하에서만 보이는 햄버거 메뉴입니다.
+          로그인 상태와 로그아웃 요청은 여기서 내려 주어, 드로어에서 로그아웃이 실패해도 아래의 같은 알림이 뜹니다.
+        */}
+        <MobileNav member={currentMember} isRestoring={isRestoring} activePage={activePage} onLogout={requestLogout} />
 
         {logoutNotice && (
           <div className="site-header__notice" role="alert">

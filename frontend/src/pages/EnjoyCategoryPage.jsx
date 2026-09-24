@@ -2,12 +2,24 @@ import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import PlacePinIcon from '../components/icons/PlacePinIcon'
 import { enjoyCategories, enjoyConfigs } from '../data/enjoyMocks'
+import NotFoundPage from './NotFoundPage'
 import './EnjoyCategoryPage.css'
 import './EnjoyCategoryPageOverrides.css'
 
 export default function EnjoyCategoryPage() {
   const { category } = useParams()
-  const config = enjoyConfigs[category] || enjoyConfigs.festivals
+  // URL 값은 사용자가 마음대로 넣을 수 있습니다. enjoyConfigs['constructor']처럼 프로토타입에서 올라온 값이
+  // 통과하면 config.items에서 TypeError가 나므로, 객체가 직접 가진 키인지 Object.hasOwn으로 판별합니다.
+  const config = Object.hasOwn(enjoyConfigs, category) ? enjoyConfigs[category] : null
+
+  // Design Ref: §6 — 없는 카테고리를 축제 목록으로 대신 보여 주면 사용자가 잘못된 주소임을 알 수 없으므로 404로 안내합니다.
+  // Hook 호출 순서를 지키기 위해 판별은 이 컴포넌트에서 하고, 상태를 쓰는 본문은 아래 컴포넌트로 분리합니다.
+  if (!config) return <NotFoundPage />
+
+  return <EnjoyCategoryContent category={category} config={config} />
+}
+
+function EnjoyCategoryContent({ category, config }) {
   const [region, setRegion] = useState('전체 지역')
   const [sort, setSort] = useState('기본')
   const [saved, setSaved] = useState(() => new Set())
