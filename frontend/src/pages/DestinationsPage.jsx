@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import PageHero from '../components/common/PageHero'
 import PlacePinIcon from '../components/icons/PlacePinIcon'
 import TravelSearchModal from '../components/search/TravelSearchModal'
 import { travelTypes } from '../data/travelTypes'
@@ -81,7 +82,16 @@ export default function DestinationsPage() {
   const [isSearchOpen, setIsSearchOpen] = useState(false)
 
   return <div className="destinations-page">
-    <section className="destination-hero"><div className="destination-hero__inner"><div><p className="destination-hero__eyebrow">WAYLOG DESTINATION</p><h1>어디로 떠나볼까요?</h1><p>지역과 취향에 맞는 국내 여행지를 발견해 보세요.</p><button type="button" onClick={() => setIsSearchOpen(true)}>여행지 검색하기</button><small>지역 · 여행 유형 · 여행 조건을 선택해 검색할 수 있어요.</small></div><img src={hero} alt="국내 여행지 사진 일러스트" /></div></section>
+    <PageHero
+      className="page-hero--destinations"
+      eyebrow="WAYLOG DESTINATION"
+      title="어디로 떠나볼까요?"
+      description="지역과 취향에 맞는 국내 여행지를 발견해 보세요."
+      searchLabel="여행지 검색하기"
+      searchHint="지역 · 여행 유형 · 여행 조건을 선택해 검색할 수 있어요."
+      onSearch={() => setIsSearchOpen(true)}
+      visual={<img src={hero} alt="국내 여행지 사진 일러스트" />}
+    />
 
     <main className="destination-main">
       <section><SectionHeading title="어떤 여행지를 찾고 있나요?" description="관광지부터 문화시설, 여행코스까지 원하는 방식으로 둘러보세요." /><div className="destination-type-grid">{travelTypes.map(item => <Link to={travelTypeLinks[item.id]} key={item.id}><article><img src={travelTypeImages[item.id]} alt="" /><span aria-hidden="true">{item.icon}</span><div><h3>{item.title}</h3><p>{item.description}</p></div></article></Link>)}</div></section>

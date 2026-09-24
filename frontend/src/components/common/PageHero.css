@@ -1,0 +1,31 @@
+/*
+ * PageHero 공통 스타일
+ * - 기본값: 데스크톱 레이아웃(여행지 페이지의 기존 치수)
+ * - 페이지별 데스크톱·태블릿 차이: 각 페이지 CSS에서 .page-hero--{page} 수정자로 조정하며,
+ *   모바일 공통 규칙과 겹치지 않도록 반드시 @media (min-width: 761px) 안에 둡니다.
+ * - 모바일(760px 이하): 이 파일이 두 페이지의 상단 구조를 하나로 정합니다.
+ */
+.page-hero { margin-top: 87px; min-height: 600px; background: #e6fdff; }
+.page-hero__inner { display: grid; grid-template-columns: 1fr 1.05fr; align-items: center; width: min(1480px, calc(100% - 48px)); min-height: 600px; margin: 0 auto; }
+.page-hero__eyebrow { margin: 0 0 42px; color: #3b82f6; font-size: 28px; font-weight: 600; letter-spacing: 1.4px; }
+.page-hero__title { margin: 0 0 48px; font-size: clamp(52px, 5vw, 84px); font-weight: 700; line-height: 1; letter-spacing: -1.7px; }
+.page-hero__description { margin: 0 0 45px; color: #666; font-size: 30px; line-height: 1.4; }
+.page-hero__search { width: 300px; height: 80px; border: 0; border-radius: 15px; color: #fff; background: #3b82f6; font: inherit; font-size: 26px; font-weight: 600; cursor: pointer; }
+.page-hero__search:focus-visible { outline: 3px solid #1d4ed8; outline-offset: 3px; }
+.page-hero__hint { display: block; margin-top: 22px; color: #666; font-size: 18px; }
+
+/*
+ * 모바일: 문구 → 검색 버튼 → 도움말 → 비주얼 순서로 세로로 쌓고 가운데 정렬합니다.
+ * 비주얼도 문서 흐름 안에 두어(절대 위치 X) 제목이 여러 줄로 늘어나도 서로 겹치지 않고,
+ * 고정 min-height 대신 위아래 여백으로 높이를 콘텐츠에 맞춥니다.
+ */
+@media (max-width: 760px) {
+  .page-hero { min-height: 0; }
+  .page-hero__inner { display: flex; flex-direction: column; align-items: center; width: calc(100% - 32px); min-height: 0; padding: 64px 0 40px; text-align: center; }
+  .page-hero__eyebrow { margin-bottom: 24px; font-size: 16px; letter-spacing: 1px; }
+  .page-hero__title { margin-bottom: 24px; font-size: clamp(36px, 11vw, 48px); line-height: 1.1; letter-spacing: -1px; }
+  .page-hero__description { margin-bottom: 28px; font-size: 18px; line-height: 1.5; }
+  .page-hero__search { width: min(100%, 230px); height: 62px; font-size: 20px; }
+  .page-hero__hint { margin-top: 16px; font-size: 14px; line-height: 1.5; }
+  .page-hero__visual { width: 100%; margin-top: 32px; }
+}

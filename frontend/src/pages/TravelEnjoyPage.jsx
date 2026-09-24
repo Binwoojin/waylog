@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import PageHero from '../components/common/PageHero'
 import PlacePinIcon from '../components/icons/PlacePinIcon'
 import EnjoySearchModal from '../components/search/EnjoySearchModal'
 import festival from '../assets/enjoy/category-festival.png'
@@ -85,18 +86,18 @@ export default function TravelEnjoyPage() {
   const [isSearchOpen, setIsSearchOpen] = useState(false)
 
   return <div className="travel-enjoy-page">
-    <section className="enjoy-hero">
-      <div className="enjoy-hero__inner">
-        <div className="enjoy-hero__copy">
-          <p className="enjoy-hero__eyebrow">WAYLOG EXPERIENCE</p>
-          <h1>여행을 더 즐겁게</h1>
-          <p>축제부터 맛집, 숙소까지 여행에 필요한 정보를 둘러보세요.</p>
-          <button type="button" onClick={() => setIsSearchOpen(true)}>여행 즐길거리 검색</button>
-          <small>지역과 콘텐츠 유형을 선택해 검색할 수 있어요.</small>
-        </div>
-
-        {/* 여행의 여러 순간을 사진 엽서처럼 겹쳐 표현한 Hero 콜라주입니다. */}
-        <div className="enjoy-hero__collage" aria-label="축제, 레포츠, 음식, 쇼핑과 숙박 여행 이미지">
+    <PageHero
+      className="page-hero--enjoy"
+      eyebrow="WAYLOG EXPERIENCE"
+      title="여행을 더 즐겁게"
+      description="축제부터 맛집, 숙소까지 여행에 필요한 정보를 둘러보세요."
+      searchLabel="여행 즐길거리 검색"
+      searchHint="지역과 콘텐츠 유형을 선택해 검색할 수 있어요."
+      onSearch={() => setIsSearchOpen(true)}
+      visual={
+        // 여행의 여러 순간을 사진 엽서처럼 겹쳐 표현한 Hero 콜라주입니다.
+        // aria-label은 이름을 가질 수 있는 역할(group)에만 유효하므로 role을 함께 지정합니다.
+        <div className="enjoy-hero__collage" role="group" aria-label="축제, 레포츠, 음식, 쇼핑과 숙박 여행 이미지">
           <img className="enjoy-collage__photo enjoy-collage__photo--festival" src={festival} alt="야간 불꽃 축제" />
           <img className="enjoy-collage__photo enjoy-collage__photo--leports" src={leports} alt="바다에서 즐기는 레포츠" />
           <img className="enjoy-collage__photo enjoy-collage__photo--shopping" src={shopping} alt="여행지의 쇼핑 거리" />
@@ -107,8 +108,8 @@ export default function TravelEnjoyPage() {
           <span className="enjoy-collage__icon enjoy-collage__icon--ticket" aria-hidden="true">✦</span>
           <span className="enjoy-collage__route" aria-hidden="true" />
         </div>
-      </div>
-    </section>
+      }
+    />
 
     <main className="enjoy-main">
       <section><SectionHeading title="무엇을 즐기고 싶나요?" description="여행 중 필요한 정보를 카테고리별로 빠르게 확인해 보세요." link="" /><div className="enjoy-category-grid">{categories.map(item => <Link to={`/enjoy/${item.slug}`} key={item.title}><article><img src={item.image} alt="" /><div><h3>{item.title}</h3><p>{item.text}</p></div></article></Link>)}</div></section>
