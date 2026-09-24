@@ -89,11 +89,10 @@
   .enjoy-main { width: calc(100% - 32px); }
   /*
    * 콜라주는 사진 좌표가 620×350 캔버스 기준이라 캔버스째 축소합니다.
-   * transform은 레이아웃 크기를 줄이지 않으므로, 축소된 실제 높이(350 × .57 ≈ 200px)만큼의
-   * 비주얼 상자를 문서 흐름에 두고 캔버스는 그 안에서 가운데 정렬합니다.
+   * transform은 레이아웃 크기를 줄이지 않으므로, 높이는 PageHero.css의 비주얼 상자(--page-hero-visual-h)가 갖고
+   * 캔버스는 그 상자 안에 절대 위치로 가운데 정렬한 뒤 상자 높이에 맞춰 축소합니다(배율 = 상자 높이 ÷ 350).
    */
-  .page-hero--enjoy .page-hero__visual { position: relative; height: 200px; }
-  .enjoy-hero__collage { position: absolute; top: 0; left: 50%; width: 620px; height: 350px; transform: translateX(-50%) scale(.57); transform-origin: top center; }
+  .enjoy-hero__collage { position: absolute; top: 0; left: 50%; width: 620px; height: 350px; transform: translateX(-50%) scale(calc(var(--page-hero-visual-h) / 350)); transform-origin: top center; }
   .enjoy-main { padding-top: 70px; } .enjoy-main > section { margin-bottom: 80px; }
   .enjoy-heading { align-items: flex-start; } .enjoy-heading h2 { font-size: 32px; } .enjoy-heading p { font-size: 17px; line-height: 1.5; } .enjoy-heading > a { font-size: 14px; }
   .enjoy-category-grid, .enjoy-news-grid, .enjoy-info-grid { grid-template-columns: 1fr; }
@@ -103,8 +102,3 @@
 }
 .enjoy-category-grid article > div { min-height: 150px; padding: 28px 25px 24px; }
 .enjoy-category-icon { display: none; }
-/* 320~400px 화면에서는 .57배 콜라주(약 353px)가 좌우 여백 밖으로 잘리므로 한 단계 더 축소합니다. */
-@media (max-width: 400px) {
-  .page-hero--enjoy .page-hero__visual { height: 162px; }
-  .enjoy-hero__collage { transform: translateX(-50%) scale(.46); }
-}

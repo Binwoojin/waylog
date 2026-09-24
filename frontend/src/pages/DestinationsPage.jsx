@@ -90,7 +90,7 @@ export default function DestinationsPage() {
       searchLabel="여행지 검색하기"
       searchHint="지역 · 여행 유형 · 여행 조건을 선택해 검색할 수 있어요."
       onSearch={() => setIsSearchOpen(true)}
-      visual={<img src={hero} alt="국내 여행지 사진 일러스트" />}
+      visual={<img className="destination-hero__image" src={hero} alt="국내 여행지 사진 일러스트" />}
     />
 
     <main className="destination-main">

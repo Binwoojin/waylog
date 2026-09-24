@@ -1,7 +1,12 @@
 .destinations-page { min-width: 320px; color: #1f1f1f; background: #fff; }
 .destination-main { width: min(1480px, calc(100% - 48px)); margin: 0 auto; }
-/* 상단 히어로 골격·모바일 규칙은 components/common/PageHero.css. 여기에는 이 페이지 비주얼만 둡니다. */
-.page-hero--destinations .page-hero__visual img { display: block; width: 100%; max-height: 540px; object-fit: contain; }
+/*
+ * 상단 히어로 골격·모바일 규칙은 components/common/PageHero.css. 여기에는 이 페이지 비주얼만 둡니다.
+ * 모든 폭에 필요한 규칙이라 .page-hero--destinations 수정자(761px 이상 전용)가 아닌 페이지 자체 클래스로 겁니다.
+ * height: 100%: 모바일에서는 PageHero가 정한 비주얼 상자 높이를 채우고(contain이라 잘리지 않음),
+ * 데스크톱에서는 상자 높이가 auto라 퍼센트가 무시되어 기존처럼 이미지 비율대로 그려집니다.
+ */
+.destination-hero__image { display: block; width: 100%; height: 100%; max-height: 540px; object-fit: contain; }
 .destination-main { padding: 105px 0 130px; }
 .destination-main > section + section { margin-top: 120px; }
 .destination-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 30px; margin-bottom: 44px; }
@@ -66,7 +71,6 @@
 }
 @media (max-width: 760px) {
   .destination-main { width: calc(100% - 32px); }
-  .page-hero--destinations .page-hero__visual img { height: 240px; }
   .destination-main { padding-top: 70px; } .destination-main > section + section { margin-top: 82px; }
   .destination-heading { align-items: flex-start; } .destination-heading h2 { font-size: 32px; } .destination-heading p { font-size: 16px; line-height: 1.5; } .destination-heading > a { font-size: 14px; }
   .destination-type-grid, .region-grid, .destination-info-grid--four, .destination-info-grid--three, .destination-course-grid, .destination-new-grid { grid-template-columns: 1fr; }

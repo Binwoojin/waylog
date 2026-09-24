@@ -2,8 +2,13 @@
  * PageHero 공통 스타일
  * - 기본값: 데스크톱 레이아웃(여행지 페이지의 기존 치수)
  * - 페이지별 데스크톱·태블릿 차이: 각 페이지 CSS에서 .page-hero--{page} 수정자로 조정하며,
- *   모바일 공통 규칙과 겹치지 않도록 반드시 @media (min-width: 761px) 안에 둡니다.
- * - 모바일(760px 이하): 이 파일이 두 페이지의 상단 구조를 하나로 정합니다.
+ *   수정자(0,2,0)가 모바일 공통 규칙(0,1,0)을 이기지 않도록 반드시 @media (min-width: 761px) 안에 둡니다.
+ * - 모바일(760px 이하): 이 파일이 두 페이지의 상단 구조와 치수를 하나로 정합니다.
+ *   페이지별 조정이 꼭 필요하면 수정자로 규칙을 덮지 말고 아래 CSS 변수만 덮어씁니다.
+ *
+ * --page-hero-visual-h: 모바일 비주얼 상자 높이(단위 없는 px 숫자).
+ *   단위를 빼 둔 이유: 페이지가 calc(var(--page-hero-visual-h) / 350)처럼 숫자끼리 나눠
+ *   transform: scale() 값을 바로 구할 수 있게 하기 위해서입니다(길이÷길이 연산은 브라우저 지원이 제한적).
  */
 .page-hero { margin-top: 87px; min-height: 600px; background: #e6fdff; }
 .page-hero__inner { display: grid; grid-template-columns: 1fr 1.05fr; align-items: center; width: min(1480px, calc(100% - 48px)); min-height: 600px; margin: 0 auto; }
@@ -20,12 +25,23 @@
  * 고정 min-height 대신 위아래 여백으로 높이를 콘텐츠에 맞춥니다.
  */
 @media (max-width: 760px) {
-  .page-hero { min-height: 0; }
+  .page-hero { --page-hero-visual-h: 200; min-height: 0; }
   .page-hero__inner { display: flex; flex-direction: column; align-items: center; width: calc(100% - 32px); min-height: 0; padding: 64px 0 40px; text-align: center; }
   .page-hero__eyebrow { margin-bottom: 24px; font-size: 16px; letter-spacing: 1px; }
   .page-hero__title { margin-bottom: 24px; font-size: clamp(36px, 11vw, 48px); line-height: 1.1; letter-spacing: -1px; }
   .page-hero__description { margin-bottom: 28px; font-size: 18px; line-height: 1.5; }
   .page-hero__search { width: min(100%, 230px); height: 62px; font-size: 20px; }
   .page-hero__hint { margin-top: 16px; font-size: 14px; line-height: 1.5; }
-  .page-hero__visual { width: 100%; margin-top: 32px; }
+  /* 비주얼 상자가 높이를 갖고, 페이지 비주얼은 이 상자를 채웁니다(절대 위치 비주얼의 기준 상자 겸용). */
+  .page-hero__visual { position: relative; width: 100%; height: calc(var(--page-hero-visual-h) * 1px); margin-top: 32px; }
+}
+/*
+ * 400px 이하: 두 페이지 비주얼 중 가장 제약이 큰 쪽(현재 여행 즐기기 콜라주, 회전 포함 폭 약 636px 캔버스)에
+ * 맞춘 공통값입니다. 160 ÷ 350 ≈ .457배 → 320px에서도 좌우로 잘리지 않습니다.
+ * 두 페이지 높이를 통일하려고 페이지별로 다르게 두지 않습니다.
+ * 트레이드오프: 여행지 일러스트는 이전 최대 360×240에서 300×200(401~760px)/240×160(400px 이하)으로 작아졌습니다.
+ * 장식 이미지이므로 검색 버튼이 첫 화면에 더 잘 들어오는 쪽을 택했습니다.
+ */
+@media (max-width: 400px) {
+  .page-hero { --page-hero-visual-h: 160; }
 }
