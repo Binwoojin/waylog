@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import fallbackImage from '../../assets/figma/news-busan.png'
 import PlacePinIcon from '../icons/PlacePinIcon'
+import { ENJOY_CONTENT_TYPES, getTourDetailPath } from '../../data/tourContentTypes'
 import './HomeSections.css'
 
 /**
@@ -118,8 +119,12 @@ export default function WeeklyNewsSection({
                  * 상세 페이지 주소에는 제목 대신 contentId를 사용합니다.
                  * 제목은 중복되거나 URL에 공백과 특수문자가 포함될 수 있지만,
                  * contentId는 TourAPI 콘텐츠의 고유 식별자입니다.
+                 *
+                 * Design Ref: §5.3 — <a href> 대신 Link를 써서 전체 새로고침을 없앱니다.
+                 * 새로고침하면 홈 API와 세션 복원(/auth/refresh)을 다시 요청하게 됩니다.
+                 * 축제 응답에는 contentTypeId가 없어 15(행사/공연/축제)로 고정합니다.
                  */}
-                <a href={`/enjoy/festivals/${festival.contentId}`}>
+                <Link to={getTourDetailPath(festival.contentId, ENJOY_CONTENT_TYPES.festivals) ?? '/enjoy/festivals'}>
                   <img src={festival.image || fallbackImage} 
                   alt={festival.title} 
                   onError={(event) => {
@@ -143,7 +148,7 @@ export default function WeeklyNewsSection({
                       {festival.address || '장소 정보가 없습니다.'}
                     </p>
                   </div>
-                </a>
+                </Link>
               </article>
             ))}
           </div>

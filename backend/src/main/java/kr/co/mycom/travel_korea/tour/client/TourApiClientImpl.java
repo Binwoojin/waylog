@@ -3,6 +3,7 @@ package kr.co.mycom.travel_korea.tour.client;
 import kr.co.mycom.travel_korea.tour.config.TourApiProperties;
 import kr.co.mycom.travel_korea.tour.dto.external.*;
 import kr.co.mycom.travel_korea.tour.exception.TourApiException;
+import kr.co.mycom.travel_korea.tour.exception.TourContentNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -238,7 +239,7 @@ public class TourApiClientImpl implements TourApiClient {
                     .retrieve()
                     .body(TourApiDetailCommonRawResponse.class);
 
-            return extractDetailCommon(rawResponse);
+            return extractDetailCommon(rawResponse, contentId);
         } catch (TourApiException exception) {
             throw exception;
         } catch (RestClientException exception) {
@@ -272,7 +273,8 @@ public class TourApiClientImpl implements TourApiClient {
 
     /** detailCommon2에서 상세 화면의 공통 정보를 꺼냅니다. */
     private TourApiDetailCommonItem extractDetailCommon(
-            TourApiDetailCommonRawResponse rawResponse
+            TourApiDetailCommonRawResponse rawResponse,
+            String contentId
     ) {
         if (rawResponse == null || rawResponse.response() == null) {
             throw new TourApiException(
@@ -293,10 +295,13 @@ public class TourApiClientImpl implements TourApiClient {
                 || response.body().items() == null
                 || response.body().items().item() == null
                 || response.body().items().item().isEmpty()) {
-            throw new TourApiException(
-                    "EMPTY_DETAIL_COMMON_RESPONSE",
-                    "TourAPI 공통 상세 데이터가 없습니다."
-            );
+            /*
+             * Design Ref: §4.3 BE-3 — resultCode가 0000(정상)인데 items가 비어 있으면
+             * 외부 API 장애가 아니라 해당 contentId가 없는 것이므로 404로 구분합니다.
+             * 이 예외는 RestClientException이 아니라서 getDetailCommon의 catch에서
+             * 502로 변환되지 않고 그대로 전파됩니다.
+             */
+            throw new TourContentNotFoundException(contentId);
         }
 
         return response.body().items().item().get(0);

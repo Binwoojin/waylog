@@ -5,6 +5,7 @@ import kr.co.mycom.travel_korea.tour.dto.external.TourApiDetailCommonItem;
 import kr.co.mycom.travel_korea.tour.dto.external.TourApiDetailIntroItem;
 import kr.co.mycom.travel_korea.tour.dto.response.TourDetailInfoResponse;
 import kr.co.mycom.travel_korea.tour.dto.response.TourDetailResponse;
+import kr.co.mycom.travel_korea.tour.exception.TourContentNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -37,6 +38,14 @@ public class TourDetailService {
 
         // 1. 모든 유형에서 공통으로 필요한 기본 상세 정보 조회
         TourApiDetailCommonItem common = tourApiClient.getDetailCommon(contentId, contentTypeId);
+
+        // Design Ref: §4.3 BE-4 — 구현체가 null을 반환해도 NPE(500) 대신 404로 응답합니다.
+        if (common == null) {
+            throw new TourContentNotFoundException(contentId);
+        }
+
+        // SI-1 — 요청 유형과 실제 유형이 다르면 없는 콘텐츠로 처리합니다.
+        validateActualContentType(contentId, contentTypeId, common.contenttypeid());
 
         // 2. 콘텐츠 유형별 detailIntro 정보 조회
         TourApiDetailIntroItem intro = tourApiClient.getDetailIntro(contentId, contentTypeId);
@@ -251,6 +260,28 @@ public class TourDetailService {
     private void validateContentType(Integer contentTypeId) {
         if (!List.of(12, 14, 15, 28, 32, 38, 39).contains(contentTypeId)) {
             throw new IllegalArgumentException("지원하지 않는 콘텐츠 유형입니다.");
+        }
+    }
+
+    /**
+     * detailCommon2는 contentId만으로 조회하므로, 다른 유형으로 요청해도 콘텐츠를 반환합니다.
+     * 이때 요청 유형을 그대로 응답하면 화면에 틀린 태그와 빈 이용 안내가 표시됩니다.
+     *
+     * 실제 유형이 있고 요청 유형과 다르면 404(TOUR_CONTENT_NOT_FOUND)로 응답해
+     * 프론트가 not-found 화면을 보여 주게 합니다. 실제 유형이 비어 있으면 판단할 수 없으므로
+     * 기존처럼 통과시킵니다.
+     *
+     * 예외는 @Cacheable에 저장되지 않습니다. 그래서 잘못된 유형 요청은 캐시에 남지 않고,
+     * 올바른 유형의 캐시 항목(key: detail:{id}:{type})에도 영향을 주지 않습니다.
+     * detailIntro2 호출 전에 검사해 외부 API 호출을 1회로 줄입니다.
+     */
+    private void validateActualContentType(
+            String contentId,
+            Integer requestedContentTypeId,
+            Integer actualContentTypeId
+    ) {
+        if (actualContentTypeId != null && !actualContentTypeId.equals(requestedContentTypeId)) {
+            throw new TourContentNotFoundException(contentId);
         }
     }
 

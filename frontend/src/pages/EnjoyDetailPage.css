@@ -199,3 +199,73 @@
     margin-bottom: 22px;
   }
 }
+
+/*
+ * TourAPI 상세 (enjoy-detail-main--api)
+ * Design Ref: §3.2, §5.2 — API 텍스트는 HTML이 아니라 줄바꿈(\n)이 있는 순수 텍스트로 렌더링하므로
+ * pre-line으로 줄바꿈만 살립니다. 목업 화면은 영향을 받지 않도록 수정자 클래스 아래에서만 적용합니다.
+ */
+.enjoy-detail-main--api .enjoy-detail-content .lead {
+  /* overview는 목업 한 줄 요약보다 훨씬 길어서 목업의 강조 문단 크기로는 읽기 어렵습니다. */
+  color: #35485f;
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 1.85;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+/* 여러 줄 값(이용 시간 안내 등)이 라벨과 위쪽 기준으로 맞도록 합니다. */
+.enjoy-detail-main--api .enjoy-detail-guide p {
+  align-items: start;
+}
+
+.enjoy-detail-main--api .enjoy-detail-guide span {
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+/* 비어 있음 안내는 라벨·값 2열이 아니라 한 줄 문장입니다. */
+.enjoy-detail-guide .enjoy-detail-guide__empty {
+  display: block;
+  color: #7d8999;
+}
+
+/* Design Ref: §5.2 — 커버 문구는 JS에서 첫 줄 80자로 자르고, 좁은 화면에서는 2줄 말줄임으로 한 번 더 제한합니다. */
+.enjoy-detail-main--api .enjoy-detail-cover strong {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+/* API 콘텐츠의 실제 문의처 (목업의 "전화 문의" 버튼 대신) */
+.enjoy-detail-content aside .enjoy-detail-contact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin: 0 0 12px;
+  color: #35485f;
+}
+
+.enjoy-detail-contact b {
+  color: #4b85c9;
+  font-size: 13px;
+}
+
+.enjoy-detail-contact a,
+.enjoy-detail-contact span {
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+
+.enjoy-detail-contact a {
+  color: #236fc9;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.enjoy-detail-contact a:hover {
+  text-decoration: underline;
+}

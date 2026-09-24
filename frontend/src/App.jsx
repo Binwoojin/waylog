@@ -26,6 +26,7 @@ import EnjoySearchResultsPage from './pages/EnjoySearchResultsPage'
 import ComingSoonPage from './pages/ComingSoonPage'
 import NotFoundPage from './pages/NotFoundPage'
 import ErrorBoundary from './components/common/ErrorBoundary'
+import ScrollToTop from './components/common/ScrollToTop'
 
 /**
  * 홈 API 요청 Promise를 저장합니다.
@@ -266,6 +267,8 @@ function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        {/* Design Ref: §5.4 — 경로가 바뀌면 새 화면을 맨 위부터 보여 줍니다. Layout 밖(홈·로그인)도 포함하려고 여기 둡니다. */}
+        <ScrollToTop />
         {/*
           Design Ref: §2.1 — 최상위 오류 경계입니다. Layout 밖의 홈·로그인 화면이나
           헤더 자체의 렌더 오류처럼 페이지 영역 경계가 잡지 못하는 오류를 받아 전체 오류 화면을 보여 줍니다.

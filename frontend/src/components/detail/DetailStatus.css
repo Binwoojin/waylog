@@ -1,0 +1,14 @@
+/*
+ * Design Ref: §5.1 — 재시도 실패 후 스크립트로 포커스를 옮기는 오류 카드 제목(tabIndex=-1)의 포커스 표시입니다.
+ * StatusPage.css는 app-safety-net 소유라 수정하지 않고 이 파일에 둡니다.
+ * 마우스로 "다시 시도"를 눌렀을 때는 윤곽선을 숨기고, 키보드 사용자에게만 현재 위치를 보여 줍니다.
+ */
+.detail-status__title:focus {
+  outline: none;
+}
+
+.detail-status__title:focus-visible {
+  outline: 3px solid #93c5fd;
+  outline-offset: 4px;
+  border-radius: 6px;
+}
