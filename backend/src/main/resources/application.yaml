@@ -1,4 +1,8 @@
 spring:
+  config:
+    # 실행 디렉터리(backend/)의 .env를 properties 형식으로 읽습니다.
+    # 파일이 없어도 기동되도록 optional로 둡니다. (.env는 git에서 무시됩니다)
+    import: optional:file:.env[.properties]
   cache:
     type: caffeine
     cache-names:

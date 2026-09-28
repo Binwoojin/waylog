@@ -30,6 +30,20 @@ cd backend
 
 테스트는 `application-test.yaml`의 H2 인메모리 DB와 더미 값을 사용하므로 별도 환경변수 없이 `./mvnw clean test`로 바로 실행할 수 있습니다.
 
+### 로컬 실행 (MySQL 없이, TourAPI 키 하나만)
+
+`local` 프로필(`application-local.yaml`)은 H2 인메모리 DB와 더미 JWT·메일·S3 값, 포트 8080, CORS `http://localhost:5173`을 사용합니다. `backend/.env`는 `application.yaml`의 `spring.config.import`로 자동으로 읽힙니다(없어도 기동됨, git 무시 대상).
+
+```powershell
+cd backend
+Copy-Item .env.example .env        # .env 의 TOUR_API= 뒤에 공공데이터포털 "Decoding" 키 입력
+.\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=local"
+```
+
+- TourAPI 키 없이 개발할 때: `"-Dspring-boot.run.profiles=local,local-mock"` (Mock 데이터 사용)
+- 프로필은 `.env`가 아니라 실행 인자로 지정합니다.
+- 로컬 프로필에서는 메일 발송·S3 이미지 업로드가 동작하지 않으며, DB는 종료 시 초기화됩니다.
+
 ## Frontend (`frontend/`)
 
 React 19 + Vite + react-router-dom 기반 SPA입니다.

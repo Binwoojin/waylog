@@ -1,0 +1,56 @@
+# 로컬 개발용 프로필입니다. (MySQL·메일·S3 없이 백엔드를 띄울 때 사용)
+#
+# 실행: ./mvnw spring-boot:run "-Dspring-boot.run.profiles=local"
+#  - 실제 TourAPI 호출: backend/.env 에 TOUR_API=<Decoding 키> 입력 후 local 프로필로 실행
+#  - 키 없이 개발:      "-Dspring-boot.run.profiles=local,local-mock" (MockTourApiClient 사용)
+#
+# tour-api.service-key 는 여기서 덮어쓰지 않습니다.
+# application.yaml 의 ${TOUR_API} 가 .env 또는 환경변수에서 그대로 주입됩니다.
+
+server:
+  # 프론트 Vite 프록시가 http://localhost:8080 을 바라봅니다.
+  port: 8080
+
+jwt:
+  # 로컬 전용 더미 시크릿입니다. (운영 값 아님)
+  secret: bG9jYWwtb25seS1qd3Qtc2VjcmV0LWZvci13YXlsb2ctZGV2ZWxvcG1lbnQ=
+
+spring:
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:mem:waylog-local;MODE=MySQL;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+
+  jpa:
+    hibernate:
+      # H2 메모리 DB에 엔티티 기준으로 스키마를 만들고 종료 시 삭제합니다.
+      ddl-auto: create-drop
+    show-sql: false
+
+  mail:
+    # 로컬에서는 실제 메일을 보내지 않습니다. (인증 메일 발송 시 연결 오류가 날 수 있음)
+    host: localhost
+    port: 3025
+    username: local@example.com
+    password: local-password
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
+            required: false
+          connectiontimeout: 1000
+          timeout: 1000
+          writetimeout: 1000
+
+app:
+  cors:
+    frontend-origin: http://localhost:5173
+  storage:
+    # S3 클라이언트 빈 생성만을 위한 더미 값입니다. 실제 업로드는 동작하지 않습니다.
+    type: s3
+  s3:
+    bucket: local-dummy-bucket
+    region: ap-northeast-2
