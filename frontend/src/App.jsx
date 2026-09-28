@@ -19,6 +19,7 @@ import SignupPage from './pages/SignupPage'
 import ForgotPasswordPage from './pages/ForgotPasswordPage'
 import DestinationCatalogPage from './pages/DestinationCatalogPage'
 import DestinationSearchResultsPage from './pages/DestinationSearchResultsPage'
+import TourCatalogPage from './pages/TourCatalogPage'
 import TravelDetailPage from './pages/TravelDetailPage'
 import EnjoyCategoryPage from './pages/EnjoyCategoryPage'
 import EnjoyDetailPage from './pages/EnjoyDetailPage'
@@ -290,8 +291,9 @@ function App() {
               <Route path="/destinations" element={<DestinationsPage />} />
               <Route path="/destinations/search" element={<DestinationSearchResultsPage />} />
               <Route path="/destinations/detail/:id" element={<TravelDetailPage />} />
-              <Route path="/destinations/attractions" element={<DestinationCatalogPage kind="attraction" />} />
-              <Route path="/destinations/culture" element={<DestinationCatalogPage kind="culture" />} />
+              {/* 관광지·문화시설은 API 목록, 여행코스는 목업(D-1). key로 유형 전환 시 이전 유형의 카드를 남기지 않습니다. */}
+              <Route path="/destinations/attractions" element={<TourCatalogPage key="attraction" kind="attraction" />} />
+              <Route path="/destinations/culture" element={<TourCatalogPage key="culture" kind="culture" />} />
               <Route path="/destinations/courses" element={<DestinationCatalogPage kind="course" />} />
 
               {/* Design Ref: §3.2 — 메뉴는 있지만 아직 구현되지 않은 기능은 "준비 중" 화면으로 연결합니다. */}

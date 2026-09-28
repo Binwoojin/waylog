@@ -1,12 +1,11 @@
 import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import PlacePinIcon from '../components/icons/PlacePinIcon'
-import { cultureItems, destinationItems, courseItems } from '../data/destinationMocks'
+import { courseItems } from '../data/destinationMocks'
 import './DestinationCatalogPage.css'
 
+// 관광지·문화시설은 TourCatalogPage(API 목록)로 옮겼습니다. 이 페이지는 여행코스 목업 전용입니다(D-1).
 const configs = {
-  attraction: { breadcrumb: '관광지', title: '테마별 관광지', description: '관심 있는 테마를 선택하고 원하는 관광지를 둘러보세요.', tabs: ['전체', '자연', '역사', '문화', '체험', '휴양'], regions: ['서울', '제주'], items: destinationItems },
-  culture: { breadcrumb: '문화시설', title: '문화와 역사를 만나는 곳', description: '지역의 역사와 문화를 다양한 공간에서 만나보세요.', tabs: ['전체', '박물관', '미술관', '전시관', '역사 유적', '공연장'], regions: ['서울', '부산'], items: cultureItems },
   course: { breadcrumb: '여행코스', title: '코스를 따라 떠나는 여행', description: '여러 장소를 순서대로 둘러보는 추천 코스를 확인해 보세요.', tabs: ['전체', '당일치기', '1박 2일', '2박 이상'], regions: ['대전', '부산', '제주'], items: courseItems },
 }
 
@@ -15,7 +14,6 @@ export default function DestinationCatalogPage({ kind }) {
   const config = configs[kind]
   const gridRef = useRef(null)
   const [activeTab, setActiveTab] = useState('전체')
-  const [bookmarkedCards, setBookmarkedCards] = useState(() => new Set())
   const [selectedRegion, setSelectedRegion] = useState('전체 지역')
   const [sortOrder, setSortOrder] = useState('기본')
   const [currentPage, setCurrentPage] = useState(1)
@@ -38,14 +36,6 @@ export default function DestinationCatalogPage({ kind }) {
     window.requestAnimationFrame(() => window.scrollTo({ top: Math.max(0, gridRef.current?.offsetTop - 110), behavior: 'smooth' }))
   }
 
-  const toggleBookmark = cardKey => {
-    setBookmarkedCards(current => {
-      const next = new Set(current)
-      next.has(cardKey) ? next.delete(cardKey) : next.add(cardKey)
-      return next
-    })
-  }
-
   return <div className="catalog-page">
     <main className="catalog-main">
       <p className="catalog-breadcrumb"><Link to="/">홈</Link><span>›</span><Link to="/destinations">여행지</Link><span>›</span>{config.breadcrumb}</p>
@@ -58,7 +48,6 @@ export default function DestinationCatalogPage({ kind }) {
       <div ref={gridRef} className={`catalog-grid${kind === 'course' ? ' catalog-grid--course' : ''}`}>
         {cards.map((item, index) => {
           const cardKey = `${item.id}-${(currentPage - 1) * pageSize + index}`
-          const isBookmarked = bookmarkedCards.has(cardKey)
           return <article className="catalog-card" key={cardKey}>
             <Link className="catalog-card__link" to={`/destinations/detail/${item.id}`}>
               <img src={item.image} alt="" />
@@ -69,9 +58,6 @@ export default function DestinationCatalogPage({ kind }) {
                 {item.stops ? <div className="catalog-route">{item.stops.map(stop => <small key={stop}><i aria-hidden="true"/><span>{stop}</span></small>)}</div> : <small className="catalog-address"><PlacePinIcon />{item.address}</small>}
               </div>
             </Link>
-            {kind !== 'course' && <button className={`catalog-card__bookmark${isBookmarked ? ' is-active' : ''}`} type="button" aria-label={`${item.title} 북마크 ${isBookmarked ? '해제' : '등록'}`} aria-pressed={isBookmarked} onClick={() => toggleBookmark(cardKey)}>
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4.75A1.75 1.75 0 0 1 7.75 3h8.5A1.75 1.75 0 0 1 18 4.75V21l-6-3.75L6 21V4.75Z" /></svg>
-            </button>}
           </article>
         })}
       </div>

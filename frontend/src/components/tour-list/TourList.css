@@ -1,0 +1,284 @@
+/*
+ * 여행지 목록 공통 스타일 (카탈로그·검색 결과)
+ *
+ * Design Ref: §10 — 카드·그리드·툴바·페이지네이션은 기존 catalog-* 규칙(DestinationCatalogPage.css)을 재사용하고,
+ * 이 파일에는 API 목록에서 새로 필요한 규칙(tour-list__*)만 둡니다. 페이지가 DestinationCatalogPage.css를 함께 import합니다.
+ */
+
+/* ── 탭: 링크로 렌더하므로 기존 버튼 탭과 같은 모양을 a에 적용합니다 ── */
+.tour-list__tab {
+  display: inline-flex;
+  min-width: 118px;
+  height: 58px;
+  padding: 0 20px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  color: #1f1f1f;
+  background: #fff;
+  box-shadow: 0 5px 10px rgba(0, 0, 0, .18);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.tour-list__tab.is-active {
+  color: #fff;
+  background: #3b82f6;
+}
+
+.tour-list__tab:focus-visible {
+  outline: 3px solid rgba(40, 120, 237, .35);
+  outline-offset: 2px;
+}
+
+/* ── 필터 바 ── */
+.tour-list__filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.catalog-select select:disabled {
+  color: #94a3b8;
+  background: #f8fafc;
+  cursor: not-allowed;
+}
+
+.tour-list__retry {
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid #d5dee7;
+  border-radius: 8px;
+  color: #2563eb;
+  background: #fff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ── 건수 영역: 페이지 이동 후 포커스·스크롤 대상. 고정 헤더 높이만큼 여백을 둡니다(기존 offsetTop - 110 보정 대체) ── */
+.tour-list__summary {
+  min-height: 30px;
+  margin: 40px 0 0;
+  color: #1f1f1f;
+  font-size: 20px;
+  font-weight: 700;
+  scroll-margin-top: 110px;
+}
+
+.tour-list__summary b {
+  color: #3b82f6;
+  font-size: 22px;
+}
+
+.tour-list__summary:focus {
+  outline: none;
+}
+
+.tour-list__summary:focus-visible {
+  outline: 3px solid #93c5fd;
+  outline-offset: 4px;
+  border-radius: 6px;
+}
+
+.tour-list__sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+/* ── 그리드: 건수 줄이 위에 생겼으므로 기존 여백(48px)을 줄입니다 ── */
+.tour-list .catalog-grid {
+  margin-top: 24px;
+}
+
+.tour-list__grid.is-busy {
+  opacity: .55;
+  pointer-events: none;
+  transition: opacity .2s ease;
+}
+
+/* ── 카드: 고정 비율 이미지, 제목 2줄·주소 1줄 말줄임으로 카드 높이를 맞춥니다 ── */
+.catalog-card__link > img.tour-list__card-image,
+.tour-list__skeleton-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+.catalog-card__link > .tour-list__card-body,
+.tour-list__skeleton-card > .tour-list__card-body {
+  min-height: 0;
+  padding: 22px 24px 24px;
+}
+
+.tour-list__card-title {
+  display: -webkit-box;
+  min-height: calc(1.35em * 2);
+  margin: 0 0 14px;
+  overflow: hidden;
+  font-size: 22px;
+  line-height: 1.35;
+  word-break: keep-all;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.catalog-card .tour-list__card-address {
+  margin-top: 0;
+}
+
+.tour-list__card-address span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.catalog-card__link:focus-visible {
+  outline: 3px solid rgba(40, 120, 237, .45);
+  outline-offset: -3px;
+  border-radius: 26px;
+}
+
+/* ── 스켈레톤: 카드와 같은 치수 ── */
+.tour-list__skeleton-card,
+.tour-list__skeleton-card:hover {
+  transform: none;
+}
+
+.tour-list__skeleton-image,
+.tour-list__skeleton-line {
+  background: linear-gradient(90deg, #eef1f5 25%, #f6f8fa 50%, #eef1f5 75%);
+  background-size: 200% 100%;
+  animation: tour-list-shimmer 1.4s ease-in-out infinite;
+}
+
+.tour-list__skeleton-line {
+  display: block;
+  border-radius: 6px;
+}
+
+.tour-list__skeleton-line--title {
+  width: 70%;
+  height: calc(22px * 1.35 * 2);
+  margin-bottom: 14px;
+}
+
+.tour-list__skeleton-line--address {
+  width: 55%;
+  height: 22px;
+}
+
+@keyframes tour-list-shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: -100% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tour-list__skeleton-image,
+  .tour-list__skeleton-line {
+    animation: none;
+  }
+
+  .tour-list__grid.is-busy {
+    transition: none;
+  }
+}
+
+/* ── 상태 블록: 스켈레톤 한 줄 정도 높이로 푸터가 튀어 오르지 않게 합니다 ── */
+.tour-list__status {
+  display: flex;
+  min-height: 320px;
+  margin-top: 24px;
+  align-items: center;
+  justify-content: center;
+}
+
+.tour-list__status-title:focus {
+  outline: none;
+}
+
+.tour-list__status-title:focus-visible {
+  outline: 3px solid #93c5fd;
+  outline-offset: 4px;
+  border-radius: 6px;
+}
+
+/* ── 페이지네이션: 이전·다음도 기존 처음/끝 버튼과 같은 테두리 스타일 ── */
+.tour-list__pagination .tour-list__page-step {
+  border: 1px solid #bbb;
+  font-size: 26px;
+  line-height: 1;
+}
+
+.tour-list__pagination button:focus-visible {
+  outline: 3px solid rgba(40, 120, 237, .45);
+  outline-offset: 2px;
+}
+
+@media (max-width: 620px) {
+  .tour-list__tab {
+    min-width: 95px;
+  }
+
+  .tour-list__filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .tour-list__filter,
+  .tour-list__filters > .catalog-select {
+    width: 100%;
+  }
+
+  .tour-list__filter .catalog-select {
+    flex: 1;
+  }
+
+  .tour-list__filters .catalog-select span {
+    flex: 0 0 44px;
+  }
+
+  .tour-list__filters .catalog-select select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .tour-list__summary {
+    margin-top: 28px;
+  }
+
+  .tour-list__card-title {
+    font-size: 20px;
+  }
+
+  /* §5.7 — 360px에서 가로 스크롤 없이 한 줄: 처음·끝을 숨겨 7개 버튼, 40px, gap 6px */
+  .tour-list__pagination {
+    gap: 6px;
+    margin-top: 48px;
+  }
+
+  .tour-list__pagination button {
+    width: 40px;
+    height: 40px;
+  }
+
+  .tour-list__pagination .tour-list__page-edge {
+    display: none;
+  }
+
+  .tour-list__status .status-page__card {
+    padding: 40px 24px;
+  }
+}
