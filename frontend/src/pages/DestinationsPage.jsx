@@ -37,12 +37,14 @@ import './DestinationsPage.css'
 const travelTypeImages = { attraction, culture: cultureType, course: courseType }
 const travelTypeLinks = { attraction: '/destinations/attractions', culture: '/destinations/culture', course: '/destinations/courses' }
 
-// 지역 코드는 백엔드 TourAPI areaCode 응답과 연결할 예정입니다.
+// Design Ref: §5.5 FR-14 — lDongRegnCd는 권역의 대표 시·도입니다(D-2: 권역 조회는 이번 범위 밖).
+// 도착한 목록의 지역 select에서 사용자가 다른 시·도로 바꿀 수 있습니다.
+// '12'(전라도 카드)는 regions.json에서 전남·광주가 통합된 코드입니다(§5.5 v0.2 실제 키 확인).
 const regions = [
-  { image: seoul, title: '서울' }, { image: gyeonggi, title: '경기·인천' },
-  { image: gangwon, title: '강원' }, { image: chungcheong, title: '충청' },
-  { image: jeolla, title: '전라도' }, { image: gyeongsang, title: '경상도' },
-  { image: busan, title: '부산' }, { image: jeju, title: '제주' },
+  { image: seoul, title: '서울', lDongRegnCd: '11' }, { image: gyeonggi, title: '경기·인천', lDongRegnCd: '41' },
+  { image: gangwon, title: '강원', lDongRegnCd: '51' }, { image: chungcheong, title: '충청', lDongRegnCd: '44' },
+  { image: jeolla, title: '전라도', lDongRegnCd: '12' }, { image: gyeongsang, title: '경상도', lDongRegnCd: '47' },
+  { image: busan, title: '부산', lDongRegnCd: '26' }, { image: jeju, title: '제주', lDongRegnCd: '50' },
 ]
 
 const themes = [
@@ -96,7 +98,7 @@ export default function DestinationsPage() {
     <main className="destination-main">
       <section><SectionHeading title="어떤 여행지를 찾고 있나요?" description="관광지부터 문화시설, 여행코스까지 원하는 방식으로 둘러보세요." /><div className="destination-type-grid">{travelTypes.map(item => <Link to={travelTypeLinks[item.id]} key={item.id}><article><img src={travelTypeImages[item.id]} alt="" /><span aria-hidden="true">{item.icon}</span><div><h3>{item.title}</h3><p>{item.description}</p></div></article></Link>)}</div></section>
 
-      <section><SectionHeading title="지역별로 둘러보기" description="가고 싶은 지역을 선택해 여행지를 확인해 보세요." /><div className="region-grid">{regions.map(item => <article key={item.title}><img src={item.image} alt={`${item.title} 여행 풍경`} /><h3>{item.title}</h3></article>)}</div></section>
+      <section><SectionHeading title="지역별로 둘러보기" description="가고 싶은 지역을 선택해 여행지를 확인해 보세요." /><div className="region-grid">{regions.map(item => <Link to={`/destinations/attractions?lDongRegnCd=${item.lDongRegnCd}`} key={item.title} aria-label={`${item.title} 관광지 보기`}><article><img src={item.image} alt={`${item.title} 여행 풍경`} /><h3>{item.title}</h3></article></Link>)}</div></section>
 
       <section><SectionHeading title="주제별로 둘러보기" description="TourAPI 관광 분류를 기준으로 다양한 여행지를 만나보세요." moreTo="/destinations/attractions" moreLabel="관광지 더보기" /><div className="destination-info-grid destination-info-grid--four">{themes.map(item => <article className="destination-info-card" key={item.title}><img src={item.image} alt={item.title} /><div><span>{item.tag}</span><h3>{item.title}</h3><p className="destination-card-location"><PlacePinIcon />{item.location}</p><p>{item.text}</p></div></article>)}</div></section>
 

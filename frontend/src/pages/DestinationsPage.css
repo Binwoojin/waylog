@@ -24,6 +24,9 @@
 .destination-type-grid h3 { margin: 0 0 10px; font-size: 26px; }
 .destination-type-grid p { margin: 0; color: #999; font-size: 17px; }
 .region-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 28px 20px; }
+/* Design Ref: §5.5 FR-14 — 지역 카드가 링크가 됩니다. 유형 카드(.destination-type-grid > a)와 같은 규칙입니다. */
+.region-grid > a { display: block; color: inherit; text-decoration: none; cursor: pointer; }
+.region-grid > a:focus-visible { outline: 3px solid rgba(40, 120, 237, .55); outline-offset: 4px; border-radius: 28px; }
 .region-grid article { overflow: hidden; border-radius: 28px; background: #f9f9f9; box-shadow: 0 4px 12px rgba(0,0,0,.18); transition: transform .2s ease; }
 .region-grid img { display: block; width: 100%; height: 210px; object-fit: cover; }
 .region-grid h3 { margin: 0; padding: 17px 24px; font-size: 22px; }

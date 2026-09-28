@@ -70,7 +70,7 @@ export default function TourListView({ query, onPageChange, onReset, resetLabel,
     body = <TourCardSkeleton count={LIST_PAGE_SIZE} />
   } else if (status === 'error') {
     body = errorKind === 'invalid'
-      ? <ListStatus variant="invalid" onAction={onReset} />
+      ? <ListStatus variant="invalid" onAction={onReset} actionLabel={resetLabel} />
       : <ListStatus variant="error" onAction={retry} focusOnMount={hasRetried} />
   } else if (data.totalCount === 0) {
     body = <ListStatus variant="empty" onAction={onReset} actionLabel={resetLabel} />
