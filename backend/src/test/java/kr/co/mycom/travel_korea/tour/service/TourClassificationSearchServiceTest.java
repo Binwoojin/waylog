@@ -14,7 +14,7 @@ import java.util.stream.IntStream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Design Ref: §4.3 BE-5 — BE-2 중분류 원본 조회 상한(20페이지) 단위 테스트
+ * Design Ref: §4.3 BE-5 — BE-2 중분류 원본 조회 상한(MAX_SOURCE_PAGES, 현재 30페이지) 단위 테스트
  */
 class TourClassificationSearchServiceTest {
 
@@ -83,19 +83,45 @@ class TourClassificationSearchServiceTest {
         return new TourMapper(new LocalClassificationCatalog(new ObjectMapper()));
     }
 
+    private static final int MAX_PAGES = TourClassificationSearchService.MAX_SOURCE_PAGES;
+    private static final int BATCH = TourClassificationSearchService.BATCH_SIZE;
+
     @Test
-    @DisplayName("totalCount가 2,500이면 원본 조회는 상한인 20회에서 멈춘다")
+    @DisplayName("totalCount가 상한을 넘으면(상한 + 5페이지) 원본 조회는 상한 횟수에서 멈춘다")
     void stopsAtMaxSourcePages() {
-        var client = new CountingTourApiClient(2_500);
+        var client = new CountingTourApiClient((MAX_PAGES + 5) * BATCH);   // 현재 상한 30 → 3,500건
         var service = new TourClassificationSearchService(client, mapper());
 
         var grouped = service.findAllGroupedByMiddleClassification(null, null, 14, "Q", "VE");
 
-        assertThat(client.areaBasedListCalls).isEqualTo(TourClassificationSearchService.MAX_SOURCE_PAGES);
-        assertThat(client.areaBasedListCalls).isEqualTo(20);
-        // 앞 2,000건만 걸러 내므로 VE07·VE08이 1,000건씩입니다.
-        assertThat(grouped.get("VE07")).hasSize(1_000);
-        assertThat(grouped.get("VE08")).hasSize(1_000);
+        assertThat(client.areaBasedListCalls).isEqualTo(MAX_PAGES);
+        // 앞 (상한 × 100)건만 걸러 내므로 VE07·VE08이 절반씩입니다.
+        assertThat(grouped.get("VE07")).hasSize(MAX_PAGES * BATCH / 2);
+        assertThat(grouped.get("VE08")).hasSize(MAX_PAGES * BATCH / 2);
+    }
+
+    @Test
+    @DisplayName("totalCount가 정확히 상한 × 100이면 상한 횟수로 전부 조회한다(경계)")
+    void fetchesExactlyMaxPages() {
+        var client = new CountingTourApiClient(MAX_PAGES * BATCH);
+        var service = new TourClassificationSearchService(client, mapper());
+
+        var grouped = service.findAllGroupedByMiddleClassification(null, null, 14, "Q", "VE");
+
+        assertThat(client.areaBasedListCalls).isEqualTo(MAX_PAGES);
+        assertThat(grouped.get("VE07").size() + grouped.get("VE08").size()).isEqualTo(MAX_PAGES * BATCH);
+    }
+
+    @Test
+    @DisplayName("실제 문화시설 전국 건수(2,744건, 28페이지)는 상한 안에서 전부 조회한다")
+    void fetchesRealCultureCountWithinLimit() {
+        var client = new CountingTourApiClient(2_744);
+        var service = new TourClassificationSearchService(client, mapper());
+
+        var grouped = service.findAllGroupedByMiddleClassification(null, null, 14, "Q", "VE");
+
+        assertThat(client.areaBasedListCalls).isEqualTo(28).isLessThanOrEqualTo(MAX_PAGES);
+        assertThat(grouped.get("VE07").size() + grouped.get("VE08").size()).isEqualTo(2_744);
     }
 
     @Test

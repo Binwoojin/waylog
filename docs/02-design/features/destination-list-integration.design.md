@@ -41,7 +41,7 @@
 | P-7 | 모달 포커스 관리 | 언급 없음 (NFR 접근성은 목록 영역만) | **`SearchModalFrame`에서 처리**: 초기 포커스·닫을 때 복원(필수), Tab 순환(여유 범위) | §5.4. 두 모달에 한 번에 적용된다 |
 | P-8 | 백엔드 테스트 | `mvnw clean test` 통과 | 단위 테스트 2개 추가 (`TourSearchRequestTest`, `TourClassificationSearchServiceTest`) | FR-15·FR-16 규칙을 curl 없이 고정한다 |
 | P-9 | 정렬 옵션 (FR-07) | "예: 최신순 Q, 이름순 O" | **Q(기본)·O 두 개로 확정** | Q-2 결정. 둘 다 "대표 이미지 있는 항목만" 반환하므로 정렬을 바꿔도 totalCount가 같다 |
-| P-10 | 중분류 조회 상한 (FR-15) | "최대 페이지 상한" | **20페이지(2,000건). 초과분은 버리고 서버 WARN 로그**. 실제 키로 문화시설 전국 건수를 확인한 뒤 확정 | Q-3 결정 |
+| P-10 | 중분류 조회 상한 (FR-15) | "최대 페이지 상한" | **30페이지(3,000건). 초과분은 버리고 서버 WARN 로그**. 처음엔 20페이지였으나 실제 키로 문화시설 전국 VE 2,744건(28페이지)을 확인하고 30으로 상향 (v0.3) | Q-3 결정 |
 
 ---
 
@@ -543,7 +543,7 @@ if ((lclsSystm1 == null || lclsSystm1.isBlank())
 **BE-2. 중분류 전체 조회 상한 (FR-15, Q-3) — `service/TourClassificationSearchService.java`**
 
 ```java
-private static final int MAX_SOURCE_PAGES = 20;   // 100건 × 20 = 2,000건
+private static final int MAX_SOURCE_PAGES = 30;   // 100건 × 30 = 3,000건
 
 int lastPage = Math.min(totalPages, MAX_SOURCE_PAGES);
 if (apiPage == 1 && totalPages > MAX_SOURCE_PAGES) {
@@ -554,8 +554,8 @@ if (apiPage == 1 && totalPages > MAX_SOURCE_PAGES) {
 // while (apiPage <= lastPage)
 ```
 
-- 상한을 넘으면 앞 2,000건 안에서만 중분류를 걸러 낸다. 그 경우 화면의 totalCount는 실제보다 작다. 로그로 빈도를 확인한다.
-- **수치 확정 절차**: 실제 키로 L1 #9(`contentTypeId=14&lclsSystm1=VE&size=1`)의 `totalCount`를 확인한다. 전국 문화시설 VE 건수가 2,000 이하면 상한에 걸리지 않으므로 그대로 확정한다. 크게 넘으면 분석 단계에서 상한 조정 또는 "일부 결과" 안내(Q-3 선택지 b)를 다시 검토한다. 결과는 분석 문서에 기록한다.
+- 상한을 넘으면 앞 3,000건 안에서만 중분류를 걸러 낸다. 그 경우 화면의 totalCount는 실제보다 작다. 로그로 빈도를 확인한다.
+- **수치 확정 (v0.3)**: 실제 키 L1 #9에서 전국 문화시설 VE `totalCount`는 2,744건(28페이지)이었다. 20페이지 상한에서는 VE07 조회가 `20/28`에서 멈춰 총 건수가 실제보다 작게 나왔다. 사용자 결정으로 상한을 30페이지로 올려 전국 조회도 전체를 담게 했다. 대가는 캐시 미스 1회당 원본 호출 최대 30회(1시간 캐시)다. 데이터가 3,000건을 넘으면 WARN 로그로 알 수 있다.
 - 최악의 호출 수: 조건 조합(지역 × 시군구 × arrange) 1개당 첫 조회 20회, 이후는 캐시(`sync = true`로 동시 요청도 1회). 서버를 재시작하면 캐시가 사라진다는 점을 README 로컬 실행 절에 한 줄 적는다(선택).
 - `@Slf4j`를 추가한다(`lombok`은 이미 사용 중).
 
@@ -821,7 +821,7 @@ export default function TravelSearchModal({ isOpen, onClose }) {
 | 6 | `GET /api/v1/search?contentTypeId=12&arrange=X` / `arrange=q` | local-mock | 400 `INVALID_REQUEST` |
 | 7 | `GET /api/v1/search?contentTypeId=12&arrange=O` | local-mock | 200 |
 | 8 | `GET /api/v1/regions`, `GET /api/v1/regions/districts?lDongRegnCd=11` | local-mock | 200, 16건 / 서울 시군구 |
-| 9 | `GET /api/v1/search?contentTypeId=14&lclsSystm1=VE&size=1` | 기본 + 실제 키 | `totalCount` 기록 → Q-3 상한 확정 근거. `contentTypeId=14&lclsSystm2=VE07` 1회 호출 후 서버 로그에서 원본 조회 횟수(≤ 20) 확인 |
+| 9 | `GET /api/v1/search?contentTypeId=14&lclsSystm1=VE&size=1` | 기본 + 실제 키 | `totalCount` 기록 → Q-3 상한 확정 근거. `contentTypeId=14&lclsSystm2=VE07` 1회 호출 후 서버 로그에서 원본 조회 횟수(≤ 30) 확인 |
 | 10 | `GET /api/v1/home` | local-mock | 200, 기존과 같은 3건 (회귀 없음) |
 | 11 | `GET /api/v1/search?contentTypeId=12&lDongRegnCd=12&size=1` | 기본 + 실제 키 | 200, `totalCount > 0`, 주소가 "전남광주통합특별시"로 시작 (§5.5, 코드 유효성은 2026-09-28 확인됨) |
 | 12 | `GET /api/v1/tour/contents/9120004?contentTypeId=12` | local-mock | 200, 제목 `목 관광지 04` (합성 항목 상세) |
@@ -1090,7 +1090,7 @@ frontend-code-reviewer 리뷰와 bkit gap 분석을 거쳐 frontend-lead가 문�
 | 3.1 FR-07 | 정렬 옵션을 Q(기본)·O로 확정 |
 | 3.1 FR-12 | 분류 선택지 출처를 `/classifications` → `tourListConfigs` 정적 정의로 변경(P-3). 여행코스 유형 비활성(Q-5) 추가 |
 | 3.1 FR-13 | 캐시 대상에서 분류 제외(지역·시군구만) |
-| 3.1 FR-15 | 상한 20페이지(2,000건) + WARN 로그, 실제 키로 확정 (Q-3) |
+| 3.1 FR-15 | 상한 30페이지(3,000건) + WARN 로그 (Q-3, 실제 키 확인 후 20 → 30 상향) |
 | 3.1 FR 추가 | 조건 없는 검색 결과 진입 시 no-query 안내(Q-6) |
 | 5 위험 | local-mock 위험 대응을 "BE-4로 해결"로 갱신. `regions.json` 코드 확인 위험 추가 |
 | 6.1 / 6.2 | `EnjoySearchModal.jsx` 변경 자원 추가, `App.jsx` 라우트 변경 추가 |
@@ -1105,3 +1105,4 @@ frontend-code-reviewer 리뷰와 bkit gap 분석을 거쳐 frontend-lead가 문�
 |------|------|------|--------|
 | 0.1 | 2026-09-28 | 초안. 설계안 A/B/C 비교, 사용자 선택 B, Q-1 ~ Q-6 결정 반영. URL 스키마, view model, `useTourList` 상태 머신, option 모델·즐기기 어댑터, 백엔드 BE-1 ~ BE-6, 테스트 계획, 파일 소유, Session Guide | WOOJIN |
 | 0.2 | 2026-09-28 | §5.5·§8.2 #11·§13.1: 지역 코드 `12`는 전남광주통합특별시로 실제 키 응답에서 확인됨. 전라도 카드를 `52` → `12`로 변경, 후속 과제에서 제거 | WOOJIN |
+| 0.3 | 2026-09-28 | P-10·§4.3 BE-2·§8.2 #9: 중분류 조회 상한 20 → 30페이지 (문화시설 전국 2,744건 확인, 사용자 결정) | WOOJIN |

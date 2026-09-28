@@ -132,7 +132,7 @@
 | FR-12 | 검색 모달은 `/regions`, `/regions/districts`와 `data/tourListConfigs.js`의 정적 분류 정의로 선택지를 만들고 (설계 P-3), 쿼리에 코드(`lDongRegnCd`, `lDongSignguCd`, `contentTypeId`, `lclsSystm1`/`lclsSystm2`)를 실어 `navigate()`로 이동한다. 모달을 열 때 현재 URL 조건을 반영한다. 여행코스 유형은 비활성 + '준비 중'으로 표시한다 (Q-5) | High | frontend-lead | Pending |
 | FR-13 | 지역·시군구 목록은 앱 수명 동안 메모리에 캐시한다 (로컬 JSON API라 변하지 않음). 분류는 정적 정의라 호출하지 않는다 | Medium | frontend-lead | Pending |
 | FR-14 | 랜딩의 지역 카드를 해당 시·도 조건의 목록으로 연결한다. 권역 카드는 대표 시·도로 연결한다 | Medium | frontend-lead | Pending |
-| FR-15 | 백엔드: `lclsSystm2`만 오면 앞 2자리로 `lclsSystm1`을 보정하고, 중분류 전체 조회는 최대 20페이지(2,000건)로 제한하며 초과 시 WARN 로그를 남긴다. 상한은 실제 키로 문화시설 전국 건수를 확인한 뒤 확정 (Q-3) | High | frontend-support-backend | Pending |
+| FR-15 | 백엔드: `lclsSystm2`만 오면 앞 2자리로 `lclsSystm1`을 보정하고, 중분류 전체 조회는 최대 30페이지(3,000건)로 제한하며 초과 시 WARN 로그를 남긴다. 실제 키로 확인한 문화시설 전국 건수 2,744건(28페이지)을 모두 담도록 20에서 30으로 상향 (Q-3, 2026-09-28 사용자 결정) | High | frontend-support-backend | Pending |
 | FR-16 | 백엔드: `arrange`가 허용값(A/C/D/O/Q/R)이 아니면 400 `INVALID_REQUEST`로 응답한다 | Medium | frontend-support-backend | Pending |
 | FR-17 | 조건 없이 `/destinations/search`에 들어오면 API를 호출하지 않고 "조건을 선택해 주세요" 안내와 모달 열기 버튼을 보여 준다 (Q-6) | Medium | frontend-lead | Pending |
 | FR-18 | local-mock 목 클라이언트가 contentTypeId별 합성 데이터와 page/size/totalCount를 반영하고, 특정 지역 코드는 빈 결과를 반환한다 (Q-4) | Medium | frontend-support-backend | Pending |
@@ -287,3 +287,4 @@ frontend-interview-coach : 완료 보고서 후 포트폴리오 자료 추출
 |------|------|------|--------|
 | 0.1 | 2026-09-28 | 초안. frontend-lead 분석 반영, 사용자 결정 D-1 ~ D-8 반영 | WOOJIN |
 | 0.2 | 2026-09-28 | 설계 단계 반영: 설계안 B, 범위 추가(즐기기 모달 이전, 목 개선, 포커스 관리, 백엔드 단위 테스트), FR-07·12·13·15 확정, FR-17·18 추가, 위험·영향·작업 순서 갱신 | WOOJIN |
+| 0.3 | 2026-09-28 | FR-15 상한을 20 → 30페이지로 상향 (문화시설 전국 2,744건 확인, 사용자 결정) | WOOJIN |

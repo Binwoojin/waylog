@@ -22,16 +22,19 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 public class TourClassificationSearchService {
-    private static final int BATCH_SIZE = 100;
+    static final int BATCH_SIZE = 100;
 
     /**
-     * 중분류 필터링을 위한 원본 조회 최대 페이지 수입니다. (100건 × 20 = 2,000건)
+     * 중분류 필터링을 위한 원본 조회 최대 페이지 수입니다. (100건 × 30 = 3,000건)
      *
      * Design Ref: §4.3 BE-2 (Q-3) — 조건 조합 1개의 첫 조회가 TourAPI 일일 한도(1,000회)를
-     * 크게 소모하지 않도록 호출 수를 제한합니다. 상한을 넘으면 앞 2,000건 안에서만 걸러 내므로
-     * 응답 totalCount가 실제보다 작을 수 있고, 그 빈도는 WARN 로그로 확인합니다.
+     * 크게 소모하지 않도록 호출 수를 제한합니다.
+     * 30으로 정한 근거: 실제 키 확인(2026-09-28) 결과 문화시설 전국 VE가 2,744건(28페이지)이라
+     * 20페이지로는 잘렸습니다. 전국 조회도 전부 걸러 내도록 30으로 올리고, 데이터 증가 여유를 둡니다.
+     * 상한을 넘으면 앞 3,000건 안에서만 걸러 내므로 응답 totalCount가 실제보다 작을 수 있고,
+     * 그 빈도는 WARN 로그로 확인합니다.
      */
-    static final int MAX_SOURCE_PAGES = 20;
+    static final int MAX_SOURCE_PAGES = 30;
 
     private final TourApiClient tourApiClient;
     private final TourMapper tourMapper;
