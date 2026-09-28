@@ -1,4 +1,6 @@
 import { apiClient } from './client'
+import { getTourDetailPath, isTourContentId } from '../data/tourContentTypes'
+import { LIST_PAGE_SIZE, toTourApiParams } from '../lib/tourListQuery'
 
 /*
  * TourAPI 콘텐츠 API 모듈
@@ -120,4 +122,170 @@ export function toTelHref(contact) {
   if (digits.length < PHONE_MIN_DIGITS || digits.length > PHONE_MAX_DIGITS) return null
 
   return `tel:${match[0].startsWith('+') ? '+' : ''}${digits}`
+}
+
+/*
+ * 목록 조회 (destination-list-integration)
+ *
+ * Design Ref: §3.3, §4.2 — 목록 화면은 API 필드 이름을 모르고 TourCard view model만 씁니다.
+ */
+
+function toNonEmptyText(value) {
+  return typeof value === 'string' && value.trim() ? value.trim() : null
+}
+
+/**
+ * 목록 조회: GET /api/v1/search
+ *
+ * 성공: TourListResult { items: TourCard[], totalCount, page, totalPages }
+ * 실패: ApiError(400·502 등), 형식이 다른 응답이면 Error, 취소되면 AbortError(DOMException)
+ */
+export async function fetchTourList(query, { signal } = {}) {
+  // Design Ref: §7 — 쿼리 문자열은 URLSearchParams로만 만듭니다(화이트리스트를 통과한 값만 들어감).
+  const params = toTourApiParams(query)
+  const data = await apiClient.get(`/api/v1/search?${params}`, { signal })
+  return toTourList(data, { size: LIST_PAGE_SIZE, page: query.page, contentTypeId: query.contentTypeId })
+}
+
+/**
+ * API 응답(TourListResponse) → TourListResult
+ *
+ * Design Ref: §3.3 FR-02
+ * - totalPages는 요청한 size로 계산합니다. 응답의 size는 마지막 페이지에서 남은 건수로 줄어듭니다.
+ * - fail-closed: items가 배열이 아니거나 totalCount가 0 이상의 정수가 아니면 성공으로 보지 않습니다
+ *   (client.js는 JSON이 아닌 200 응답을 {}로 돌려줍니다).
+ * - 버린 카드가 있어도 totalCount는 서버 값을 그대로 씁니다.
+ *
+ * @param options.size 요청한 페이지 크기
+ * @param options.page 요청한 페이지. 화면의 기준은 URL이므로 응답의 page보다 우선합니다
+ * @param options.contentTypeId 항목에 contentTypeId가 없을 때 상세 경로에 쓸 요청 유형
+ */
+export function toTourList(data, { size = LIST_PAGE_SIZE, page, contentTypeId } = {}) {
+  if (!data || !Array.isArray(data.items) || !Number.isInteger(data.totalCount) || data.totalCount < 0) {
+    throw new Error('목록 응답 형식이 올바르지 않습니다.')
+  }
+
+  const seenIds = new Set()
+  const items = []
+  for (const item of data.items) {
+    const card = toTourCard(item, contentTypeId)
+    // 같은 contentId가 두 번 오면 React key가 겹치므로 첫 항목만 씁니다.
+    if (!card || seenIds.has(card.id)) continue
+    seenIds.add(card.id)
+    items.push(card)
+  }
+
+  const totalCount = data.totalCount
+  const resolvedPage = Number.isInteger(page) && page > 0
+    ? page
+    : (Number.isInteger(data.page) && data.page > 0 ? data.page : 1)
+
+  return {
+    items,
+    totalCount,
+    page: resolvedPage,
+    totalPages: totalCount === 0 ? 0 : Math.ceil(totalCount / size),
+  }
+}
+
+/**
+ * 목록 항목(TourSummaryResponse) → TourCard | null
+ *
+ * Design Ref: §3.3 FR-03 — 상세로 연결할 수 없거나 제목이 없는 카드는 버립니다(fail-closed).
+ * 빈 제목 카드, 링크 없는 카드를 만들지 않습니다.
+ *
+ * @param fallbackContentTypeId 항목에 contentTypeId가 없을 때 쓸 요청 유형
+ */
+export function toTourCard(item, fallbackContentTypeId) {
+  if (!item || typeof item !== 'object') return null
+
+  const id = item.contentId == null ? '' : String(item.contentId)
+  if (!isTourContentId(id)) return null
+
+  const title = toNonEmptyText(item.title)
+  if (!title) return null
+
+  const detailPath = getTourDetailPath(id, item.contentTypeId ?? fallbackContentTypeId)
+  if (!detailPath) return null
+
+  return {
+    id,
+    title,
+    address: toNonEmptyText(item.address) ?? EMPTY_ADDRESS,
+    // 빈 문자열은 없는 이미지로 봅니다. 둘 다 없으면 카드가 기본 이미지를 씁니다.
+    image: toNonEmptyText(item.image) ?? toNonEmptyText(item.thumbnail),
+    // 중분류 이름이 더 구체적입니다. 둘 다 없으면 배지를 표시하지 않습니다.
+    category: toNonEmptyText(item.lclsSystm2Nm) ?? toNonEmptyText(item.lclsSystm1Nm),
+    detailPath,
+  }
+}
+
+/*
+ * 지역·시군구 선택지 (FR-13)
+ *
+ * Design Ref: §4.2 — 로컬 JSON API라 앱 수명 동안 변하지 않으므로 모듈 메모리에 캐시합니다.
+ * - 값이 아니라 Promise를 저장해, 같은 키를 동시에 요청해도 네트워크 요청은 1회입니다.
+ * - 실패하면 캐시에서 지워 다음 호출(다시 시도)이 새로 요청합니다.
+ * - signal을 받지 않습니다. 여러 컴포넌트가 같은 Promise를 공유하므로
+ *   한 컴포넌트의 언마운트가 다른 컴포넌트의 요청까지 취소하면 안 됩니다(client.js refreshSession과 같은 이유).
+ * 목록 결과는 캐시하지 않습니다. 서버 캐시(tourLists)가 TourAPI 호출을 막고, 무효화할 수 없는 캐시를 늘리지 않습니다(§2.4).
+ */
+const optionCache = new Map()
+
+function loadOptions(cacheKey, path, valueField) {
+  const cached = optionCache.get(cacheKey)
+  if (cached) return cached.promise
+
+  const entry = { promise: null, options: null }
+  // 변환(toOptions) 실패도 캐시에서 지워야 하므로 then의 두 번째 인자가 아니라 catch로 받습니다.
+  // then(onFulfilled, onRejected)는 onFulfilled 안에서 던진 오류를 onRejected로 보내지 않습니다.
+  entry.promise = apiClient.get(path)
+    .then(data => {
+      const options = toOptions(data, valueField)
+      entry.options = options
+      return options
+    })
+    .catch(error => {
+      if (optionCache.get(cacheKey) === entry) optionCache.delete(cacheKey)
+      throw error
+    })
+  optionCache.set(cacheKey, entry)
+  return entry.promise
+}
+
+// 화면이 API 필드 이름을 모르게 { value, label } option으로 바꿉니다(§3.5 Option 모델).
+function toOptions(data, valueField) {
+  if (!Array.isArray(data)) throw new Error('지역 응답 형식이 올바르지 않습니다.')
+
+  const options = data
+    .map(item => ({ value: toNonEmptyText(item?.[valueField]), label: toNonEmptyText(item?.name) }))
+    .filter(option => option.value && option.label)
+  // 여러 화면이 같은 배열을 공유하므로 한 곳에서 바꾸지 못하게 합니다.
+  return Object.freeze(options.map(option => Object.freeze(option)))
+}
+
+function districtsCacheKey(lDongRegnCd) {
+  return `districts:${lDongRegnCd}`
+}
+
+// 시·도 목록: GET /api/v1/regions → Option[] ({ value: lDongRegnCd, label: name })
+export function fetchRegions() {
+  return loadOptions('regions', '/api/v1/regions', 'lDongRegnCd')
+}
+
+// 시군구 목록: GET /api/v1/regions/districts?lDongRegnCd= → Option[] ({ value: lDongSignguCd, label: name })
+export function fetchDistricts(lDongRegnCd) {
+  const params = new URLSearchParams({ lDongRegnCd: String(lDongRegnCd) })
+  return loadOptions(districtsCacheKey(lDongRegnCd), `/api/v1/regions/districts?${params}`, 'lDongSignguCd')
+}
+
+// 이미 받아 둔 시·도 목록(동기). 아직 없거나 진행 중이면 null
+// Design Ref: §4.2 — 모달을 두 번째 열 때 첫 렌더부터 ready로 보여 줘 깜빡이지 않게 합니다.
+export function getCachedRegions() {
+  return optionCache.get('regions')?.options ?? null
+}
+
+// 이미 받아 둔 시군구 목록(동기). 아직 없거나 진행 중이면 null
+export function getCachedDistricts(lDongRegnCd) {
+  return optionCache.get(districtsCacheKey(lDongRegnCd))?.options ?? null
 }

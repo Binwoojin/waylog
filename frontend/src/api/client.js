@@ -40,7 +40,13 @@ function isAuthPath(path) {
   return path.startsWith(AUTH_PATH_PREFIX)
 }
 
-async function request(path, { method = 'GET', body, credentials, headers } = {}, isRetry = false) {
+// Design Ref: §2.5 — 취소는 ApiError가 아니라 DOMException('AbortError')으로 옵니다.
+// 호출하는 쪽이 ApiError 판정 전에 먼저 걸러 내 오류 UI로 표시하지 않게 합니다(FR-01).
+export function isAbortError(error) {
+  return error?.name === 'AbortError'
+}
+
+async function request(path, { method = 'GET', body, credentials, headers, signal } = {}, isRetry = false) {
   // Design Ref: §12 R-2 — 요청을 보낸 시점의 인증 세대를 기억합니다.
   // 401을 받은 시점에 읽으면, 그 사이 로그아웃했더라도 재발급이 성공해
   // "로그아웃된 화면 + 유효한 토큰" 상태가 될 수 있습니다.
@@ -57,9 +63,16 @@ async function request(path, { method = 'GET', body, credentials, headers } = {}
     credentials,
     headers: requestHeaders,
     body: body !== undefined ? JSON.stringify(body) : undefined,
+    // Design Ref: §2.5 — signal을 넘기지 않는 기존 호출은 undefined라 동작이 같습니다.
+    signal,
   })
 
-  const data = await response.json().catch(() => ({}))
+  // JSON이 아닌 응답은 {}로 보지만, 본문을 읽는 도중의 취소는 삼키지 않습니다.
+  // 삼키면 취소된 요청이 빈 성공 응답처럼 보입니다.
+  const data = await response.json().catch(error => {
+    if (isAbortError(error)) throw error
+    return {}
+  })
 
   if (!response.ok) {
     const error = new ApiError(data.message || `요청에 실패했습니다. (HTTP ${response.status})`, response.status, data)
@@ -69,7 +82,9 @@ async function request(path, { method = 'GET', body, credentials, headers } = {}
     // /api/v1/auth/** 는 401이 "비밀번호 불일치·재발급 실패" 등 화면이 처리할 의미이므로 제외하고,
     // 재시도는 1회로 제한해 무한 루프를 막습니다.
     if (response.status === 401 && !isRetry && !isAuthPath(path)) {
-      return retryAfterRefresh(path, { method, body, credentials, headers }, error, sentGeneration)
+      // Design Ref: §2.5 — 재시도 요청에도 같은 signal을 넘겨, 재발급을 기다리는 동안 취소되면 재시도 fetch가 바로 끝나게 합니다.
+      // 재발급(refreshSession)에는 넘기지 않습니다. 여러 요청이 공유하는 Promise라 한 요청의 취소가 다른 요청의 재발급을 끊으면 안 됩니다.
+      return retryAfterRefresh(path, { method, body, credentials, headers, signal }, error, sentGeneration)
     }
 
     throw error
