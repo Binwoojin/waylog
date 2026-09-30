@@ -5,7 +5,7 @@ import kr.co.mycom.travel_korea.board.storage.StoredObject;
 import kr.co.mycom.travel_korea.user.entity.UserEntity;
 import kr.co.mycom.travel_korea.feed.domain.*;
 import kr.co.mycom.travel_korea.feed.dto.FeedCreateRequest;
-import kr.co.mycom.travel_korea.feed.dto.FeedPageResponse;
+import kr.co.mycom.travel_korea.feed.dto.FeedTimelineResponse;
 import kr.co.mycom.travel_korea.feed.dto.FeedPostResponse;
 import kr.co.mycom.travel_korea.feed.dto.FeedUpdateRequest;
 import kr.co.mycom.travel_korea.feed.repository.FeedBookMarkRepository;
@@ -13,10 +13,8 @@ import kr.co.mycom.travel_korea.feed.repository.FeedLikeRepository;
 import kr.co.mycom.travel_korea.feed.repository.FeedPostRepository;
 import kr.co.mycom.travel_korea.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
@@ -109,18 +107,31 @@ public class FeedService {
     }
 
 
-    public FeedPageResponse getFeed(String loginEmail, int page, int size) {
-        /*
-         * 프론트엔드는 1페이지부터 사용하지만 Spring Data는 0페이지부터 사용합니다.
-         */
-        int pageIndex = Math.max(page - 1, 0);
+    /*
+     * feed-integration 설계 §4.2(P-3): 오프셋(page/size) 대신 id 기준 커서로 타임라인을 조회한다.
+     * id는 IDENTITY 채번이라 생성 순서와 항상 일치하므로, "cursor보다 오래된 것만" 조회하면
+     * 스크롤 도중 새 글이 추가돼도 이미 본 항목이 중복되거나 건너뛰어지지 않는다.
+     *
+     * 이 API를 현재 호출하는 프론트 코드가 없음을 grep으로 확인했으므로
+     * page 파라미터를 cursor로 대체하는 것은 하위 호환을 깨지 않는다.
+     */
+    public FeedTimelineResponse getFeed(String loginEmail, Long cursor, int size) {
         int pageSize = Math.min(Math.max(size, 1), 30);
 
-        Pageable pageable = PageRequest.of(pageIndex, pageSize, Sort.by(Sort.Direction.DESC, "createdAt"));
+        /*
+         * COUNT 쿼리 없이 다음 페이지 존재 여부를 알기 위해 1개를 더 조회한다
+         * (tour-course-list-integration의 N+1 회피 집계 쿼리와 같은 원칙).
+         */
+        Pageable pageable = PageRequest.of(0, pageSize + 1);
 
-        Page<FeedPost> postPage = feedPostRepository.findByVisibilityAndDeletedAtIsNull("PUBLIC", pageable);
+        List<FeedPost> fetched = (cursor == null)
+                ? feedPostRepository.findByVisibilityAndDeletedAtIsNullOrderByIdDesc("PUBLIC", pageable)
+                : feedPostRepository.findByVisibilityAndDeletedAtIsNullAndIdLessThanOrderByIdDesc("PUBLIC", cursor, pageable);
 
-        List<Long> postIds = postPage.getContent().stream()
+        boolean hasNext = fetched.size() > pageSize;
+        List<FeedPost> pageItems = hasNext ? fetched.subList(0, pageSize) : fetched;
+
+        List<Long> postIds = pageItems.stream()
                 .map(FeedPost::getId).toList();
 
         Set<Long> likedPostIds = new HashSet<>();
@@ -140,14 +151,16 @@ public class FeedService {
                     .forEach(bookmark -> bookmarkedPostIds.add(bookmark.getFeedPost().getId()));
         }
 
-        List<FeedPostResponse> responses = postPage.getContent().stream()
+        List<FeedPostResponse> responses = pageItems.stream()
                 .map(post -> toResponse(
                         post,
                         likedPostIds.contains(post.getId()),
                         bookmarkedPostIds.contains(post.getId())
                 )).toList();
 
-        return FeedPageResponse.from(postPage, responses);
+        Long nextCursor = pageItems.isEmpty() ? null : pageItems.get(pageItems.size() - 1).getId();
+
+        return new FeedTimelineResponse(responses, nextCursor, hasNext);
     }
 
     public FeedPostResponse getOne(Long postId, String loginEmail) {

@@ -67,6 +67,36 @@ public class FeedProfileService {
     }
 
     /**
+     * feed-integration 설계 §4.4(P-6): 다른 사용자의 SNS 프로필과 그가 작성한
+     * PUBLIC 게시물만 조회합니다(본인 프로필과 달리 PRIVATE 게시물은 노출하지 않음).
+     *
+     * liked/bookmarked는 조회자와 무관하게 항상 false로 단순화합니다(설계 §4.4
+     * 노출 범위 결정 — "둘러보기" 목적이 우선이라, 로그인 사용자 기준 좋아요 여부
+     * 계산이 필요해지면 getFeed의 조회 로직을 그대로 옮겨오면 된다).
+     */
+    public FeedProfileResponse getUserProfile(Long userId, int page, int size) {
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("회원 정보를 찾을 수 없습니다."));
+        FeedProfile profile = findOrCreateProfile(user);
+
+        int pageIndex = Math.max(page - 1, 0);
+        int pageSize = Math.min(Math.max(size, 1), 30);
+
+        Pageable pageable = PageRequest.of(pageIndex, pageSize, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        // 타인 프로필은 PUBLIC 게시물만 노출한다(getMyProfile은 본인 것이라 전부 보여주는 것과 대비).
+        Page<FeedPost> postPage = feedPostRepository.findByAuthor_IdAndVisibilityAndDeletedAtIsNull(userId, "PUBLIC", pageable);
+
+        List<FeedPostResponse> posts = postPage.getContent().stream()
+                .map(post -> FeedPostResponse.from(post, false, false, this::toReadableImageUrl)).toList();
+
+        long receivedLikeCount = feedLikeRepository.countByFeedPost_Author_Id(userId);
+
+        return FeedProfileResponse.of(user, profile, postPage.getTotalElements(), receivedLikeCount, posts,
+                postPage.getNumber() + 1, postPage.getTotalPages(), postPage.hasNext());
+    }
+
+    /**
      * SNS 전용 @아이디를 변경합니다.
      */
     @Transactional

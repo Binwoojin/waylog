@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface FeedPostRepository extends JpaRepository<FeedPost, Long> {
@@ -18,6 +19,29 @@ public interface FeedPostRepository extends JpaRepository<FeedPost, Long> {
      */
     @EntityGraph(attributePaths = "author")
     Page<FeedPost> findByVisibilityAndDeletedAtIsNull(String  visibility, Pageable pageable);
+
+    /*
+     * feed-integration 설계 §4.2(P-3): 무한 스크롤 타임라인용 커서 기반 조회.
+     * id는 GenerationType.IDENTITY라 생성 순서와 항상 일치하므로, id 하나만으로
+     * "이미 본 항목보다 오래된 것만" 안전하게 조회할 수 있다(복합 커서 불필요).
+     *
+     * 첫 페이지(cursor 없음) 조회용.
+     */
+    @EntityGraph(attributePaths = "author")
+    List<FeedPost> findByVisibilityAndDeletedAtIsNullOrderByIdDesc(String visibility, Pageable pageable);
+
+    /*
+     * 다음 페이지(cursor 있음) 조회용. cursor보다 id가 작은(=더 오래된) 게시물만 가져온다.
+     */
+    @EntityGraph(attributePaths = "author")
+    List<FeedPost> findByVisibilityAndDeletedAtIsNullAndIdLessThanOrderByIdDesc(String visibility, Long cursorId, Pageable pageable);
+
+    /*
+     * feed-integration 설계 §4.4(P-6): 타인 프로필 조회는 PUBLIC 게시물만 노출한다
+     * (본인 프로필의 findByAuthor_Id는 공개/비공개 모두 보여주는 것과 대비).
+     */
+    @EntityGraph(attributePaths = "author")
+    Page<FeedPost> findByAuthor_IdAndVisibilityAndDeletedAtIsNull(Long userId, String visibility, Pageable pageable);
 
     /*
      * photos와 tags를 동시에 fetch join하면

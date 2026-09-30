@@ -25,6 +25,9 @@ import TravelDetailPage from './pages/TravelDetailPage'
 import EnjoyCategoryPage from './pages/EnjoyCategoryPage'
 import EnjoyDetailPage from './pages/EnjoyDetailPage'
 import EnjoySearchResultsPage from './pages/EnjoySearchResultsPage'
+import FeedPage from './pages/FeedPage'
+import FeedDetailPage from './pages/FeedDetailPage'
+import FeedUserProfilePage from './pages/FeedUserProfilePage'
 import ComingSoonPage from './pages/ComingSoonPage'
 import NotFoundPage from './pages/NotFoundPage'
 import ErrorBoundary from './components/common/ErrorBoundary'
@@ -342,8 +345,16 @@ function App() {
               <Route path="/destinations/courses" element={<TourCourseCatalogPage />} />
               <Route path="/destinations/courses/:id" element={<TourCourseDetailPage />} />
 
+              {/*
+                Design Ref: feed-integration.design.md §10 — 사이클 1(feed-integration) 구현으로
+                "여행 피드" 메뉴가 실제 화면과 연결됩니다. 댓글 UI는 이번 사이클 범위 밖이라 상세
+                화면에는 포함되지 않습니다(후속 feed-comment-integration).
+              */}
+              <Route path="/feed" element={<FeedPage />} />
+              <Route path="/feed/posts/:id" element={<FeedDetailPage />} />
+              <Route path="/feed/users/:userId" element={<FeedUserProfilePage />} />
+
               {/* Design Ref: §3.2 — 메뉴는 있지만 아직 구현되지 않은 기능은 "준비 중" 화면으로 연결합니다. */}
-              <Route path="/feed" element={<ComingSoonPage title="여행 피드" />} />
               <Route path="/bookmarks" element={<ComingSoonPage title="북마크" />} />
               <Route path="/mypage" element={<ComingSoonPage title="마이 페이지" />} />
               <Route path="/notices" element={<ComingSoonPage title="공지사항" />} />

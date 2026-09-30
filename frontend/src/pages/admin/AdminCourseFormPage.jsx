@@ -8,7 +8,9 @@ import {
   replaceAdminCourseCoverImage,
   updateAdminCourse,
 } from '../../api/adminCourseApi'
-import TourReferencePicker from '../../components/admin/TourReferencePicker'
+// Design Ref: feed-integration.design.md §5.2 — 공개 피드 작성 폼도 이 모달을 재사용하도록
+// components/common/으로 이동했다(내부 로직·마크업은 변경 없음, 경로만 변경).
+import TourReferencePicker from '../../components/common/TourReferencePicker'
 import ConfirmDialog from '../../components/admin/ConfirmDialog'
 import AdminToast from '../../components/admin/AdminToast'
 import './AdminCourseFormPage.css'

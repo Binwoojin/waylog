@@ -29,6 +29,23 @@ public class FeedProfileController {
     }
 
     /**
+     * feed-integration 설계 §4.4(P-6): 타인의 SNS 프로필과 그가 작성한 PUBLIC 게시물만 조회합니다.
+     *
+     * 비로그인 사용자도 조회할 수 있는 공개 API입니다("둘러보기" 목적). 좋아요·북마크 여부는
+     * 조회자와 무관하게 항상 false로 고정합니다(설계 §4.4 노출 범위 결정).
+     *
+     * 경로 세그먼트 수가 위 getMyProfile("/api/v1/feed/profile")과 다르므로
+     * 스프링이 두 매핑을 올바르게 구분합니다(라우팅 충돌 없음).
+     */
+    @GetMapping("/{userId}")
+    public ResponseEntity<FeedProfileResponse> getUserProfile(
+            @PathVariable Long userId,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "12") int size) {
+        return ResponseEntity.ok(feedProfileService.getUserProfile(userId, page, size));
+    }
+
+    /**
      * SNS 전용 @아이디를 수정합니다.
      */
     @PatchMapping

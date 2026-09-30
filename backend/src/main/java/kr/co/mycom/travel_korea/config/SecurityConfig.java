@@ -60,6 +60,11 @@ public class SecurityConfig {
 
                        // 공개 피드 조회
                        .requestMatchers(HttpMethod.GET, "/api/v1/feed/posts/**").permitAll()
+                       // 타인 프로필 조회는 비로그인도 허용 (feed-integration 설계 §4.4).
+                       // 단일 세그먼트 와일드카드(/*)만 사용해, 인증이 필요한
+                       // 내 프로필 조회(GET /api/v1/feed/profile, path variable 없음)는
+                       // 매칭에서 제외한다.
+                       .requestMatchers(HttpMethod.GET, "/api/v1/feed/profile/*").permitAll()
                        .requestMatchers(HttpMethod.GET, "/api/v1/tour/contents/**").permitAll()
 
                        // 공개 여행코스 조회 (tour-course-list-integration 설계 §4.3).
