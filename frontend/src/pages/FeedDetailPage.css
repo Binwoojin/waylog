@@ -212,9 +212,71 @@
   font-size: 14px;
 }
 
+/*
+ * 댓글 섹션
+ *
+ * Design Ref: feed-comment-integration.design.md §6.1 — article 안쪽, footer 아래에
+ * 이어지는 영역이다. 별도 카드로 분리하지 않고 상세 카드와 같은 구분선 톤을 이어간다.
+ */
+
+.feed-comment-section {
+  padding: 20px 24px 24px;
+  border-top: 1px solid #eef1f4;
+}
+
+.feed-comment-section__title {
+  margin: 0 0 14px;
+  color: #1f1f1f;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.feed-comment-section__hint {
+  margin: 0 0 16px;
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+.feed-comment-section__error {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+  margin: 0 0 16px;
+  color: #b91c1c;
+  font-size: 14px;
+}
+
+.feed-comment-section__error button {
+  height: 32px;
+  padding: 0 14px;
+  border: 1px solid #fca5a5;
+  border-radius: 10px;
+  color: #b91c1c;
+  background: #fef2f2;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.feed-comment-section__form {
+  margin-top: 16px;
+}
+
+.feed-comment-section__delete-error {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  color: #b91c1c;
+  background: #fef2f2;
+  font-size: 13px;
+}
+
 @media (max-width: 620px) {
   .feed-detail-main { width: calc(100% - 32px); padding-top: 105px; }
   .feed-detail-gallery { grid-template-columns: 1fr; }
   .feed-detail-gallery img { height: 260px; }
   .feed-detail-actions { gap: 16px; }
+  .feed-comment-section { padding: 16px 16px 20px; }
 }

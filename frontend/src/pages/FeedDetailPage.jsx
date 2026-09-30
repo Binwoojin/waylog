@@ -2,13 +2,17 @@ import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useFeedDetail } from '../hooks/useFeedDetail'
+import { useFeedComments } from '../hooks/useFeedComments'
 import { deleteFeedPost, toggleFeedBookmark, toggleFeedLike } from '../api/feedApi'
+import { createFeedComment, deleteFeedComment } from '../api/feedCommentApi'
 import { getTourDetailPath } from '../data/tourContentTypes'
 import { buildKakaoMapLink } from '../lib/mapLink'
 import HeartIcon from '../components/icons/HeartIcon'
 import BookmarkIcon from '../components/icons/BookmarkIcon'
 import PlacePinIcon from '../components/icons/PlacePinIcon'
 import FeedConfirmDialog from '../components/feed/FeedConfirmDialog'
+import FeedCommentList from '../components/feed/FeedCommentList'
+import FeedCommentForm from '../components/feed/FeedCommentForm'
 import DetailStatus from '../components/detail/DetailStatus'
 import NotFoundPage from './NotFoundPage'
 import { DETAIL_NOT_FOUND_DESCRIPTION, DETAIL_NOT_FOUND_TITLE } from '../components/detail/detailMessages'
@@ -21,8 +25,11 @@ const FEED_LIST_PATH = '/feed'
  * 피드 게시물 상세 (`/feed/posts/:id`)
  *
  * Design Ref: feed-integration.design.md — 삭제는 작성자 본인 게시물에서만 노출되고,
- * 항상 확인 모달을 거친다(계획 §2.1, 프로젝트 전체 삭제 원칙). 댓글 UI는 이번 사이클
- * 범위 밖이라 포함하지 않는다(설계 §13 "연결 지점").
+ * 항상 확인 모달을 거친다(계획 §2.1, 프로젝트 전체 삭제 원칙).
+ *
+ * Design Ref: feed-comment-integration.design.md §6.1 — 댓글 섹션(CommentSection)을 기존
+ * "댓글 N개" 표시 지점 아래 인라인으로 연결한다. 댓글 작성·삭제가 성공하면 새 상태를 만들지
+ * 않고 useFeedDetail의 applyLocalUpdate를 재사용해 post.commentCount를 갱신한다.
  */
 export default function FeedDetailPage() {
   const { id } = useParams()
@@ -152,7 +159,7 @@ function FeedDetailContent({ id }) {
               <span>좋아요 {post.likeCount}</span>
             </button>
 
-            {/* 댓글 UI는 이번 사이클 범위 밖이다(설계 §13). 숫자만 표시하고 링크는 만들지 않는다. */}
+            {/* 실제 댓글 목록·입력은 아래 CommentSection에 있다. 이 액션 바의 숫자는 요약 표시용이다. */}
             <span className="feed-detail-action feed-detail-action--comment" aria-label={`댓글 ${post.commentCount}개`}>
               <span aria-hidden="true">💬</span>
               <span>댓글 {post.commentCount}</span>
@@ -170,6 +177,15 @@ function FeedDetailContent({ id }) {
           </footer>
 
           {deleteError && <p className="feed-detail-error" role="alert">{deleteError}</p>}
+
+          <CommentSection
+            postId={post.id}
+            currentUserId={member?.memberId ?? null}
+            isLoggedIn={Boolean(member)}
+            requireLogin={requireLogin}
+            commentCount={post.commentCount}
+            onCommentCountChange={delta => applyLocalUpdate({ commentCount: Math.max(0, post.commentCount + delta) })}
+          />
         </article>
       </main>
 
@@ -182,5 +198,128 @@ function FeedDetailContent({ id }) {
         onCancel={() => setConfirmOpen(false)}
       />
     </div>
+  )
+}
+
+/**
+ * 댓글 섹션 (게시물 상세에 인라인으로 통합)
+ *
+ * Design Ref: feed-comment-integration.design.md §6.1, §7 — useFeedComments(페이지 기반 누적,
+ * "더 보기" 버튼)를 감싸는 얇은 컨테이너. Q-4(낙관적 업데이트 미적용): 작성·삭제 모두
+ * API 요청이 await로 끝난 뒤에만 useFeedComments의 addComment/removeComment를 호출하고,
+ * 그때만 onCommentCountChange로 post.commentCount를 갱신한다.
+ */
+function CommentSection({ postId, currentUserId, isLoggedIn, requireLogin, commentCount, onCommentCountChange }) {
+  const { comments, status, hasNext, loadMoreStatus, loadMore, retry, addComment, removeComment } = useFeedComments(postId)
+  const [replyTargetId, setReplyTargetId] = useState(null)
+  const [deleteTarget, setDeleteTarget] = useState(null) // { comment, parentId } | null
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState('')
+
+  async function handleSubmitTopLevel(content) {
+    const saved = await createFeedComment(postId, { content, parentCommentId: null })
+    addComment(saved, null)
+    onCommentCountChange(1)
+  }
+
+  async function handleSubmitReply(parentId, content) {
+    const saved = await createFeedComment(postId, { content, parentCommentId: parentId })
+    addComment(saved, parentId)
+    onCommentCountChange(1)
+    setReplyTargetId(null)
+  }
+
+  function handleStartReply(commentId) {
+    if (!isLoggedIn) return requireLogin()
+    // 답글 입력창은 한 번에 하나만 연다. 같은 댓글을 다시 누르면 닫는다.
+    setReplyTargetId(current => (current === commentId ? null : commentId))
+  }
+
+  function handleRequestDelete(comment, parentId) {
+    setDeleteTarget({ comment, parentId })
+    setDeleteError('')
+  }
+
+  async function handleConfirmDelete() {
+    if (!deleteTarget) return
+    setDeleting(true)
+    setDeleteError('')
+
+    const { comment, parentId } = deleteTarget
+
+    try {
+      const result = await deleteFeedComment(postId, comment.id)
+      // 서버가 실제로 삭제한 개수를 응답으로 내려준다(모달이 열려 있는 동안 다른 사용자가
+      // 답글을 추가했어도 정확함). 응답이 예상과 다른 형식이면 로컬 추정치로 폴백한다(fail-closed).
+      const removedCount = Number.isInteger(result?.removedCount) && result.removedCount > 0
+        ? result.removedCount
+        : 1 + comment.replies.length
+      removeComment(comment.id, parentId)
+      onCommentCountChange(-removedCount)
+      setDeleteTarget(null)
+    } catch (error) {
+      console.error('댓글 삭제에 실패했습니다.', error)
+      setDeleteError('댓글을 삭제하지 못했습니다. 잠시 후 다시 시도해 주세요.')
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  return (
+    <section className="feed-comment-section" aria-label="댓글">
+      <h2 className="feed-comment-section__title">댓글 {commentCount}</h2>
+
+      {status === 'loading' && (
+        <p className="feed-comment-section__hint" role="status">댓글을 불러오는 중입니다...</p>
+      )}
+
+      {status === 'error' && (
+        <div className="feed-comment-section__error" role="alert">
+          <p>댓글을 불러오지 못했습니다.</p>
+          <button type="button" onClick={retry}>다시 시도</button>
+        </div>
+      )}
+
+      {status === 'success' && (
+        <FeedCommentList
+          comments={comments}
+          hasNext={hasNext}
+          loadMoreStatus={loadMoreStatus}
+          onLoadMore={loadMore}
+          currentUserId={currentUserId}
+          replyTargetId={replyTargetId}
+          onStartReply={handleStartReply}
+          onCancelReply={() => setReplyTargetId(null)}
+          onSubmitReply={handleSubmitReply}
+          onDelete={handleRequestDelete}
+          isLoggedIn={isLoggedIn}
+          requireLogin={requireLogin}
+        />
+      )}
+
+      <div className="feed-comment-section__form">
+        <FeedCommentForm
+          placeholder="댓글을 남겨보세요"
+          onSubmit={handleSubmitTopLevel}
+          isLoggedIn={isLoggedIn}
+          requireLogin={requireLogin}
+        />
+      </div>
+
+      {deleteError && <p className="feed-comment-section__delete-error" role="alert">{deleteError}</p>}
+
+      <FeedConfirmDialog
+        open={Boolean(deleteTarget)}
+        title="댓글을 삭제할까요?"
+        description={
+          deleteTarget?.comment.replies.length > 0
+            ? '답글이 있는 댓글을 삭제하면 답글도 함께 삭제됩니다. 삭제한 댓글은 되돌릴 수 없습니다.'
+            : '삭제한 댓글은 되돌릴 수 없습니다.'
+        }
+        pending={deleting}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
+    </section>
   )
 }

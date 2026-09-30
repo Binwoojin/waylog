@@ -83,6 +83,14 @@ public class FeedPost {
     private List<FeedPhoto> photos = new ArrayList<>();
 
     /*
+     * feed-comment-integration 설계 §3.1 — 게시물 삭제 시 댓글·답글도 함께 정리되도록
+     * cascade + orphanRemoval을 photos와 동일한 방식으로 연결한다. FeedService.delete()는
+     * 이 연관관계 덕분에 코드 변경 없이 댓글까지 하드 삭제한다.
+     */
+    @OneToMany(mappedBy = "feedPost", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<FeedComment> comments = new ArrayList<>();
+
+    /*
      * 태그는 별도 엔티티 동작이 필요하지 않아 ElementCollection으로 관리합니다.
      */
     @ElementCollection

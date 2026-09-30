@@ -5,11 +5,29 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
 
 public interface FeedPostRepository extends JpaRepository<FeedPost, Long> {
+
+    /*
+     * code-review Must Fix 2 — commentCount 필드 증감(+ dirty checking) 대신 원자적 UPDATE로 처리한다.
+     * 동시에 댓글이 작성/삭제되어도 lost update 없이 DB 레벨에서 안전하게 증감된다.
+     *
+     * clearAutomatically는 일부러 켜지 않는다: FeedCommentService.delete()는 이 메서드를 호출하기
+     * 직전에 feedCommentRepository.delete(comment)로 댓글을 영속성 컨텍스트에서 제거 예약만 해둔
+     * 상태(아직 flush 전)다. clearAutomatically = true를 쓰면 이 bulk UPDATE 실행 직후 영속성
+     * 컨텍스트를 통째로 비워버려, 아직 flush되지 않은 그 삭제 예약까지 함께 사라져 댓글이 실제로는
+     * 지워지지 않는 문제가 있었다(로컬 테스트로 확인). 이 UPDATE 자체는 이미 DB 레벨 단일 문장이라
+     * clearAutomatically 없이도 원자성에는 영향이 없다.
+     */
+    @Modifying
+    @Query("UPDATE FeedPost p SET p.commentCount = p.commentCount + :delta WHERE p.id = :postId")
+    void adjustCommentCount(@Param("postId") Long postId, @Param("delta") long delta);
     /*
      * 작성자 정보가 LAZY이므로 피드 목록 조회 시 author를 함께 가져옵니다.
      * 사진과 태그는 컬렉션이므로 서비스 트랜잭션 안에서 조회합니다.
