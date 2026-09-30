@@ -2,6 +2,8 @@ package kr.co.mycom.travel_korea.tourcourse.repository;
 
 import jakarta.persistence.LockModeType;
 import kr.co.mycom.travel_korea.tourcourse.domain.TourCourse;
+import kr.co.mycom.travel_korea.tourcourse.domain.TourCourseStop;
+import kr.co.mycom.travel_korea.tourcourse.dto.TourCourseAggregateProjection;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -10,6 +12,7 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface TourCourseRepository extends JpaRepository<TourCourse, Long> {
@@ -50,4 +53,31 @@ public interface TourCourseRepository extends JpaRepository<TourCourse, Long> {
     @EntityGraph(attributePaths = {"days", "days.stops"})
     @Query("select c from TourCourse c where c.id = :id")
     Optional<TourCourse> findByIdForUpdate(@Param("id") Long id);
+
+    /*
+     * 공개 목록 전용 집계 쿼리 (tour-course-list-integration 설계 §4.2). 검색 결과
+     * 페이지의 코스 id 목록에 대해 코스별 일자 수·경유지 수를 한 번에 집계한다.
+     * 관리자 목록(list)은 이 쿼리를 쓰지 않는다 — 관리자 목록은 N+1 회피 결정을
+     * 그대로 유지한다(TourCourseListItemResponse 주석 참고).
+     */
+    @Query("""
+        select new kr.co.mycom.travel_korea.tourcourse.dto.TourCourseAggregateProjection(
+            d.course.id, count(distinct d.id), count(s.id))
+        from TourCourseDay d left join d.stops s
+        where d.course.id in :courseIds
+        group by d.course.id
+    """)
+    List<TourCourseAggregateProjection> aggregateCounts(@Param("courseIds") List<Long> courseIds);
+
+    /*
+     * 공개 목록 전용: 1일차의 경유지를 코스별로, sortOrder 오름차순으로 가져온다.
+     * 서비스(TourCoursePublicService)가 이 리스트를 순회하며 코스별로 처음 만나는
+     * 행(=sortOrder 최솟값)만 취해 "1일차 대표 주소"로 사용한다(설계 §4.2).
+     */
+    @Query("""
+        select s from TourCourseStop s
+        where s.day.dayNumber = 1 and s.day.course.id in :courseIds
+        order by s.day.course.id asc, s.sortOrder asc
+    """)
+    List<TourCourseStop> findFirstDayStopsOrderedByCourse(@Param("courseIds") List<Long> courseIds);
 }

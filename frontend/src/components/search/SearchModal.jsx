@@ -10,6 +10,14 @@ import './EnjoySearchModal.css'
  * Design Ref: §5.4 — 여행지 모달과 즐기기 모달이 이 화면 구조 하나를 공유합니다.
  * 선택지가 API에서 왔는지 상수인지, 제출 시 어디로 이동하는지는 모릅니다(TravelSearchModal·EnjoySearchModal이 결정).
  * 기존 클래스(`travel-search-modal__*`, `enjoy-search-modal__*`)를 그대로 써서 두 모달의 모양이 바뀌지 않게 합니다.
+ *
+ * keywordStep (선택, tour-course-list-integration.design.md §9.2)
+ * { title, placeholder, value, onChange } | undefined
+ * 주어지면 1단계(지역 선택)와 3단계(세부 항목)를 렌더링하지 않고 그 자리에 텍스트 입력 하나를 보여줍니다
+ * (여행코스 유형: 지역 필터가 없어 키워드로만 검색합니다, D-4). 2단계(유형 선택)는 그대로 유지됩니다.
+ * EnjoySearchModal은 이 prop을 넘기지 않으므로 기존 3단계 구조가 그대로 유지됩니다.
+ * title은 label/htmlFor로 input과 프로그래밍적으로 연결되어 그대로 접근 가능한 이름이 됩니다
+ * (코드 리뷰 반영 — 화면 문구와 스크린리더 문구가 어긋나지 않도록 별도 aria-label을 쓰지 않습니다).
  */
 export default function SearchModal({
   frame,
@@ -25,6 +33,7 @@ export default function SearchModal({
   typeIconClassName,
   showTypeDescription = false,
   regionGroupClassName,
+  keywordStep,
   summaryItems,
   canSubmit,
   submitHint,
@@ -35,6 +44,7 @@ export default function SearchModal({
   const districtLabelId = `${baseId}-district`
   const typeLabelId = `${baseId}-type`
   const detailLabelId = `${baseId}-detail`
+  const keywordInputId = `${baseId}-keyword`
 
   const regionListClassName = regionGroupClassName
     ? `travel-search-modal__option-list ${regionGroupClassName}`
@@ -62,33 +72,55 @@ export default function SearchModal({
         </footer>
       }
     >
-      <div className="travel-search-modal__section">
-        <h3>{step1Title}</h3>
-        <div className="travel-search-modal__region-box">
-          <strong id={regionLabelId}>시 · 도 선택</strong>
-          <p>먼저 여행할 지역을 선택해 주세요.</p>
-          <SearchOptionGroup
-            legendId={regionLabelId}
-            optionList={regionOptions}
-            selectedValue={selection.region}
-            onSelect={actions.selectRegion}
-            listClassName={regionListClassName}
-          />
+      {keywordStep ? (
+        <div className="travel-search-modal__section">
+          <h3>{step1Title}</h3>
+          <div className="travel-search-modal__region-box">
+            {/*
+              Design Ref: 코드 리뷰 반영 — 화면에 보이는 문구(keywordStep.title)와 스크린리더용
+              문구가 서로 다르면 어긋나므로, aria-label 대신 label/htmlFor로 프로그래밍적으로
+              연결한다. 노출 문구는 그대로 keywordStep.title을 쓴다.
+            */}
+            <label htmlFor={keywordInputId}>{keywordStep.title}</label>
+            <input
+              id={keywordInputId}
+              type="text"
+              className="travel-search-modal__keyword-input"
+              value={keywordStep.value}
+              onChange={event => keywordStep.onChange(event.target.value)}
+              placeholder={keywordStep.placeholder}
+            />
+          </div>
         </div>
-        <div className="travel-search-modal__region-box">
-          <strong id={districtLabelId}>시 · 군 · 구 선택</strong>
-          <p>{selectedRegionLabel ? `${selectedRegionLabel}의 세부 지역을 선택해 주세요.` : '먼저 시 · 도를 선택해 주세요.'}</p>
-          <SearchOptionGroup
-            legendId={districtLabelId}
-            optionList={districtOptions}
-            selectedValue={selection.district}
-            onSelect={actions.selectDistrict}
-            disabled={!selection.region}
-            disabledMessage="먼저 시 · 도를 선택해 주세요."
-            listClassName="travel-search-modal__option-list travel-search-modal__district-list"
-          />
+      ) : (
+        <div className="travel-search-modal__section">
+          <h3>{step1Title}</h3>
+          <div className="travel-search-modal__region-box">
+            <strong id={regionLabelId}>시 · 도 선택</strong>
+            <p>먼저 여행할 지역을 선택해 주세요.</p>
+            <SearchOptionGroup
+              legendId={regionLabelId}
+              optionList={regionOptions}
+              selectedValue={selection.region}
+              onSelect={actions.selectRegion}
+              listClassName={regionListClassName}
+            />
+          </div>
+          <div className="travel-search-modal__region-box">
+            <strong id={districtLabelId}>시 · 군 · 구 선택</strong>
+            <p>{selectedRegionLabel ? `${selectedRegionLabel}의 세부 지역을 선택해 주세요.` : '먼저 시 · 도를 선택해 주세요.'}</p>
+            <SearchOptionGroup
+              legendId={districtLabelId}
+              optionList={districtOptions}
+              selectedValue={selection.district}
+              onSelect={actions.selectDistrict}
+              disabled={!selection.region}
+              disabledMessage="먼저 시 · 도를 선택해 주세요."
+              listClassName="travel-search-modal__option-list travel-search-modal__district-list"
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="travel-search-modal__section">
         <h3 id={typeLabelId}>{step2Title}</h3>
@@ -108,22 +140,24 @@ export default function SearchModal({
         />
       </div>
 
-      <div className="travel-search-modal__section">
-        <div className="travel-search-modal__detail-title">
-          <h3 id={detailLabelId}>3. {detailHeading}</h3>
-          <span>{detailHint}</span>
+      {!keywordStep && (
+        <div className="travel-search-modal__section">
+          <div className="travel-search-modal__detail-title">
+            <h3 id={detailLabelId}>3. {detailHeading}</h3>
+            <span>{detailHint}</span>
+          </div>
+          <SearchOptionGroup
+            legendId={detailLabelId}
+            optionList={detailOptions}
+            selectedValue={selection.detail}
+            onSelect={actions.selectDetail}
+            disabled={!selection.type}
+            disabledMessage="먼저 유형을 선택해 주세요."
+            listClassName="travel-search-modal__detail-options"
+            buttonClassName="travel-search-modal__detail-button"
+          />
         </div>
-        <SearchOptionGroup
-          legendId={detailLabelId}
-          optionList={detailOptions}
-          selectedValue={selection.detail}
-          onSelect={actions.selectDetail}
-          disabled={!selection.type}
-          disabledMessage="먼저 유형을 선택해 주세요."
-          listClassName="travel-search-modal__detail-options"
-          buttonClassName="travel-search-modal__detail-button"
-        />
-      </div>
+      )}
 
       <div className="travel-search-modal__summary">
         <h3>선택한 조건</h3>

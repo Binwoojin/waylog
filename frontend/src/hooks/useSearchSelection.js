@@ -7,10 +7,14 @@ import { useReducer } from 'react'
  * 한 곳에 모아 여행지 모달과 즐기기 모달이 공유합니다. 기존 SearchModal의
  * `setRegion(item); setDistrict('')` 동작과 같습니다.
  *
- * selection: { region: string, district: string, type: string, detail: string } ('' = 선택 안 함)
+ * selection: { region: string, district: string, type: string, detail: string, keyword: string } ('' = 선택 안 함)
+ *
+ * keyword (tour-course-list-integration §9.1)
+ * 여행코스 유형은 지역·세부 항목 대신 키워드 검색 하나로 동작합니다(D-4). 기존 필드에
+ * 하나만 추가하는 상위 호환 확장이라 EnjoySearchModal은 이 필드를 몰라도 동작이 바뀌지 않습니다.
  */
 
-const EMPTY_SELECTION = { region: '', district: '', type: '', detail: '' }
+const EMPTY_SELECTION = { region: '', district: '', type: '', detail: '', keyword: '' }
 
 // 순수 함수로 export합니다(테스트 가능하게, §3.5).
 export function searchSelectionReducer(state, action) {
@@ -23,6 +27,8 @@ export function searchSelectionReducer(state, action) {
       return { ...state, type: action.value, detail: '' }
     case 'selectDetail':
       return { ...state, detail: action.value }
+    case 'selectKeyword':
+      return { ...state, keyword: action.value }
     case 'reset':
       return EMPTY_SELECTION
     default:
@@ -46,6 +52,7 @@ export function useSearchSelection(initialSelection) {
     selectDistrict: value => dispatch({ type: 'selectDistrict', value }),
     selectType: value => dispatch({ type: 'selectType', value }),
     selectDetail: value => dispatch({ type: 'selectDetail', value }),
+    selectKeyword: value => dispatch({ type: 'selectKeyword', value }),
     reset: () => dispatch({ type: 'reset' }),
   }
 

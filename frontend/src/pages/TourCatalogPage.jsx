@@ -13,8 +13,9 @@ import './DestinationCatalogPage.css'
  *
  * Design Ref: §5.2 FR-05 ~ FR-10 — 목록 조건(탭·지역·시군구·정렬·페이지)은 URL에만 둡니다.
  * 이 페이지는 URL 해석과 화면 조립만 맡고, 조회와 상태별 화면은 TourListView가 맡습니다.
- * 여행코스(목업)는 훅 구성이 달라 DestinationCatalogPage에 남깁니다. 한 컴포넌트에서 분기하면
- * 코스에서도 목록 훅이 실행됩니다(§2.2).
+ * 여행코스는 쿼리 모델(키워드만, 지역·분류 없음)이 근본적으로 달라 별도 페이지(TourCourseCatalogPage)로
+ * 분리돼 있습니다(tour-course-list-integration.design.md §2.2). 한 컴포넌트에서 분기하면
+ * 코스에서도 이 페이지의 목록 훅이 실행됩니다.
  *
  * App.jsx가 key={kind}로 렌더합니다. 관광지 ↔ 문화시설 이동 시 다른 유형의 카드가
  * refreshing으로 잠시 보이지 않고 스켈레톤부터 시작합니다(§5.2).

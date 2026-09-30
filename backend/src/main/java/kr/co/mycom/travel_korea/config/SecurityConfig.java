@@ -61,6 +61,11 @@ public class SecurityConfig {
                        // 공개 피드 조회
                        .requestMatchers(HttpMethod.GET, "/api/v1/feed/posts/**").permitAll()
                        .requestMatchers(HttpMethod.GET, "/api/v1/tour/contents/**").permitAll()
+
+                       // 공개 여행코스 조회 (tour-course-list-integration 설계 §4.3).
+                       // GET으로 한정해, 나중에 이 경로 아래 쓰기 메서드가 추가되더라도
+                       // permitAll이 실수로 상속되지 않게 한다.
+                       .requestMatchers(HttpMethod.GET, "/api/v1/courses", "/api/v1/courses/**").permitAll()
                        /*
                         * 공지 등록·수정·삭제는 관리자만 허용합니다.
                         *

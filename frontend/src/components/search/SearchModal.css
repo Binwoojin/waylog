@@ -7,8 +7,13 @@
 .travel-search-modal__section > h3, .travel-search-modal__detail-title h3 { margin: 0 0 16px; font-size: 24px; }
 .travel-search-modal__region-box { margin-top: 14px; padding: 20px 30px; border: 1px solid #b8d5e6; border-radius: 16px; background: #def2ff; }
 .travel-search-modal__region-box strong { font-size: 19px; }
+/* Design Ref: 코드 리뷰 반영 — 키워드 입력 label은 <strong>과 같은 굵기·크기를 유지합니다(label은 기본이 굵지 않음). */
+.travel-search-modal__region-box label { display: block; font-size: 19px; font-weight: 700; }
 .travel-search-modal__region-box p { margin: 4px 0 14px; color: #999; }
 .travel-search-modal__region-box button, .travel-search-modal__detail-button { min-width: 90px; height: 44px; border: 1px solid #c9c9c9; border-radius: 8px; background: #fff; color: #1f1f1f; font-size: 16px; font-weight: 700; cursor: pointer; }
+/* Design Ref: tour-course-list-integration.design.md §9.2 — 여행코스 유형의 키워드 입력(지역 선택 박스 대체) */
+.travel-search-modal__keyword-input { width: 100%; height: 48px; padding: 0 18px; border: 1px solid #b8d5e6; border-radius: 8px; color: #1f1f1f; background: #fff; font: inherit; font-size: 16px; }
+.travel-search-modal__keyword-input:focus { border-color: #3b82f6; outline: none; box-shadow: 0 0 0 3px rgba(59,130,246,.16); }
 .travel-search-modal__region-box button:disabled { cursor: not-allowed; opacity: .45; }
 .travel-search-modal__detail-button:disabled { cursor: not-allowed; opacity: .45; }
 .travel-search-modal button.is-selected { border-color: #3b82f6; background: #eff6ff; color: #2563eb; box-shadow: 0 0 0 2px rgba(59,130,246,.12); }

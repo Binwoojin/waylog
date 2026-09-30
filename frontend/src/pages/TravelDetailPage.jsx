@@ -12,7 +12,6 @@ import { toTelHref } from '../api/tourApi'
 import { allDestinationMocks, destinationItems } from '../data/destinationMocks'
 import { DESTINATION_CONTENT_TYPES, isTourContentId } from '../data/tourContentTypes'
 import defaultDestinationImage from '../assets/figma/destination-jeju.png'
-import TravelCourseDetailPage from './TravelCourseDetailPage'
 import NotFoundPage from './NotFoundPage'
 import './TravelDetailPage.css'
 
@@ -20,10 +19,14 @@ const guideLabels = ['이용 시간', '휴무일', '입장 안내', '주차', '�
 
 /**
  * Design Ref: §2.2 — id를 한 번만 해석합니다. 렌더링 중에 계산하는 파생값이라 state에 두지 않습니다.
- * 1. 목업에 있는 slug → 목업 (코스 목업 포함)
+ * 1. 목업에 있는 slug → 목업
  * 2. TourAPI contentId 형식(숫자)이고 type이 12·14(없으면 12) → 상세 API
  * 3. 그 외 → not-found (API 호출 없음). 예전처럼 첫 번째 목업으로 대체하지 않습니다.
  * 목록 페이지가 API로 전환되면 1번 분기만 지웁니다.
+ *
+ * 여행코스는 별도 라우트(/destinations/courses/:id, TourCourseDetailPage)로 분리됐습니다
+ * (tour-course-list-integration.design.md §6, D-5). 코스 ID가 이 함수의 숫자 판정(isTourContentId)과
+ * 겹칠 위험을 원천적으로 없애기 위해서라, 이 파일은 더 이상 코스를 다루지 않습니다.
  */
 function resolveDestinationDetail(id, typeParam) {
   const item = allDestinationMocks.find(entry => entry.id === id)
@@ -69,7 +72,6 @@ export default function TravelDetailPage() {
   // Design Ref: §2.3 — key로 재마운트해 주변 카드로 이동할 때 저장·사진 위치 state가 이전 항목에서 넘어오지 않게 합니다.
   if (resolved.kind === 'mock') {
     const { item } = resolved
-    if (item.stops) return <TravelCourseDetailPage key={id} item={item} />
     return <TravelDetailView key={id} detail={toDestinationMockDetail(item)} backTo={getMockBackTo(item)} />
   }
 

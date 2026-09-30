@@ -1,0 +1,69 @@
+/*
+ * 여행코스 카탈로그 전용 스타일
+ *
+ * Design Ref: tour-course-list-integration.design.md §7.1 — 카드·그리드·페이지네이션은
+ * 기존 catalog-*(DestinationCatalogPage.css)·tour-list__*(TourList.css) 규칙을 그대로 쓰고,
+ * 이 파일에는 코스 전용 키워드 검색창·카드 메타 한 줄만 둡니다.
+ */
+
+.course-catalog__search {
+  margin: 40px 0 0;
+}
+
+.course-catalog__search-label {
+  display: block;
+  margin-bottom: 10px;
+  color: #555;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.course-catalog__search-box {
+  display: flex;
+  gap: 12px;
+  max-width: 520px;
+}
+
+.course-catalog__search-box input {
+  flex: 1;
+  height: 52px;
+  padding: 0 20px;
+  border: 1px solid #d7dee6;
+  border-radius: 8px;
+  color: #1f1f1f;
+  background: #fff;
+  font: inherit;
+}
+
+.course-catalog__search-box input:focus {
+  border-color: #8bb6ed;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, .12);
+}
+
+.course-catalog__search-box button {
+  min-width: 96px;
+  height: 52px;
+  padding: 0 24px;
+  border: 0;
+  border-radius: 8px;
+  color: #fff;
+  background: #3b82f6;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.tour-list__card-meta {
+  display: block;
+  margin: 6px 0 8px;
+  color: #3b82f6;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+@media (max-width: 620px) {
+  .course-catalog__search-box {
+    max-width: none;
+  }
+}

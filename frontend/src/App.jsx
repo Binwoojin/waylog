@@ -17,9 +17,10 @@ import DestinationsPage from './pages/DestinationsPage'
 import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
 import ForgotPasswordPage from './pages/ForgotPasswordPage'
-import DestinationCatalogPage from './pages/DestinationCatalogPage'
 import DestinationSearchResultsPage from './pages/DestinationSearchResultsPage'
 import TourCatalogPage from './pages/TourCatalogPage'
+import TourCourseCatalogPage from './pages/TourCourseCatalogPage'
+import TourCourseDetailPage from './pages/TourCourseDetailPage'
 import TravelDetailPage from './pages/TravelDetailPage'
 import EnjoyCategoryPage from './pages/EnjoyCategoryPage'
 import EnjoyDetailPage from './pages/EnjoyDetailPage'
@@ -330,10 +331,16 @@ function App() {
               <Route path="/destinations" element={<DestinationsPage />} />
               <Route path="/destinations/search" element={<DestinationSearchResultsPage />} />
               <Route path="/destinations/detail/:id" element={<TravelDetailPage />} />
-              {/* 관광지·문화시설은 API 목록, 여행코스는 목업(D-1). key로 유형 전환 시 이전 유형의 카드를 남기지 않습니다. */}
+              {/* 관광지·문화시설·여행코스 모두 실제 API 목록입니다. key로 유형 전환 시 이전 유형의 카드를 남기지 않습니다. */}
               <Route path="/destinations/attractions" element={<TourCatalogPage key="attraction" kind="attraction" />} />
               <Route path="/destinations/culture" element={<TourCatalogPage key="culture" kind="culture" />} />
-              <Route path="/destinations/courses" element={<DestinationCatalogPage kind="course" />} />
+              {/*
+                Design Ref: tour-course-list-integration.design.md §6.1 (D-5) — 코스 ID(작은 정수)가
+                /destinations/detail/:id의 TourAPI contentId 숫자 판정과 겹치는 것을 막기 위해
+                완전히 분리된 라우트를 씁니다.
+              */}
+              <Route path="/destinations/courses" element={<TourCourseCatalogPage />} />
+              <Route path="/destinations/courses/:id" element={<TourCourseDetailPage />} />
 
               {/* Design Ref: §3.2 — 메뉴는 있지만 아직 구현되지 않은 기능은 "준비 중" 화면으로 연결합니다. */}
               <Route path="/feed" element={<ComingSoonPage title="여행 피드" />} />
