@@ -1,0 +1,23 @@
+.admin-course-list__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.admin-course-list__header h1 {
+  margin: 0;
+  font-size: 24px;
+}
+
+.admin-course-list__thumbnail {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.admin-course-list__thumbnail--empty {
+  display: inline-block;
+  background: #f1f5f9;
+}

@@ -28,6 +28,17 @@ import ComingSoonPage from './pages/ComingSoonPage'
 import NotFoundPage from './pages/NotFoundPage'
 import ErrorBoundary from './components/common/ErrorBoundary'
 import ScrollToTop from './components/common/ScrollToTop'
+import RequireAdmin from './components/admin/RequireAdmin'
+import AdminLayout from './components/admin/AdminLayout'
+import AdminDashboardHome from './pages/admin/AdminDashboardHome'
+import AdminNoticeListPage from './pages/admin/AdminNoticeListPage'
+import AdminNoticeFormPage from './pages/admin/AdminNoticeFormPage'
+import AdminUserListPage from './pages/admin/AdminUserListPage'
+import AdminUserDetailPage from './pages/admin/AdminUserDetailPage'
+import AdminFeedListPage from './pages/admin/AdminFeedListPage'
+import AdminFeedDetailPage from './pages/admin/AdminFeedDetailPage'
+import AdminCourseListPage from './pages/admin/AdminCourseListPage'
+import AdminCourseFormPage from './pages/admin/AdminCourseFormPage'
 
 /**
  * 홈 API 요청 Promise를 저장합니다.
@@ -281,6 +292,34 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+
+            {/*
+              Design Ref: admin-dashboard.design.md §2.1 — 관리자 화면은 사용자용 Layout(헤더·푸터)과
+              완전히 분리된 트리다. RequireAdmin이 인증·등급을 판단해 로그인 화면·접근 거부·AdminLayout 중 하나로 보낸다.
+              공지·회원·피드·여행코스 4개 리소스가 모두 구현되어 계획 9장 구현 순서가 끝났다.
+            */}
+            <Route
+              path="/admin/*"
+              element={(
+                <RequireAdmin>
+                  <AdminLayout />
+                </RequireAdmin>
+              )}
+            >
+              <Route index element={<AdminDashboardHome />} />
+              <Route path="notices" element={<AdminNoticeListPage />} />
+              <Route path="notices/new" element={<AdminNoticeFormPage />} />
+              <Route path="notices/:id/edit" element={<AdminNoticeFormPage />} />
+              <Route path="courses" element={<AdminCourseListPage />} />
+              <Route path="courses/new" element={<AdminCourseFormPage />} />
+              <Route path="courses/:id/edit" element={<AdminCourseFormPage />} />
+              <Route path="users" element={<AdminUserListPage />} />
+              <Route path="users/:id" element={<AdminUserDetailPage />} />
+              <Route path="feed" element={<AdminFeedListPage />} />
+              <Route path="feed/:id" element={<AdminFeedDetailPage />} />
+              {/* Design Ref: app-safety-net §2.2와 같은 이유 — "/admin/*"이 이미 상위에서 매칭돼 아래로 내려오므로, 정의되지 않은 하위 경로도 이 안에서 404를 처리해야 빈 화면이 남지 않는다. */}
+              <Route path="*" element={<NotFoundPage />} />
+            </Route>
 
             <Route element={<Layout />}>
               <Route path="/enjoy" element={<TravelEnjoyPage />} />

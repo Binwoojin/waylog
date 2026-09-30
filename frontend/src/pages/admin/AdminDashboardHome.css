@@ -1,0 +1,44 @@
+.admin-dashboard-home h1 {
+  margin: 0 0 4px;
+  font-size: 26px;
+}
+
+.admin-dashboard-home > p {
+  margin: 0 0 28px;
+  color: #64748b;
+}
+
+.admin-dashboard-home__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.admin-dashboard-home__card {
+  display: block;
+  padding: 20px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #fff;
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.admin-dashboard-home__card:hover {
+  border-color: #93c5fd;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+.admin-dashboard-home__card h2 {
+  margin: 0 0 6px;
+  font-size: 17px;
+  color: #1f1f1f;
+}
+
+.admin-dashboard-home__card p {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.5;
+}

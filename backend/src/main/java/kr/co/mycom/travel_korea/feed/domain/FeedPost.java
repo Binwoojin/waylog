@@ -96,6 +96,18 @@ public class FeedPost {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    /*
+     * 관리자 소프트 삭제(admin-dashboard 설계 §3.4.1).
+     *
+     * null이면 정상 노출, 값이 있으면 소프트 삭제됨. 정책위반(하드) 삭제는 행 자체가
+     * 사라지므로 이 두 컬럼에 값이 남지 않는다(설계 §3.4.1, 의도된 트레이드오프).
+     */
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
+    @Column(name = "delete_reason", length = 255)
+    private String deleteReason;
+
     public FeedPost(UserEntity author, String content, String locationName, String address, BigDecimal latitude, BigDecimal longitude, String tourContentId, Integer tourContentTypeId, String visibility) {
         this.author = author;
         this.content = content;
@@ -168,6 +180,20 @@ public class FeedPost {
                         sortOrder
                 )
         );
+    }
+
+    /**
+     * 관리자 일반(소프트) 삭제를 적용한다. DB 행은 유지하고 노출만 막는다.
+     *
+     * Design Ref: admin-dashboard 설계 §3.4.3 — type=NORMAL
+     */
+    public void softDelete(String reason) {
+        this.deletedAt = LocalDateTime.now();
+        this.deleteReason = reason;
+    }
+
+    public boolean isDeleted() {
+        return deletedAt != null;
     }
 
     public void increaseLikeCount() {

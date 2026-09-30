@@ -217,6 +217,12 @@ export function toTourCard(item, fallbackContentTypeId) {
     // 중분류 이름이 더 구체적입니다. 둘 다 없으면 배지를 표시하지 않습니다.
     category: toNonEmptyText(item.lclsSystm2Nm) ?? toNonEmptyText(item.lclsSystm1Nm),
     detailPath,
+    // Design Ref: admin-dashboard.design.md §3.3.2 — 여행코스 REFERENCE 경유지(TourReferencePicker)가
+    // 선택 시점의 스냅샷(contentTypeId, 좌표)을 저장해야 해서 추가했습니다. 기존 카드 UI는 이 필드들을
+    // 쓰지 않으므로 하위 호환에 영향이 없습니다. TourSummaryResponse에는 이미 있던 필드입니다.
+    contentTypeId: item.contentTypeId ?? fallbackContentTypeId ?? null,
+    latitude: typeof item.latitude === 'number' ? item.latitude : null,
+    longitude: typeof item.longitude === 'number' ? item.longitude : null,
   }
 }
 

@@ -118,7 +118,7 @@ public class FeedService {
 
         Pageable pageable = PageRequest.of(pageIndex, pageSize, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-        Page<FeedPost> postPage = feedPostRepository.findByVisibility("PUBLIC", pageable);
+        Page<FeedPost> postPage = feedPostRepository.findByVisibilityAndDeletedAtIsNull("PUBLIC", pageable);
 
         List<Long> postIds = postPage.getContent().stream()
                 .map(FeedPost::getId).toList();
@@ -151,7 +151,7 @@ public class FeedService {
     }
 
     public FeedPostResponse getOne(Long postId, String loginEmail) {
-        FeedPost post = findPost(postId);
+        FeedPost post = findVisiblePost(postId);
         validateVisibility(post, loginEmail);
 
         boolean liked = false;
@@ -270,6 +270,15 @@ public class FeedService {
     private FeedPost findPost(Long postId) {
 
         return feedPostRepository.findWithDetailsById(postId).orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+    }
+
+    /*
+     * 공개 상세 조회 전용(admin-dashboard 설계 §3.4.2). 소프트 삭제된 게시물은
+     * 일반 사용자에게 "게시글을 찾을 수 없습니다"로 보인다(관리자 상세는 findPost를 그대로 사용).
+     */
+    private FeedPost findVisiblePost(Long postId) {
+        return feedPostRepository.findWithDetailsByIdAndDeletedAtIsNull(postId)
+                .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
     }
 
     /**

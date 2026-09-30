@@ -1,0 +1,99 @@
+.admin-tour-picker {
+  width: min(560px, 100%);
+  max-height: min(80vh, 720px);
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-tour-picker__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.admin-tour-picker__kind {
+  display: flex;
+  gap: 6px;
+}
+
+.admin-tour-picker__kind .admin-button.is-active {
+  border-color: transparent;
+  color: #fff;
+  background: #2563eb;
+}
+
+.admin-tour-picker__filters select {
+  height: 36px;
+  padding: 0 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 13px;
+}
+
+.admin-tour-picker__results {
+  flex: 1;
+  min-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+}
+
+.admin-tour-picker__message {
+  padding: 32px 16px;
+  color: #64748b;
+  text-align: center;
+}
+
+.admin-tour-picker__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.admin-tour-picker__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.admin-tour-picker__item:last-child {
+  border-bottom: none;
+}
+
+.admin-tour-picker__item img,
+.admin-tour-picker__item-placeholder {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  object-fit: cover;
+  background: #f1f5f9;
+}
+
+.admin-tour-picker__item-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-tour-picker__item-title {
+  margin: 0 0 2px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f1f1f;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-tour-picker__item-address {
+  margin: 0;
+  font-size: 12px;
+  color: #64748b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

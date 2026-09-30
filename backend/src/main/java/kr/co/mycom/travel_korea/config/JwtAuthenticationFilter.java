@@ -63,6 +63,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     );
 
             /*
+             * 체크포인트 3: 회원 조회 성공 직후 정지 여부를 확인한다.
+             * 정지 중이면 인증 정보를 설정하지 않고, 아래 catch 블록과 같은 경로(잘못된 토큰 분기)를 타서
+             * SecurityContextHolder.clearContext() 후 401로 이어지게 한다.
+             */
+            // Design Ref: §4.2 체크포인트 3
+            if (user.isSuspended()) {
+                throw new IllegalArgumentException("정지된 계정입니다.");
+            }
+
+            /*
              * GRADE 컬럼 값과 권한 문자열을 맞춰야 합니다.
              *
              * 예: DB의 grade 값이 ADMIN이면 ROLE_ADMIN으로 변환합니다.

@@ -63,6 +63,20 @@ public class AuthService {
                     .body(Map.of("message", "이메일 또는 비밀번호가 올바르지 않습니다."));
         }
         if (passwordEncoder.matches(request.getPassword(), dbUser.getPassword())) {
+            /*
+             * 체크포인트 1: 비밀번호 검증 통과 직후 정지 여부를 확인한다.
+             * 정지 중이면 토큰을 발급하지 않고 403으로 구체적인 사유(해제 예정일)를 알려준다.
+             */
+            // Design Ref: §4.2 체크포인트 1, §4.3 오류 응답 형식
+            if (dbUser.isSuspended()) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of(
+                                "code", "ACCOUNT_SUSPENDED",
+                                "message", "계정이 일시 정지되었습니다. 해제 예정: " + dbUser.getSuspendedUntil(),
+                                "suspendedUntil", dbUser.getSuspendedUntil()
+                        ));
+            }
+
             JwtConfig.TokenResponse tokens = jwt.createTokenPair(dbUser.getEmail());
             /*
              * "로그인 상태 유지"를 끈 경우(false)만 세션 쿠키로 발급합니다.
@@ -167,7 +181,20 @@ public class AuthService {
         Optional<UserEntity> user = repo.findByEmail(email);
         if (user.isEmpty()) {
             log.debug("Refresh Token 재발급 실패: 회원 없음");
+            return user;
         }
+
+        /*
+         * 체크포인트 2: 회원 조회 성공 직후 정지 여부를 확인한다.
+         * 정지 중이면 "회원 없음"과 같은 분기(Optional.empty())로 처리해
+         * 기존 401 REFRESH_FAILED_MESSAGE 흐름을 그대로 타게 한다.
+         */
+        // Design Ref: §4.2 체크포인트 2 (계획 대비 변경 P-4)
+        if (user.get().isSuspended()) {
+            log.debug("Refresh Token 재발급 실패: 계정 정지 중");
+            return Optional.empty();
+        }
+
         return user;
     }
 

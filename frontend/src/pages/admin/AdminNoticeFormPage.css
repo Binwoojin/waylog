@@ -1,0 +1,55 @@
+.admin-notice-form {
+  max-width: 720px;
+}
+
+.admin-notice-form h1 {
+  margin: 0 0 20px;
+  font-size: 24px;
+}
+
+.admin-notice-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+
+.admin-notice-form__field label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.admin-notice-form__field input,
+.admin-notice-form__field textarea {
+  padding: 10px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 14px;
+  resize: vertical;
+}
+
+.admin-notice-form__field input:focus-visible,
+.admin-notice-form__field textarea:focus-visible {
+  outline: 3px solid #93c5fd;
+  outline-offset: 1px;
+}
+
+.admin-notice-form__error {
+  margin: 0 0 16px;
+  color: #b91c1c;
+  font-size: 14px;
+}
+
+.admin-notice-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.admin-notice-form__status {
+  padding: 40px 16px;
+  color: #64748b;
+  text-align: center;
+}

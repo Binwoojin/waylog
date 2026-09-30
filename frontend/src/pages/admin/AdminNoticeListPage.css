@@ -1,0 +1,22 @@
+.admin-notice-list__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.admin-notice-list__header h1 {
+  margin: 0;
+  font-size: 24px;
+}
+
+.admin-notice-list__row-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.admin-notice-list__row-actions .admin-button {
+  height: 32px;
+  padding: 0 12px;
+  font-size: 13px;
+}

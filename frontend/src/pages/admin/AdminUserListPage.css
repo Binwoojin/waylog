@@ -1,0 +1,13 @@
+.admin-user-list__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.admin-user-list__header h1 {
+  margin: 0;
+  font-size: 24px;
+}
+
+/* 상태 배지 스타일은 admin-common.css의 .admin-status-badge*로 옮겼다(피드 화면과 공유). */

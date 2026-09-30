@@ -51,8 +51,15 @@ async function request(path, { method = 'GET', body, credentials, headers, signa
   // 401을 받은 시점에 읽으면, 그 사이 로그아웃했더라도 재발급이 성공해
   // "로그아웃된 화면 + 유효한 토큰" 상태가 될 수 있습니다.
   const sentGeneration = authGeneration
+
+  // Design Ref: admin-dashboard.design.md §3.3.4 — 관리자 공지·여행코스 수정 API는 멀티파트를 받습니다.
+  // FormData는 JSON.stringify하지 않고, Content-Type도 직접 지정하지 않습니다.
+  // 브라우저가 FormData를 보낼 때 boundary가 포함된 Content-Type을 자동으로 채우는데,
+  // 여기서 'application/json'을 먼저 넣으면 그 값이 덮어써져 서버가 파트를 파싱하지 못합니다.
+  const isFormData = typeof FormData !== 'undefined' && body instanceof FormData
+
   const requestHeaders = {
-    ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+    ...(body !== undefined && !isFormData ? { 'Content-Type': 'application/json' } : {}),
     // Design Ref: §2.2 — 토큰이 있으면 모든 요청에 Bearer 헤더를 붙입니다. 호출부가 직접 지정한 헤더가 우선합니다.
     ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
     ...headers,
@@ -62,7 +69,7 @@ async function request(path, { method = 'GET', body, credentials, headers, signa
     method,
     credentials,
     headers: requestHeaders,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
+    body: body === undefined ? undefined : (isFormData ? body : JSON.stringify(body)),
     // Design Ref: §2.5 — signal을 넘기지 않는 기존 호출은 undefined라 동작이 같습니다.
     signal,
   })
@@ -162,4 +169,7 @@ export const apiClient = {
   get: (path, options) => request(path, { ...options, method: 'GET' }),
   post: (path, body, options) => request(path, { ...options, method: 'POST', body }),
   put: (path, body, options) => request(path, { ...options, method: 'PUT', body }),
+  // Design Ref: admin-dashboard.design.md §4.1 — 관리자 API(등급·정지 변경, 공지 수정 조회 등)에 추가
+  patch: (path, body, options) => request(path, { ...options, method: 'PATCH', body }),
+  delete: (path, options) => request(path, { ...options, method: 'DELETE' }),
 }
