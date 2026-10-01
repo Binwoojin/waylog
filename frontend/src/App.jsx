@@ -28,6 +28,8 @@ import EnjoySearchResultsPage from './pages/EnjoySearchResultsPage'
 import FeedPage from './pages/FeedPage'
 import FeedDetailPage from './pages/FeedDetailPage'
 import FeedUserProfilePage from './pages/FeedUserProfilePage'
+import MyPage from './pages/MyPage'
+import BookmarksPage from './pages/BookmarksPage'
 import ComingSoonPage from './pages/ComingSoonPage'
 import NotFoundPage from './pages/NotFoundPage'
 import ErrorBoundary from './components/common/ErrorBoundary'
@@ -354,9 +356,14 @@ function App() {
               <Route path="/feed/posts/:id" element={<FeedDetailPage />} />
               <Route path="/feed/users/:userId" element={<FeedUserProfilePage />} />
 
+              {/*
+                Design Ref: mypage-bookmarks.design.md §8 — "메뉴는 있는데 화면이 없다" 패턴이던
+                두 라우트를 실제 화면으로 교체합니다. 비로그인 접근은 각 화면이 자신의 훅에서
+                401(login-required)을 구분해 안내합니다(별도 RequireAuth 래퍼 없음).
+              */}
+              <Route path="/bookmarks" element={<BookmarksPage />} />
+              <Route path="/mypage" element={<MyPage />} />
               {/* Design Ref: §3.2 — 메뉴는 있지만 아직 구현되지 않은 기능은 "준비 중" 화면으로 연결합니다. */}
-              <Route path="/bookmarks" element={<ComingSoonPage title="북마크" />} />
-              <Route path="/mypage" element={<ComingSoonPage title="마이 페이지" />} />
               <Route path="/notices" element={<ComingSoonPage title="공지사항" />} />
 
               {/*

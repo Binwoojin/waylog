@@ -9,6 +9,8 @@ import {
   DETAIL_NOT_FOUND_TITLE,
 } from '../components/detail/detailMessages'
 import { toTelHref } from '../api/tourApi'
+import { toggleTourBookmark } from '../api/tourBookmarkApi'
+import { useAuth } from '../context/AuthContext'
 import { enjoyConfigs, findEnjoyItem } from '../data/enjoyMocks'
 import { getEnjoyContentType, isTourContentId } from '../data/tourContentTypes'
 import NotFoundPage from './NotFoundPage'
@@ -94,6 +96,7 @@ export default function EnjoyDetailPage() {
 
 function EnjoyDetailContent({ category, config, detail }) {
   const navigate = useNavigate()
+  const { member } = useAuth()
   const [saved,setSaved]=useState(false)
   const isMock = detail.source === 'mock'
   // Design Ref: §5.2 — 외부 이미지 URL이 깨지면 카테고리 커버로 한 번만 바꿉니다(무한 onError 방지).
@@ -102,10 +105,38 @@ function EnjoyDetailContent({ category, config, detail }) {
   const coverText = isMock ? detail.description : toCoverText(detail.description)
   const telHref = toTelHref(detail.contact)
   const goBack=()=>window.history.length>1?window.history.back():navigate(`/enjoy/${category}`)
+
+  // Design Ref: mypage-bookmarks.design.md §7.1 — "저장되지 않는 가짜 버튼" 제거. contentTypeId는
+  // 카테고리 slug로 결정되므로(resolveEnjoyDetail과 같은 기준) 목업·API 콘텐츠 모두 동일하게 구한다.
+  async function handleToggleSave() {
+    if (!member) {
+      navigate('/login')
+      return
+    }
+
+    const previous = saved
+    setSaved(!previous)
+
+    try {
+      const nextSaved = await toggleTourBookmark({
+        contentId: detail.id,
+        contentTypeId: getEnjoyContentType(category),
+        title: detail.title,
+        imageUrl: detail.image ?? null,
+        address: detail.address ?? null,
+        categoryName: detail.typeLabel || config.title,
+      })
+      setSaved(nextSaved)
+    } catch (error) {
+      console.error('북마크 처리에 실패했습니다.', error)
+      setSaved(previous)
+    }
+  }
+
   return <div className="enjoy-detail-page"><main className={isMock ? 'enjoy-detail-main' : 'enjoy-detail-main enjoy-detail-main--api'}>
     <button className="enjoy-detail-back" onClick={goBack}>← 이전 페이지</button>
     <nav className="enjoy-detail-crumb"><Link to="/enjoy">여행 즐기기</Link><i>›</i><Link to={`/enjoy/${category}`}>{config.title}</Link><i>›</i><strong>{detail.title}</strong></nav>
-    <header className="enjoy-detail-title"><div><span>{detail.typeLabel || config.title}</span><h1>{detail.title}</h1><p><PlacePinIcon size={19}/>{detail.address}</p></div><button className={saved?'active':''} onClick={()=>setSaved(v=>!v)}><svg viewBox="0 0 24 24"><path d="M6 4.75A1.75 1.75 0 0 1 7.75 3h8.5A1.75 1.75 0 0 1 18 4.75V21l-6-3.75L6 21V4.75Z"/></svg>{saved?'저장됨':'저장'}</button></header>
+    <header className="enjoy-detail-title"><div><span>{detail.typeLabel || config.title}</span><h1>{detail.title}</h1><p><PlacePinIcon size={19}/>{detail.address}</p></div><button className={saved?'active':''} aria-pressed={saved} onClick={handleToggleSave}><svg viewBox="0 0 24 24"><path d="M6 4.75A1.75 1.75 0 0 1 7.75 3h8.5A1.75 1.75 0 0 1 18 4.75V21l-6-3.75L6 21V4.75Z"/></svg>{saved?'저장됨':'저장'}</button></header>
     <section className="enjoy-detail-cover">
       <img src={coverImage} alt={detail.title} onError={() => setIsImageBroken(true)}/>
       <div><small>TRAVEL EXPERIENCE</small>{coverText && <strong>{coverText}</strong>}</div>

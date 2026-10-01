@@ -47,6 +47,16 @@ public class UserEntity {
     @Column(name = "SUSPENDED_AT")
     private LocalDateTime suspendedAt;
 
+    /*
+     * 회원 탈퇴(mypage-bookmarks 설계 §3.1, §3.3)
+     *
+     * FeedPost.author가 nullable=false FK라 하드 삭제가 불가능해 소프트 삭제(계정 비활성)로
+     * 처리한다. suspendedUntil과 달리 "현재 시각과 비교"하는 계산이 아니다 — 탈퇴는 기간제가
+     * 아니라 영구적인 조치이므로 withdrawnAt이 null이 아니면 무조건 탈퇴 상태다.
+     */
+    @Column(name = "WITHDRAWN_AT")
+    private LocalDateTime withdrawnAt;
+
     public UserEntity(String email, String password, String nickname, String grade) {
         this.email = email;
         this.password = password;
@@ -94,5 +104,43 @@ public class UserEntity {
         this.suspendedUntil = null;
         this.suspensionReason = null;
         this.suspendedAt = null;
+    }
+
+    /**
+     * 탈퇴 여부를 판단한다. suspendedUntil처럼 "현재 시각과 비교"하는 계산이 아니라
+     * withdrawnAt이 null이 아니면 무조건 탈퇴 상태다(탈퇴는 기간제가 아니라 영구적이므로
+     * isSuspended()와 달리 시각 비교가 필요 없다).
+     *
+     * Design Ref: mypage-bookmarks 설계 §3.1
+     */
+    public boolean isWithdrawn() {
+        return withdrawnAt != null;
+    }
+
+    /**
+     * 회원 탈퇴를 처리한다. suspend()와 달리 되돌리는 메서드(liftWithdrawal)를 두지 않는다
+     * — 탈퇴는 사용자가 직접 요청한 영구적 조치이고, 관리자가 임의로 푸는 기능은
+     * 이번 범위에 없다(필요해지면 후속 관리자 기능에서 별도로 설계).
+     *
+     * Design Ref: mypage-bookmarks 설계 §3.1, §3.3(최소 범위 — 재로그인 차단까지만)
+     */
+    public void withdraw(LocalDateTime withdrawnAt) {
+        this.withdrawnAt = withdrawnAt;
+    }
+
+    /**
+     * 마이페이지 프로필 수정 — 닉네임·소개만 변경한다. 프로필 이미지는
+     * updateProfileImage()로 분리한다(이미지 업로드 실패와 텍스트 저장 실패를
+     * 같은 트랜잭션에서 섞지 않기 위함).
+     *
+     * Design Ref: mypage-bookmarks 설계 §3.1
+     */
+    public void updateProfile(String nickname, String introduce) {
+        this.nickname = nickname;
+        this.introduce = introduce;
+    }
+
+    public void updateProfileImage(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
     }
 }

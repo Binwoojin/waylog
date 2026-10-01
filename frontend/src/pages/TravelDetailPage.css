@@ -14,6 +14,14 @@
 .detail-back{display:inline-flex;align-items:center;gap:8px;margin-bottom:20px;padding:0;border:0;color:#526174;background:transparent;font:inherit;font-size:14px;font-weight:700;cursor:pointer}.detail-back span{display:grid;width:30px;height:30px;place-items:center;border:1px solid #d7e0e9;border-radius:50%;background:#fff;font-size:17px;transition:.18s}.detail-back:hover{color:#2878ed}.detail-back:hover span{color:#fff;border-color:#2878ed;background:#2878ed;transform:translateX(-2px)}
 
 /*
+ * Design Ref: mypage-bookmarks.design.md §2.2 제외 목록 — "주변에서 함께 둘러볼 곳" 카드의 북마크는
+ * 로컬 전용 가짜 토글이다. 헤더의 실제(서버 연동) 저장 버튼과 같은 파란색 활성 색상을 쓰면
+ * 사용자가 구분할 수 없으므로, 여기서만 활성 색을 무채색 톤으로 낮춰 "준비 중" 느낌을 준다.
+ */
+.detail-nearby>article>button.is-local-only:hover,.detail-nearby>article>button.is-local-only.active{color:#5b6472}
+.detail-nearby>article>button.is-local-only.active svg{fill:currentColor}
+
+/*
  * TourAPI 상세 (travel-detail-main--api)
  * Design Ref: §3.2, §5.2 — API 텍스트는 줄바꿈(\n)이 있는 순수 텍스트라 pre-line으로 줄바꿈만 살립니다.
  * 목업 화면에 영향이 없도록 수정자 클래스 아래에서만 적용합니다.

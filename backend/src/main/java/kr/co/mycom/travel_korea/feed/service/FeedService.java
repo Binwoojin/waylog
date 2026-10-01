@@ -4,6 +4,7 @@ import kr.co.mycom.travel_korea.board.storage.StorageService;
 import kr.co.mycom.travel_korea.board.storage.StoredObject;
 import kr.co.mycom.travel_korea.user.entity.UserEntity;
 import kr.co.mycom.travel_korea.feed.domain.*;
+import kr.co.mycom.travel_korea.feed.dto.FeedBookmarkPageResponse;
 import kr.co.mycom.travel_korea.feed.dto.FeedCreateRequest;
 import kr.co.mycom.travel_korea.feed.dto.FeedTimelineResponse;
 import kr.co.mycom.travel_korea.feed.dto.FeedPostResponse;
@@ -13,6 +14,7 @@ import kr.co.mycom.travel_korea.feed.repository.FeedLikeRepository;
 import kr.co.mycom.travel_korea.feed.repository.FeedPostRepository;
 import kr.co.mycom.travel_korea.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.parameters.P;
@@ -304,6 +306,38 @@ public class FeedService {
 
         feedBookMarkRepository.save(new FeedBookMark(post, user));
         return true;
+    }
+
+    /**
+     * 내 피드 북마크 목록을 북마크한 시각(createdAt) 내림차순으로 조회합니다.
+     *
+     * mypage-bookmarks 설계 §4.5(Q-5, Q-7): 이 화면의 게시물은 전부 "내가 북마크한 것"이므로
+     * bookmarked는 상수 true로 고정한다. liked만 getFeed와 동일한 배치 조회 원칙으로
+     * 계산한다(N+1 방지).
+     */
+    public FeedBookmarkPageResponse getMyBookmarks(String loginEmail, int page, int size) {
+        UserEntity user = findUser(loginEmail);
+        int pageIndex = Math.max(page - 1, 0);
+        int pageSize = Math.min(Math.max(size, 1), 30);
+        Pageable pageable = PageRequest.of(pageIndex, pageSize);
+
+        Page<FeedBookMark> bookmarkPage = feedBookMarkRepository
+                .findByUser_IdAndFeedPost_DeletedAtIsNullOrderByCreatedAtDesc(user.getId(), pageable);
+
+        List<Long> postIds = bookmarkPage.getContent().stream()
+                .map(bookmark -> bookmark.getFeedPost().getId()).toList();
+
+        Set<Long> likedPostIds = new HashSet<>();
+        if (!postIds.isEmpty()) {
+            feedLikeRepository.findByUser_IdAndFeedPost_IdIn(user.getId(), postIds)
+                    .forEach(like -> likedPostIds.add(like.getFeedPost().getId()));
+        }
+
+        List<FeedPostResponse> posts = bookmarkPage.getContent().stream()
+                .map(bookmark -> toResponse(bookmark.getFeedPost(), likedPostIds.contains(bookmark.getFeedPost().getId()), true))
+                .toList();
+
+        return new FeedBookmarkPageResponse(posts, bookmarkPage.getNumber() + 1, bookmarkPage.getTotalPages(), bookmarkPage.hasNext());
     }
 
     private UserEntity findUser(String email) {

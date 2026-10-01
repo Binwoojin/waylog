@@ -9,6 +9,8 @@ import {
   DETAIL_NOT_FOUND_TITLE,
 } from '../components/detail/detailMessages'
 import { toTelHref } from '../api/tourApi'
+import { toggleTourBookmark } from '../api/tourBookmarkApi'
+import { useAuth } from '../context/AuthContext'
 import { allDestinationMocks, destinationItems } from '../data/destinationMocks'
 import { DESTINATION_CONTENT_TYPES, isTourContentId } from '../data/tourContentTypes'
 import defaultDestinationImage from '../assets/figma/destination-jeju.png'
@@ -64,6 +66,16 @@ function getMockBackTo(item) {
   return destinationItems.some(entry => entry.id === item.id) ? '/destinations/attractions' : '/destinations/culture'
 }
 
+// Design Ref: mypage-bookmarks.design.md §7.1 — 목업 항목도 tour-bookmarks 백엔드가 contentId를
+// 형식 검증 없이 문자열로 저장하므로(TourBookmark.contentId, length 30) 실제 토글이 가능하다.
+// 다만 contentTypeId는 백엔드가 아는 값(12=관광지, 14=문화시설)이어야 하므로, 목업이 어느
+// 배열 소속인지로 구분해 넘긴다(getMockBackTo와 동일한 판별 기준).
+function getMockContentTypeId(item) {
+  return destinationItems.some(entry => entry.id === item.id)
+    ? DESTINATION_CONTENT_TYPES.attraction
+    : DESTINATION_CONTENT_TYPES.culture
+}
+
 export default function TravelDetailPage() {
   const { id } = useParams()
   const [searchParams] = useSearchParams()
@@ -72,7 +84,14 @@ export default function TravelDetailPage() {
   // Design Ref: §2.3 — key로 재마운트해 주변 카드로 이동할 때 저장·사진 위치 state가 이전 항목에서 넘어오지 않게 합니다.
   if (resolved.kind === 'mock') {
     const { item } = resolved
-    return <TravelDetailView key={id} detail={toDestinationMockDetail(item)} backTo={getMockBackTo(item)} />
+    return (
+      <TravelDetailView
+        key={id}
+        detail={toDestinationMockDetail(item)}
+        backTo={getMockBackTo(item)}
+        contentTypeId={getMockContentTypeId(item)}
+      />
+    )
   }
 
   if (resolved.kind === 'api') {
@@ -83,7 +102,7 @@ export default function TravelDetailPage() {
         contentId={resolved.contentId}
         contentTypeId={resolved.contentTypeId}
         backTo={backTo}
-        renderDetail={detail => <TravelDetailView detail={detail} backTo={backTo} />}
+        renderDetail={detail => <TravelDetailView detail={detail} backTo={backTo} contentTypeId={resolved.contentTypeId} />}
       />
     )
   }
@@ -97,8 +116,9 @@ export default function TravelDetailPage() {
  * Design Ref: §5.2 — 목업 전용 하드코딩 값(요약, 전화번호, 추가 사진, 주변 목업)은
  * detail.source === 'mock'일 때만 표시합니다. API 콘텐츠에 거짓 정보를 붙이지 않기 위해서입니다.
  */
-function TravelDetailView({ detail, backTo }) {
+function TravelDetailView({ detail, backTo, contentTypeId }) {
   const navigate = useNavigate()
+  const { member } = useAuth()
   const isMock = detail.source === 'mock'
   // Design Ref: §5.2 — 외부 이미지 URL이 깨지면 기본 이미지로 한 번만 바꿉니다.
   // 기본 이미지까지 실패해도 값이 그대로라 다시 렌더링·요청이 반복되지 않습니다.
@@ -106,7 +126,37 @@ function TravelDetailView({ detail, backTo }) {
   const image = detail.image && !isImageBroken ? detail.image : defaultDestinationImage
   const telHref = toTelHref(detail.contact)
   const [saved, setSaved] = useState(false)
+  // Design Ref: mypage-bookmarks.design.md §2.2 제외 목록 — "주변에서 함께 둘러볼 곳" 카드의 북마크는
+  // 의도적으로 로컬 전용 상태다(서버 연동 범위 밖, 후속 과제). 위 `saved`(헤더, 실제 서버 연동)와
+  // 혼동하지 않도록 변수명도 분리해 둔다. 실제 연동 전까지는 새로고침하면 초기화된다.
   const [nearbyBookmarks, setNearbyBookmarks] = useState(() => new Set())
+
+  // Design Ref: mypage-bookmarks.design.md §7.1 — "저장되지 않는 가짜 버튼" 제거. 낙관적으로
+  // 먼저 바꾸고, 실패하면 되돌린다(다른 화면의 좋아요/북마크 토글과 동일한 원칙).
+  async function handleToggleSave() {
+    if (!member) {
+      navigate('/login')
+      return
+    }
+
+    const previous = saved
+    setSaved(!previous)
+
+    try {
+      const nextSaved = await toggleTourBookmark({
+        contentId: detail.id,
+        contentTypeId,
+        title: detail.title,
+        imageUrl: detail.image ?? null,
+        address: detail.address ?? null,
+        categoryName: detail.typeLabel ?? null,
+      })
+      setSaved(nextSaved)
+    } catch (error) {
+      console.error('북마크 처리에 실패했습니다.', error)
+      setSaved(previous)
+    }
+  }
   const [photoIndex, setPhotoIndex] = useState(0)
   const [slideMotion, setSlideMotion] = useState({ direction: 'next', key: 0 })
   const additionalPhotos = Array.from({ length: 5 }, (_, index) => ({ id: index + 1, src: image }))
@@ -126,7 +176,7 @@ function TravelDetailView({ detail, backTo }) {
   return <div className="travel-detail-page"><main className={isMock ? 'travel-detail-main' : 'travel-detail-main travel-detail-main--api'}>
     <button className="detail-back" type="button" onClick={goBack}><span aria-hidden="true">←</span> 이전 페이지</button>
     <nav className="detail-crumb" aria-label="현재 위치"><Link to="/">홈</Link><i>›</i><Link to="/destinations">여행지</Link><i>›</i><strong>{detail.title}</strong></nav>
-    <header className="detail-hero"><div>{detail.typeLabel && <span className="detail-tag">{detail.typeLabel}</span>}<h1>{detail.title}</h1><p><PlacePinIcon size={19} />{detail.address}</p></div><div className="detail-actions"><button onClick={share}><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m8.2 10.8 7.6-4.5M8.2 13.2l7.6 4.5"/></svg>공유</button><button className={saved ? 'active' : ''} aria-pressed={saved} onClick={() => setSaved(v => !v)}><svg className="detail-actions__bookmark" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4.75A1.75 1.75 0 0 1 7.75 3h8.5A1.75 1.75 0 0 1 18 4.75V21l-6-3.75L6 21V4.75Z"/></svg>{saved ? '저장됨' : '저장'}</button></div></header>
+    <header className="detail-hero"><div>{detail.typeLabel && <span className="detail-tag">{detail.typeLabel}</span>}<h1>{detail.title}</h1><p><PlacePinIcon size={19} />{detail.address}</p></div><div className="detail-actions"><button onClick={share}><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m8.2 10.8 7.6-4.5M8.2 13.2l7.6 4.5"/></svg>공유</button><button className={saved ? 'active' : ''} aria-pressed={saved} onClick={handleToggleSave}><svg className="detail-actions__bookmark" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4.75A1.75 1.75 0 0 1 7.75 3h8.5A1.75 1.75 0 0 1 18 4.75V21l-6-3.75L6 21V4.75Z"/></svg>{saved ? '저장됨' : '저장'}</button></div></header>
     {/* Design Ref: §5.2 — API는 대표 이미지 1장뿐이라 같은 사진을 반복하지 않고 1열로 보여 줍니다. */}
     {isMock
       ? <section className="detail-gallery" aria-label={`${detail.title} 사진`}><img src={image} alt={detail.title} />{[1,2,3,4].map(n => <img src={image} alt="" key={n} />)}<button>사진 전체보기 <b>5</b></button></section>
@@ -178,7 +228,10 @@ function TravelDetailView({ detail, backTo }) {
     </section>
     <DetailHeading eyebrow="NEARBY" title="주변에서 함께 둘러볼 곳" link /><section className="detail-nearby">{destinationItems.slice(0,3).map(near => {
       const isNearSaved = nearbyBookmarks.has(near.id)
-      return <article key={near.id}><Link to={`/destinations/detail/${near.id}`}><img src={near.image} alt=""/><span className="detail-nearby__tag">{near.tag}</span><div><h3>{near.title}</h3><p><PlacePinIcon size={15}/>{near.address}</p></div></Link><button className={isNearSaved ? 'active' : ''} type="button" aria-label={`${near.title} 북마크 ${isNearSaved ? '해제' : '등록'}`} aria-pressed={isNearSaved} onClick={() => setNearbyBookmarks(current => { const next = new Set(current); next.has(near.id) ? next.delete(near.id) : next.add(near.id); return next })}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4.75A1.75 1.75 0 0 1 7.75 3h8.5A1.75 1.75 0 0 1 18 4.75V21l-6-3.75L6 21V4.75Z"/></svg></button></article>
+      /* Design Ref: §2.2 제외 목록 — 이 카드의 북마크 버튼은 의도적으로 로컬 전용(useState)이다.
+         서버 연동(`toggleTourBookmark`)은 후속 과제이며, 헤더의 실제 저장 버튼과 시각적으로
+         구분하기 위해 `is-local-only`로 활성 색상을 무채색으로 낮춰 둔다. */
+      return <article key={near.id}><Link to={`/destinations/detail/${near.id}`}><img src={near.image} alt=""/><span className="detail-nearby__tag">{near.tag}</span><div><h3>{near.title}</h3><p><PlacePinIcon size={15}/>{near.address}</p></div></Link><button className={isNearSaved ? 'active is-local-only' : 'is-local-only'} type="button" title="준비 중: 추후 서버 연동 예정" aria-label={`${near.title} 북마크 ${isNearSaved ? '해제' : '등록'} (로컬 전용, 준비 중)`} aria-pressed={isNearSaved} onClick={() => setNearbyBookmarks(current => { const next = new Set(current); next.has(near.id) ? next.delete(near.id) : next.add(near.id); return next })}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4.75A1.75 1.75 0 0 1 7.75 3h8.5A1.75 1.75 0 0 1 18 4.75V21l-6-3.75L6 21V4.75Z"/></svg></button></article>
     })}</section>
     </>}
     <p className="detail-source"><b>TourAPI</b> 이 관광정보는 한국관광공사 TourAPI를 통해 제공됩니다.</p>

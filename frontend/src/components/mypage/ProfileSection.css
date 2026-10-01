@@ -1,0 +1,249 @@
+/*
+ * 마이페이지 프로필 섹션 스타일
+ *
+ * feed-user-profile-page와 같은 톤(둥근 카드, #3b82f6 포인트)을 이어받는다.
+ */
+
+.profile-section {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 24px;
+  padding: 28px;
+  border: 1px solid #eef1f4;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+}
+
+.profile-section__avatar {
+  flex: 0 0 auto;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #e5e7eb;
+}
+
+.profile-section__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.profile-section__info h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.profile-section__handle {
+  margin: 4px 0 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.profile-section__introduce {
+  margin: 10px 0 0;
+  color: #334155;
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+.profile-section__stats {
+  display: flex;
+  gap: 24px;
+  margin: 14px 0 0;
+}
+
+.profile-section__stats div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.profile-section__stats dt {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.profile-section__stats dd {
+  margin: 0;
+  color: #1f1f1f;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.profile-section__edit-button {
+  flex: 0 0 auto;
+  height: 40px;
+  padding: 0 20px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  color: #334155;
+  background: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.profile-section__edit-button:hover {
+  border-color: #93c5fd;
+  color: #2563eb;
+  background: #eff6ff;
+}
+
+/* 수정 모드 */
+
+.profile-section--edit {
+  display: block;
+  padding: 28px;
+}
+
+.profile-section--edit form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.profile-section__edit-avatar-row {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.profile-section__image-button {
+  height: 36px;
+  padding: 0 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  color: #334155;
+  background: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.profile-section__image-button:hover {
+  border-color: #93c5fd;
+  color: #2563eb;
+}
+
+.profile-section__image-hint {
+  margin: 8px 0 0;
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.profile-section__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.profile-section__field > span {
+  font-size: 14px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.profile-section__field input,
+.profile-section__field textarea {
+  padding: 10px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font: inherit;
+  color: #1f1f1f;
+}
+
+.profile-section__field textarea {
+  resize: vertical;
+  font-family: inherit;
+}
+
+.profile-section__field input:focus,
+.profile-section__field textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+.profile-section__field small {
+  align-self: flex-end;
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.profile-section__handle-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+}
+
+.profile-section__handle-field span {
+  color: #94a3b8;
+}
+
+.profile-section__handle-field input {
+  flex: 1;
+  border: 0;
+  padding: 10px 0;
+}
+
+.profile-section__handle-field:focus-within {
+  border-color: #3b82f6;
+}
+
+.profile-section__error {
+  margin: 0;
+  color: #dc2626;
+  font-size: 13px;
+}
+
+.profile-section__error--form {
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #fef2f2;
+}
+
+.profile-section__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.profile-section__actions button {
+  height: 42px;
+  padding: 0 22px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #fff;
+  color: #334155;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.profile-section__save-button {
+  border-color: transparent !important;
+  color: #fff !important;
+  background: #3b82f6 !important;
+}
+
+.profile-section__save-button:hover:not(:disabled) {
+  background: #2563eb !important;
+}
+
+.profile-section__actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 620px) {
+  .profile-section { flex-direction: column; align-items: flex-start; text-align: left; }
+  .profile-section__edit-button { align-self: flex-start; }
+  .profile-section__edit-avatar-row { flex-direction: column; align-items: flex-start; }
+}

@@ -1,0 +1,54 @@
+.account-settings-section {
+  margin-top: 32px;
+  padding: 28px;
+  border: 1px solid #eef1f4;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+}
+
+.account-settings-section h2 {
+  margin: 0 0 20px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.account-settings-section__block {
+  padding: 20px 0;
+  border-top: 1px solid #eef1f4;
+}
+
+.account-settings-section__block:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.account-settings-section__block h3 {
+  margin: 0 0 14px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1f1f1f;
+}
+
+.account-settings-section__block--danger p {
+  margin: 0 0 14px;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.account-settings-section__withdraw-button {
+  height: 42px;
+  padding: 0 20px;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  color: #dc2626;
+  background: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.account-settings-section__withdraw-button:hover {
+  background: #fef2f2;
+}

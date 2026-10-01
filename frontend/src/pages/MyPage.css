@@ -1,0 +1,42 @@
+/*
+ * 마이페이지 레이아웃
+ *
+ * Design Ref: mypage-bookmarks.design.md §5 — FeedUserProfilePage.css의 폭·여백 기준을 그대로
+ * 따르고(feed-user-profile-page__main과 같은 width 계산), 프로필/내가 쓴 글/계정 설정 세 섹션을
+ * 세로로 쌓는 레이아웃만 이 파일에서 추가한다.
+ */
+
+.my-page {
+  min-width: 320px;
+  color: #1f1f1f;
+  background: #f7f9fc;
+}
+
+.my-page__main {
+  width: min(720px, calc(100% - 48px));
+  margin: 0 auto;
+  padding: 135px 0 110px;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+.my-page__section-title {
+  margin: 0 0 16px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.my-page__empty {
+  margin: 0;
+  padding: 32px;
+  border: 1px solid #eef1f4;
+  border-radius: 16px;
+  background: #fff;
+  color: #64748b;
+  text-align: center;
+}
+
+@media (max-width: 620px) {
+  .my-page__main { width: calc(100% - 32px); padding-top: 105px; gap: 32px; }
+}

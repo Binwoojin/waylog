@@ -64,6 +64,17 @@ public class AuthService {
         }
         if (passwordEncoder.matches(request.getPassword(), dbUser.getPassword())) {
             /*
+             * 체크포인트 1: 탈퇴한 회원은 로그인 실패와 동일한 메시지로 응답한다.
+             * 정지와 달리 "탈퇴된 계정입니다" 같은 안내는 계정 존재 여부를 추측하게 해줄 수
+             * 있어, 탈퇴 사실을 노출하지 않는다.
+             */
+            // Design Ref: mypage-bookmarks 설계 §4.4 체크포인트 1
+            if (dbUser.isWithdrawn()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("message", "이메일 또는 비밀번호가 올바르지 않습니다."));
+            }
+
+            /*
              * 체크포인트 1: 비밀번호 검증 통과 직후 정지 여부를 확인한다.
              * 정지 중이면 토큰을 발급하지 않고 403으로 구체적인 사유(해제 예정일)를 알려준다.
              */
@@ -192,6 +203,16 @@ public class AuthService {
         // Design Ref: §4.2 체크포인트 2 (계획 대비 변경 P-4)
         if (user.get().isSuspended()) {
             log.debug("Refresh Token 재발급 실패: 계정 정지 중");
+            return Optional.empty();
+        }
+
+        /*
+         * 체크포인트 2: 탈퇴한 회원도 같은 분기로 처리해 재발급 실패(401)로 이어지게 한다.
+         * 이미 발급된 Refresh Token이 유효해도 탈퇴 이후에는 재발급을 막는다.
+         */
+        // Design Ref: mypage-bookmarks 설계 §4.4 체크포인트 2
+        if (user.get().isWithdrawn()) {
+            log.debug("Refresh Token 재발급 실패: 탈퇴한 회원");
             return Optional.empty();
         }
 

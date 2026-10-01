@@ -7,6 +7,12 @@ import java.util.List;
 
 public record FeedProfileResponse(
         String nickname,
+        /*
+         * mypage-bookmarks 설계 §3.2: 마이페이지 프로필 수정에서 추가로 노출/수정하는
+         * 자기소개. 기존 필드 뒤에 추가만 해 하위 호환을 유지한다(기존 FeedUserProfilePage
+         * 소비자는 이 필드를 몰라도 그대로 동작).
+         */
+        String introduce,
         String feedHandle,
         String profileImageUrl,
 
@@ -35,6 +41,7 @@ public record FeedProfileResponse(
     ) {
         return new FeedProfileResponse(
                 user.getNickname(),
+                user.getIntroduce(),
                 profile.getFeedHandle(),
                 user.getProfileImageUrl(),
                 postCount,

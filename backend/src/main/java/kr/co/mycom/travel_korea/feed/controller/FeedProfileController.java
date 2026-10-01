@@ -7,8 +7,10 @@ import kr.co.mycom.travel_korea.feed.dto.FeedProfileUpdateRequest;
 import kr.co.mycom.travel_korea.feed.service.FeedProfileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequiredArgsConstructor
@@ -46,13 +48,20 @@ public class FeedProfileController {
     }
 
     /**
-     * SNS 전용 @아이디를 수정합니다.
+     * 마이페이지 프로필(닉네임·소개·@피드아이디·프로필이미지)을 한 번에 수정합니다.
+     *
+     * mypage-bookmarks 설계 §4.2(Q-2, Q-3): 기존 "SNS 전용 @아이디 수정"에서 범위를 넓혀
+     * FeedController.create()와 동일한 멀티파트(@RequestPart JSON Blob + 파일) 패턴을 쓴다.
+     * 프로필 이미지는 선택값이며, 보내지 않으면 기존 이미지를 유지한다.
      */
-    @PatchMapping
-    public ResponseEntity<FeedProfileResponse> updateMyHandle(
+    @PatchMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<FeedProfileResponse> updateMyProfile(
             @RequestHeader(HttpHeaders.AUTHORIZATION) String authorization,
-            @Valid @RequestBody FeedProfileUpdateRequest request) {
-        return ResponseEntity.ok(feedProfileService.updateMyHandle(extractRequiredEmail(authorization), request));
+            @Valid @RequestPart("profile") FeedProfileUpdateRequest request,
+            @RequestPart(value = "profileImage", required = false) MultipartFile profileImage) {
+        return ResponseEntity.ok(
+                feedProfileService.updateMyProfile(extractRequiredEmail(authorization), request, profileImage)
+        );
     }
 
     private String extractRequiredEmail(String authorization) {

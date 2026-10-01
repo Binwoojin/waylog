@@ -1,0 +1,116 @@
+.withdrawal-dialog__overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.5);
+}
+
+.withdrawal-dialog {
+  width: min(420px, 100%);
+  padding: 28px;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 20px 48px rgba(15, 23, 42, 0.22);
+}
+
+.withdrawal-dialog__title {
+  margin: 0 0 10px;
+  color: #1f1f1f;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.withdrawal-dialog__description {
+  margin: 0 0 20px;
+  color: #dc2626;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.withdrawal-dialog form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.withdrawal-dialog__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.withdrawal-dialog__field input {
+  padding: 10px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font: inherit;
+}
+
+.withdrawal-dialog__field input:focus {
+  outline: none;
+  border-color: #dc2626;
+}
+
+.withdrawal-dialog__agree {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: #475569;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.withdrawal-dialog__agree input {
+  margin-top: 2px;
+  accent-color: #dc2626;
+}
+
+.withdrawal-dialog__error {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 10px;
+  color: #dc2626;
+  background: #fef2f2;
+  font-size: 13px;
+}
+
+.withdrawal-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.withdrawal-dialog__actions button {
+  height: 42px;
+  padding: 0 20px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #fff;
+  color: #334155;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.withdrawal-dialog__confirm {
+  border-color: transparent !important;
+  color: #fff !important;
+  background: #dc2626 !important;
+}
+
+.withdrawal-dialog__confirm:hover:not(:disabled) {
+  background: #b91c1c !important;
+}
+
+.withdrawal-dialog__actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

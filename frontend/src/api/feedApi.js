@@ -230,6 +230,10 @@ export async function toggleFeedBookmark(id) {
 
 /**
  * API 응답(FeedProfileResponse) → FeedProfile view model
+ *
+ * Design Ref: mypage-bookmarks.design.md §3.2 — introduce는 마이페이지 프로필 수정에서
+ * 추가로 쓰는 자기소개다. 기존 필드 뒤에 추가만 돼 타인 프로필 화면(FeedUserProfilePage)도
+ * 그대로 동작한다(하위 호환).
  */
 function toFeedProfile(data) {
   if (!data || typeof data.nickname !== 'string' || !Array.isArray(data.posts)) {
@@ -238,6 +242,7 @@ function toFeedProfile(data) {
 
   return {
     nickname: data.nickname,
+    introduce: typeof data.introduce === 'string' ? data.introduce : '',
     feedHandle: typeof data.feedHandle === 'string' ? data.feedHandle : '',
     profileImageUrl: toNonEmptyText(data.profileImageUrl),
     postCount: toNonNegativeInt(data.postCount),
@@ -266,4 +271,63 @@ export async function fetchFeedUserProfile(userId, { page = 1, size = 12 } = {},
 
   const data = await apiClient.get(`${FEED_PROFILE_PATH}/${encodeURIComponent(userId)}?${params}`, { signal })
   return toFeedProfile(data)
+}
+
+/**
+ * 내 프로필 조회: GET /api/v1/feed/profile?page=&size=
+ *
+ * Design Ref: mypage-bookmarks.design.md §4.2 — 인증 필요, PRIVATE 게시물도 함께 내려온다.
+ * fetchFeedUserProfile과 응답 모양은 같지만 경로·인증 요구가 달라 별도 함수로 둔다.
+ */
+export async function fetchMyFeedProfile({ page = 1, size = 12 } = {}, { signal } = {}) {
+  const params = new URLSearchParams()
+  params.set('page', String(page))
+  params.set('size', String(size))
+
+  const data = await apiClient.get(`${FEED_PROFILE_PATH}?${params}`, { signal })
+  return toFeedProfile(data)
+}
+
+/**
+ * 내 프로필 수정: PATCH /api/v1/feed/profile (multipart/form-data)
+ *
+ * Design Ref: §4.2(Q-2, Q-3, Q-4) — FeedController.create()와 같은 멀티파트 패턴.
+ * 닉네임·피드아이디 중복확인은 "값이 바뀐 경우만" 서버가 처리하므로 프론트는 값을 그대로 보내기만 한다.
+ *
+ * 응답은 posts/통계가 0으로 비워진 FeedProfileResponse다(서비스가 목록을 다시 조회하지 않음) —
+ * 호출하는 쪽(useMyFeedProfile)이 nickname/introduce/feedHandle/profileImageUrl만 반영하고
+ * posts/통계는 기존 값을 유지해야 한다.
+ */
+export async function updateMyFeedProfile({ nickname, introduce, feedHandle, profileImageFile }) {
+  const payload = { nickname, introduce: introduce || '', feedHandle }
+  const formData = new FormData()
+  formData.append('profile', new Blob([JSON.stringify(payload)], { type: 'application/json' }))
+  if (profileImageFile) formData.append('profileImage', profileImageFile)
+
+  const data = await apiClient.patch(FEED_PROFILE_PATH, formData)
+  return toFeedProfile(data)
+}
+
+/**
+ * 내 피드 북마크 목록 조회: GET /api/v1/feed/bookmarks?page=&size=
+ *
+ * Design Ref: §4.5(Q-5, Q-7) — 북마크한 시각 내림차순. 이 목록의 게시물은 전부 "내가 북마크한 것"이라
+ * bookmarked는 항상 true로 내려온다(서버가 상수로 채움).
+ */
+export async function fetchFeedBookmarks({ page = 1, size = 12 } = {}, { signal } = {}) {
+  const params = new URLSearchParams()
+  params.set('page', String(page))
+  params.set('size', String(size))
+
+  const data = await apiClient.get(`/api/v1/feed/bookmarks?${params}`, { signal })
+  if (!data || !Array.isArray(data.posts)) {
+    throw new Error('북마크 응답 형식이 올바르지 않습니다.')
+  }
+
+  return {
+    items: data.posts.map(toFeedPost).filter(Boolean),
+    currentPage: Number.isInteger(data.currentPage) && data.currentPage > 0 ? data.currentPage : 1,
+    totalPages: toNonNegativeInt(data.totalPages),
+    hasNext: Boolean(data.hasNext),
+  }
 }
