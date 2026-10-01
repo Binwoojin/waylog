@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useFeedInfiniteList } from '../hooks/useFeedInfiniteList'
 import { toggleFeedBookmark, toggleFeedLike } from '../api/feedApi'
+import { runOptimisticToggle } from '../lib/optimisticToggle'
 import FeedCard from '../components/feed/FeedCard'
 import FeedComposer from '../components/feed/FeedComposer'
 import FeedTimelineSentinel from '../components/feed/FeedTimelineSentinel'
@@ -29,32 +30,29 @@ export default function FeedPage() {
   async function handleToggleLike(post) {
     if (!member) return requireLogin()
 
-    const previousLiked = post.liked
-    const previousCount = post.likeCount
-    updateItem(post.id, { liked: !previousLiked, likeCount: Math.max(0, previousCount + (previousLiked ? -1 : 1)) })
-
-    try {
-      const active = await toggleFeedLike(post.id)
-      updateItem(post.id, { liked: active })
-    } catch (error) {
-      console.error('좋아요 처리에 실패했습니다.', error)
-      updateItem(post.id, { liked: previousLiked, likeCount: previousCount })
-    }
+    await runOptimisticToggle({
+      key: `${post.id}:like`,
+      apply: patch => updateItem(post.id, patch),
+      optimisticPatch: { liked: !post.liked, likeCount: Math.max(0, post.likeCount + (post.liked ? -1 : 1)) },
+      revertPatch: { liked: post.liked, likeCount: post.likeCount },
+      request: () => toggleFeedLike(post.id),
+      reconcile: active => ({ liked: active }),
+      onError: error => console.error('좋아요 처리에 실패했습니다.', error),
+    })
   }
 
   async function handleToggleBookmark(post) {
     if (!member) return requireLogin()
 
-    const previousBookmarked = post.bookmarked
-    updateItem(post.id, { bookmarked: !previousBookmarked })
-
-    try {
-      const active = await toggleFeedBookmark(post.id)
-      updateItem(post.id, { bookmarked: active })
-    } catch (error) {
-      console.error('북마크 처리에 실패했습니다.', error)
-      updateItem(post.id, { bookmarked: previousBookmarked })
-    }
+    await runOptimisticToggle({
+      key: `${post.id}:bookmark`,
+      apply: patch => updateItem(post.id, patch),
+      optimisticPatch: { bookmarked: !post.bookmarked },
+      revertPatch: { bookmarked: post.bookmarked },
+      request: () => toggleFeedBookmark(post.id),
+      reconcile: active => ({ bookmarked: active }),
+      onError: error => console.error('북마크 처리에 실패했습니다.', error),
+    })
   }
 
   function handleOpenComposer() {

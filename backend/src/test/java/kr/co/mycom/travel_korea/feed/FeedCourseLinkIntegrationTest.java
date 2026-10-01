@@ -74,7 +74,7 @@ class FeedCourseLinkIntegrationTest {
     }
 
     private FeedCreateRequest requestWithCourseLink(String content, Long dayId, Long stopId) {
-        return new FeedCreateRequest(content, null, null, null, null, null, null, dayId, stopId, "PUBLIC", null, null);
+        return new FeedCreateRequest(content, null, null, null, null, null, null, dayId, stopId, "PUBLIC", null);
     }
 
     // T-1: linkedCourseDayId만 지정하면 서버가 courseId/courseTitle/dayNumber를 채우고 stopId/stopName은 null이다.

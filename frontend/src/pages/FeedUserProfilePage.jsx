@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useFeedUserProfile } from '../hooks/useFeedUserProfile'
 import { toggleFeedBookmark, toggleFeedLike } from '../api/feedApi'
+import { runOptimisticToggle } from '../lib/optimisticToggle'
 import FeedCard from '../components/feed/FeedCard'
 import DetailStatus from '../components/detail/DetailStatus'
 import NotFoundPage from './NotFoundPage'
@@ -89,29 +90,28 @@ function FeedUserProfileContent({ userId }) {
 
   async function handleToggleLike(post) {
     if (!member) return requireLogin()
-    const previousLiked = post.liked
-    const previousCount = post.likeCount
-    setOverride(post.id, { liked: !previousLiked, likeCount: Math.max(0, previousCount + (previousLiked ? -1 : 1)) })
-    try {
-      const active = await toggleFeedLike(post.id)
-      setOverride(post.id, { liked: active })
-    } catch (error) {
-      console.error('좋아요 처리에 실패했습니다.', error)
-      setOverride(post.id, { liked: previousLiked, likeCount: previousCount })
-    }
+    await runOptimisticToggle({
+      key: `${post.id}:like`,
+      apply: patch => setOverride(post.id, patch),
+      optimisticPatch: { liked: !post.liked, likeCount: Math.max(0, post.likeCount + (post.liked ? -1 : 1)) },
+      revertPatch: { liked: post.liked, likeCount: post.likeCount },
+      request: () => toggleFeedLike(post.id),
+      reconcile: active => ({ liked: active }),
+      onError: error => console.error('좋아요 처리에 실패했습니다.', error),
+    })
   }
 
   async function handleToggleBookmark(post) {
     if (!member) return requireLogin()
-    const previousBookmarked = post.bookmarked
-    setOverride(post.id, { bookmarked: !previousBookmarked })
-    try {
-      const active = await toggleFeedBookmark(post.id)
-      setOverride(post.id, { bookmarked: active })
-    } catch (error) {
-      console.error('북마크 처리에 실패했습니다.', error)
-      setOverride(post.id, { bookmarked: previousBookmarked })
-    }
+    await runOptimisticToggle({
+      key: `${post.id}:bookmark`,
+      apply: patch => setOverride(post.id, patch),
+      optimisticPatch: { bookmarked: !post.bookmarked },
+      revertPatch: { bookmarked: post.bookmarked },
+      request: () => toggleFeedBookmark(post.id),
+      reconcile: active => ({ bookmarked: active }),
+      onError: error => console.error('북마크 처리에 실패했습니다.', error),
+    })
   }
 
   return (

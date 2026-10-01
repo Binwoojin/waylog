@@ -13,6 +13,7 @@ import {
 import TourReferencePicker from '../../components/common/TourReferencePicker'
 import ConfirmDialog from '../../components/admin/ConfirmDialog'
 import AdminToast from '../../components/admin/AdminToast'
+import AdminCourseDayCard from './AdminCourseDayCard'
 import './AdminCourseFormPage.css'
 
 const MAX_IMAGES_PER_DAY = 10
@@ -328,8 +329,8 @@ function AdminCourseForm({ initialCourse }) {
     }
   }
 
-  function dayImageCount(dayIndex) {
-    return course.days[dayIndex].stops.reduce((sum, stop) => sum + stop.images.length, 0)
+  function pickReference(dayIndex, stopIndex) {
+    setPickerTarget({ dayIndex, stopIndex })
   }
 
   async function handleUploadImages(dayIndex, stopIndex, fileList) {
@@ -418,161 +419,26 @@ function AdminCourseForm({ initialCourse }) {
         <h2>2단계 · 일자와 경유지</h2>
 
         {course.days.map((day, dayIndex) => (
-          <div key={day.localKey} className="admin-course-day">
-            <div className="admin-course-day__header">
-              <h3>{dayIndex + 1}일차</h3>
-              <div className="admin-course-day__header-actions">
-                <button type="button" className="admin-button" disabled={dayIndex === 0} onClick={() => moveDay(dayIndex, -1)}>▲</button>
-                <button type="button" className="admin-button" disabled={dayIndex === course.days.length - 1} onClick={() => moveDay(dayIndex, 1)}>▼</button>
-                <button type="button" className="admin-button admin-button--danger" onClick={() => requestRemoveDay(dayIndex)}>일자 삭제</button>
-              </div>
-            </div>
-
-            {day.stops.length === 0 && <p className="admin-course-day__empty">경유지가 없습니다. 아래 버튼으로 추가해 주세요.</p>}
-
-            {day.stops.map((stop, stopIndex) => (
-              <div key={stop.localKey} className="admin-course-stop">
-                <div className="admin-course-stop__header">
-                  <span className="admin-course-stop__index">{stopIndex + 1}</span>
-                  <div className="admin-course-stop__type">
-                    <label>
-                      <input
-                        type="radio"
-                        name={`stop-type-${day.localKey}-${stop.localKey}`}
-                        checked={stop.stopType === 'REFERENCE'}
-                        onChange={() => setStopType(dayIndex, stopIndex, 'REFERENCE')}
-                      />
-                      카탈로그 참조
-                    </label>
-                    <label>
-                      <input
-                        type="radio"
-                        name={`stop-type-${day.localKey}-${stop.localKey}`}
-                        checked={stop.stopType === 'CUSTOM'}
-                        onChange={() => setStopType(dayIndex, stopIndex, 'CUSTOM')}
-                      />
-                      직접 입력
-                    </label>
-                  </div>
-                  <div className="admin-course-stop__header-actions">
-                    <button type="button" className="admin-button" disabled={stopIndex === 0} onClick={() => moveStop(dayIndex, stopIndex, -1)}>▲</button>
-                    <button type="button" className="admin-button" disabled={stopIndex === day.stops.length - 1} onClick={() => moveStop(dayIndex, stopIndex, 1)}>▼</button>
-                    <button type="button" className="admin-button admin-button--danger" onClick={() => requestRemoveStop(dayIndex, stopIndex)}>삭제</button>
-                  </div>
-                </div>
-
-                {stop.stopType === 'REFERENCE' ? (
-                  <div className="admin-course-stop__reference">
-                    {stop.tourContentId ? (
-                      <p>
-                        <strong>{stop.name || '(이름 없음)'}</strong>
-                        {stop.address ? ` · ${stop.address}` : ''}
-                      </p>
-                    ) : (
-                      <p className="admin-course-stop__reference-empty">아직 선택된 여행지가 없습니다.</p>
-                    )}
-                    <button
-                      type="button"
-                      className="admin-button"
-                      onClick={() => setPickerTarget({ dayIndex, stopIndex })}
-                    >
-                      카탈로그에서 선택
-                    </button>
-                  </div>
-                ) : (
-                  <div className="admin-course-stop__custom">
-                    <div className="admin-course-form__field">
-                      <label htmlFor={`stop-name-${stop.localKey}`}>경유지 이름</label>
-                      <input
-                        id={`stop-name-${stop.localKey}`}
-                        type="text"
-                        value={stop.name}
-                        onChange={event => updateStopField(dayIndex, stopIndex, 'name', event.target.value)}
-                      />
-                    </div>
-                    <div className="admin-course-form__field">
-                      <label htmlFor={`stop-address-${stop.localKey}`}>주소</label>
-                      <input
-                        id={`stop-address-${stop.localKey}`}
-                        type="text"
-                        value={stop.address}
-                        onChange={event => updateStopField(dayIndex, stopIndex, 'address', event.target.value)}
-                      />
-                    </div>
-                    <div className="admin-course-stop__coords">
-                      <div className="admin-course-form__field">
-                        <label htmlFor={`stop-lat-${stop.localKey}`}>위도</label>
-                        <input
-                          id={`stop-lat-${stop.localKey}`}
-                          type="number"
-                          step="any"
-                          value={stop.latitude}
-                          onChange={event => updateStopField(dayIndex, stopIndex, 'latitude', event.target.value)}
-                        />
-                      </div>
-                      <div className="admin-course-form__field">
-                        <label htmlFor={`stop-lng-${stop.localKey}`}>경도</label>
-                        <input
-                          id={`stop-lng-${stop.localKey}`}
-                          type="number"
-                          step="any"
-                          value={stop.longitude}
-                          onChange={event => updateStopField(dayIndex, stopIndex, 'longitude', event.target.value)}
-                        />
-                      </div>
-                    </div>
-                    <p className="admin-course-stop__hint">좌표를 몰라도 주소만 입력해도 됩니다.</p>
-                  </div>
-                )}
-
-                {/* 3단계: 이미지 (저장 후에만 활성화) */}
-                <div className="admin-course-stop__images">
-                  {!isSaved || !stop.id ? (
-                    <p className="admin-course-stop__images-locked">먼저 저장해야 이미지를 추가할 수 있습니다.</p>
-                  ) : (
-                    <>
-                      <div className="admin-course-stop__image-grid">
-                        {stop.images.map(image => (
-                          <div key={image.id} className="admin-course-stop__image">
-                            <img src={image.url} alt="" />
-                            <button
-                              type="button"
-                              className="admin-course-stop__image-remove"
-                              aria-label="이미지 삭제"
-                              onClick={() => setRemoveImageTarget({ stopId: stop.id, stopLocalKey: stop.localKey, image })}
-                            >
-                              ×
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                      <label
-                        className={`admin-button${dayImageCount(dayIndex) >= MAX_IMAGES_PER_DAY ? ' admin-button--disabled' : ''}`}
-                      >
-                        {uploadingStopKey === stop.localKey ? '업로드 중...' : '이미지 추가'}
-                        <input
-                          type="file"
-                          accept="image/jpeg,image/png,image/webp"
-                          multiple
-                          hidden
-                          disabled={dayImageCount(dayIndex) >= MAX_IMAGES_PER_DAY || uploadingStopKey === stop.localKey}
-                          onChange={event => {
-                            handleUploadImages(dayIndex, stopIndex, event.target.files)
-                            event.target.value = ''
-                          }}
-                        />
-                      </label>
-                      <span className={`admin-course-day__image-count${dayImageCount(dayIndex) >= 8 ? ' is-warning' : ''}`}>
-                        이 일자 이미지 {dayImageCount(dayIndex)}/{MAX_IMAGES_PER_DAY}
-                      </span>
-                    </>
-                  )}
-                </div>
-              </div>
-            ))}
-
-            <button type="button" className="admin-button" onClick={() => addStop(dayIndex)}>경유지 추가</button>
-          </div>
+          <AdminCourseDayCard
+            key={day.localKey}
+            day={day}
+            dayIndex={dayIndex}
+            isFirstDay={dayIndex === 0}
+            isLastDay={dayIndex === course.days.length - 1}
+            isSaved={isSaved}
+            maxImagesPerDay={MAX_IMAGES_PER_DAY}
+            uploadingStopKey={uploadingStopKey}
+            onMoveDay={moveDay}
+            onRequestRemoveDay={requestRemoveDay}
+            onAddStop={addStop}
+            onMoveStop={moveStop}
+            onRequestRemoveStop={requestRemoveStop}
+            onSetStopType={setStopType}
+            onUpdateStopField={updateStopField}
+            onPickReference={pickReference}
+            onUploadImages={handleUploadImages}
+            onRequestRemoveImage={setRemoveImageTarget}
+          />
         ))}
 
         {uploadError && <p className="admin-course-form__error" role="alert">{uploadError}</p>}

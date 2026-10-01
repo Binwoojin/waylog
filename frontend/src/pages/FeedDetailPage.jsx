@@ -7,6 +7,7 @@ import { deleteFeedPost, toggleFeedBookmark, toggleFeedLike } from '../api/feedA
 import { createFeedComment, deleteFeedComment } from '../api/feedCommentApi'
 import { getTourDetailPath } from '../data/tourContentTypes'
 import { buildKakaoMapLink } from '../lib/mapLink'
+import { runOptimisticToggle } from '../lib/optimisticToggle'
 import HeartIcon from '../components/icons/HeartIcon'
 import BookmarkIcon from '../components/icons/BookmarkIcon'
 import PlacePinIcon from '../components/icons/PlacePinIcon'
@@ -64,29 +65,28 @@ function FeedDetailContent({ id }) {
 
   async function handleToggleLike() {
     if (!member) return requireLogin()
-    const previousLiked = post.liked
-    const previousCount = post.likeCount
-    applyLocalUpdate({ liked: !previousLiked, likeCount: Math.max(0, previousCount + (previousLiked ? -1 : 1)) })
-    try {
-      const active = await toggleFeedLike(post.id)
-      applyLocalUpdate({ liked: active })
-    } catch (error) {
-      console.error('좋아요 처리에 실패했습니다.', error)
-      applyLocalUpdate({ liked: previousLiked, likeCount: previousCount })
-    }
+    await runOptimisticToggle({
+      key: `${post.id}:like`,
+      apply: applyLocalUpdate,
+      optimisticPatch: { liked: !post.liked, likeCount: Math.max(0, post.likeCount + (post.liked ? -1 : 1)) },
+      revertPatch: { liked: post.liked, likeCount: post.likeCount },
+      request: () => toggleFeedLike(post.id),
+      reconcile: active => ({ liked: active }),
+      onError: error => console.error('좋아요 처리에 실패했습니다.', error),
+    })
   }
 
   async function handleToggleBookmark() {
     if (!member) return requireLogin()
-    const previousBookmarked = post.bookmarked
-    applyLocalUpdate({ bookmarked: !previousBookmarked })
-    try {
-      const active = await toggleFeedBookmark(post.id)
-      applyLocalUpdate({ bookmarked: active })
-    } catch (error) {
-      console.error('북마크 처리에 실패했습니다.', error)
-      applyLocalUpdate({ bookmarked: previousBookmarked })
-    }
+    await runOptimisticToggle({
+      key: `${post.id}:bookmark`,
+      apply: applyLocalUpdate,
+      optimisticPatch: { bookmarked: !post.bookmarked },
+      revertPatch: { bookmarked: post.bookmarked },
+      request: () => toggleFeedBookmark(post.id),
+      reconcile: active => ({ bookmarked: active }),
+      onError: error => console.error('북마크 처리에 실패했습니다.', error),
+    })
   }
 
   async function handleConfirmDelete() {

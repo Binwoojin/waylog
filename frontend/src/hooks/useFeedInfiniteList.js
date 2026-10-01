@@ -89,7 +89,9 @@ export function useFeedInfiniteList(size = 10, { linkedCourseId } = {}) {
   useEffect(() => {
     load(null, true)
     return () => controllerRef.current?.abort()
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- 최초 1회만 실행합니다(size가 바뀌는 사용례는 없습니다).
+    // 최초 1회만 실행합니다 — size와 linkedCourseId 모두 마운트 후에는 바뀌지 않는다는 전제입니다.
+    // 바뀌는 사용례가 생기면 이 훅을 재마운트하는 호출부(FeedDetailPage의 key={id} 패턴 등)에서 처리해야 합니다.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const loadMore = useCallback(() => {

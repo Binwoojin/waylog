@@ -1,6 +1,7 @@
 package kr.co.mycom.travel_korea.feed.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
@@ -30,7 +31,9 @@ public record FeedCreateRequest(
          * "미태그", dayId만 있으면 "일자 단위", 둘 다 있으면 "경유지 단위"다. dayId 없이
          * stopId만 있는 조합은 서비스 계층에서 400으로 거부한다.
          */
+        @Positive(message = "일자 id는 양수여야 합니다.")
         Long linkedCourseDayId,
+        @Positive(message = "경유지 id는 양수여야 합니다.")
         Long linkedCourseStopId,
 
         /*
@@ -40,13 +43,6 @@ public record FeedCreateRequest(
         String visibility,
 
         @Size(max = 10, message = "해시태그는 최대 10개까지 등록할 수 있습니다.")
-        List<String> tags,
-
-        /*
-         * 우선 이미지 업로드가 완료된 URL을 전달받는 구조입니다.
-         * Multipart 이미지 업로드 API는 이후 별도로 구현할 수 있습니다.
-         */
-        @Size(max = 5, message = "사진은 최대 5장까지 등록할 수 있습니다.")
-        List<String> imageUrls
+        List<String> tags
 ) {
 }

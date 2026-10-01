@@ -149,7 +149,12 @@ export default function CourseReferencePicker({ open, onCancel, onSelect }) {
             </div>
 
             <div className="course-reference-picker__results" aria-busy={searchStatus === 'refreshing' || undefined}>
-              {searchStatus === 'loading' && <p className="course-reference-picker__message">검색 중입니다...</p>}
+              {searchStatus === 'loading' && (
+                <p className="course-reference-picker__message" role="status">
+                  <span className="course-reference-picker__spinner" aria-hidden="true" />
+                  검색 중입니다...
+                </p>
+              )}
               {searchStatus === 'error' && (
                 <p className="course-reference-picker__message" role="alert">검색에 실패했습니다. 잠시 후 다시 시도해 주세요.</p>
               )}
@@ -190,7 +195,12 @@ export default function CourseReferencePicker({ open, onCancel, onSelect }) {
               ← 코스 다시 검색
             </button>
 
-            {detailStatus === 'loading' && <p className="course-reference-picker__message">불러오는 중입니다...</p>}
+            {detailStatus === 'loading' && (
+              <p className="course-reference-picker__message" role="status">
+                <span className="course-reference-picker__spinner" aria-hidden="true" />
+                불러오는 중입니다...
+              </p>
+            )}
             {detailStatus === 'error' && (
               <p className="course-reference-picker__message" role="alert">여행코스 정보를 불러오지 못했습니다.</p>
             )}
