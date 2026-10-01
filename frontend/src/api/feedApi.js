@@ -1,4 +1,5 @@
 import { apiClient } from './client'
+import { getCourseDetailPath } from './courseApi'
 
 /*
  * 피드(여행 SNS) 공개 API 모듈
@@ -11,6 +12,13 @@ import { apiClient } from './client'
  * - 응답의 위치 이름 필드는 `location`이다(요청 필드는 `locationName`이라 이름이 다르다).
  * - 응답의 콘텐츠 유형 필드는 `tourContetTypeId`로 철자가 틀려 있다(FeedPostResponse.java 원본 그대로).
  *   둘 다 이 파일에서만 흡수하고, 나머지 프론트 코드는 tourContentTypeId라는 정상 철자만 사용한다.
+ *
+ * Design Ref: tour-course-feed-linking.design.md §4.3, §5.3 — 응답의 `linkedCourse`는
+ * courseId/dayNumber/stopName이 전부 있으면 "일자 또는 경유지 단위로 유효하게 참조 중",
+ * 필드 자체가 null이면 "코스 미태그"다(설계 §5.2 — 참조 대상인 일자가 삭제되면 FK가
+ * ON DELETE SET NULL로 linkedCourseDayId까지 null이 되고, 그러면 백엔드의
+ * hasCourseLink()가 false가 되어 linkedCourse 전체가 내려오지 않는다). 경유지만 삭제된
+ * 경우는 courseId/dayNumber는 남고 stopId/stopName만 null로 내려올 수 있다.
  */
 
 const FEED_POSTS_PATH = '/api/v1/feed/posts'
@@ -28,6 +36,31 @@ function toFiniteNumber(value) {
 
 function toNonNegativeInt(value) {
   return Number.isInteger(value) && value >= 0 ? value : 0
+}
+
+/**
+ * API 응답의 linkedCourse → courseTag view model (null이면 코스 미태그)
+ *
+ * Design Ref: tour-course-feed-linking.design.md §5.3 — courseId가 있으면 코스 상세로
+ * 이동 가능한 링크(detailPath)를 함께 만든다. 방어적으로 courseId가 없는데 linkedCourse만
+ * 있는(현재 백엔드 계약상 실제로는 발생하지 않는) 경우에도 courseTitle만으로 텍스트
+ * 표시는 가능하도록 courseId만 null 처리한다(거짓 링크를 만들지 않기 위함).
+ */
+function toCourseTag(linkedCourse) {
+  if (!linkedCourse || typeof linkedCourse !== 'object') return null
+
+  const courseTitle = toNonEmptyText(linkedCourse.courseTitle)
+  if (!courseTitle) return null
+
+  const courseId = linkedCourse.courseId != null ? String(linkedCourse.courseId) : null
+
+  return {
+    courseId,
+    courseTitle,
+    dayNumber: Number.isInteger(linkedCourse.dayNumber) ? linkedCourse.dayNumber : null,
+    stopName: toNonEmptyText(linkedCourse.stopName),
+    detailPath: courseId ? getCourseDetailPath(courseId) : null,
+  }
 }
 
 /**
@@ -55,6 +88,7 @@ export function toFeedPost(item) {
     tourContentId: toNonEmptyText(item.tourContentId),
     // 응답 필드명 오타(tourContetTypeId)를 여기서만 흡수한다(위 모듈 설명 참고).
     tourContentTypeId: Number.isInteger(item.tourContetTypeId) ? item.tourContetTypeId : null,
+    courseTag: toCourseTag(item.linkedCourse),
     images: Array.isArray(item.images) ? item.images.filter(url => typeof url === 'string') : [],
     tags: Array.isArray(item.tags) ? item.tags.filter(tag => typeof tag === 'string') : [],
     likeCount: toNonNegativeInt(item.likeCount),
@@ -87,15 +121,21 @@ export function toFeedTimelineResult(data) {
 }
 
 /**
- * 피드 타임라인 조회: GET /api/v1/feed/posts?cursor=&size=
+ * 피드 타임라인 조회: GET /api/v1/feed/posts?cursor=&size=&linkedCourseId=
  *
  * cursor가 없으면 최신 게시물부터(첫 페이지), 있으면 그 id보다 오래된 게시물만 반환한다.
  * 비로그인 사용자도 호출 가능(공개 게시물만 반환).
+ *
+ * Design Ref: tour-course-feed-linking.design.md §4.4(D-4) — linkedCourseId를 지정하면
+ * 그 코스를 참조한(일자·경유지 단위 무관) 게시물만 커서 페이지네이션으로 반환한다.
+ * 신규 엔드포인트가 아니라 기존 타임라인 API에 선택 파라미터만 추가된 것이라, 이 함수
+ * 하나로 메인 피드(파라미터 없음)와 코스 상세의 참조 피드 목록(파라미터 있음)을 모두 처리한다.
  */
-export async function fetchFeedTimeline({ cursor, size = 10 } = {}, { signal } = {}) {
+export async function fetchFeedTimeline({ cursor, size = 10, linkedCourseId } = {}, { signal } = {}) {
   const params = new URLSearchParams()
   if (cursor != null) params.set('cursor', String(cursor))
   params.set('size', String(size))
+  if (linkedCourseId != null) params.set('linkedCourseId', String(linkedCourseId))
 
   const data = await apiClient.get(`${FEED_POSTS_PATH}?${params}`, { signal })
   return toFeedTimelineResult(data)
@@ -131,6 +171,8 @@ export async function createFeedPost({
   longitude,
   tourContentId,
   tourContentTypeId,
+  linkedCourseDayId,
+  linkedCourseStopId,
   visibility,
   tags,
   images,
@@ -143,6 +185,10 @@ export async function createFeedPost({
     longitude: longitude ?? null,
     tourContentId: tourContentId || null,
     tourContentTypeId: tourContentTypeId ?? null,
+    // Design Ref: tour-course-feed-linking.design.md §4.1/D-2 — courseId와 스냅샷(코스명 등)은
+    // 보내지 않는다. 서버(CourseLinkResolver)가 dayId→코스 체인을 따라가 직접 채운다.
+    linkedCourseDayId: linkedCourseDayId ?? null,
+    linkedCourseStopId: linkedCourseStopId ?? null,
     visibility: visibility === 'PRIVATE' ? 'PRIVATE' : 'PUBLIC',
     tags: Array.isArray(tags) ? tags : [],
   }

@@ -24,6 +24,7 @@ public record FeedAdminPostResponse(
         String address,
         BigDecimal latitude,
         BigDecimal longitude,
+        FeedPostResponse.LinkedCourseResponse linkedCourse,
         List<String> images,
         List<String> tags,
         long likeCount,
@@ -34,6 +35,12 @@ public record FeedAdminPostResponse(
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {
+    /*
+     * 참조한 여행코스 정보(tour-course-feed-linking 설계 §4.5/D-6). 공개 응답
+     * (FeedPostResponse.LinkedCourseResponse)과 같은 모양이 필요하므로 그대로 재사용한다
+     * (별도 타입을 만들지 않음). AdminFeedDetailPage가 이 필드로 "참조한 여행코스:
+     * OO코스 · N일차 · 경유지명"을 읽기 전용으로 표시한다.
+     */
     public static FeedAdminPostResponse from(FeedPost post, Function<String, String> imageUrlResolver) {
         return new FeedAdminPostResponse(
                 post.getId(),
@@ -44,6 +51,7 @@ public record FeedAdminPostResponse(
                 post.getAddress(),
                 post.getLatitude(),
                 post.getLongitude(),
+                FeedPostResponse.LinkedCourseResponse.from(post),
                 post.getPhotos().stream()
                         .map(FeedPhoto::getImageUrl)
                         .map(imageUrlResolver)

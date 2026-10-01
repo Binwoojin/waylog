@@ -33,15 +33,20 @@ public class FeedController {
     @GetMapping
     public ResponseEntity<FeedTimelineResponse> getFeed(@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization,
                                                     @RequestParam(required = false) Long cursor,
-                                                    @RequestParam(defaultValue = "10") int size) {
+                                                    @RequestParam(defaultValue = "10") int size,
+                                                    @RequestParam(required = false) Long linkedCourseId) {
         /*
          * 피드 조회는 비로그인 사용자도 가능하므로
          * 토큰이 없으면 email을 null로 전달합니다.
+         *
+         * linkedCourseId(tour-course-feed-linking 설계 §4.4/D-4)는 코스 상세의
+         * "참조 피드 목록" 조회용 선택 파라미터다. 쿼리 파라미터는 SecurityConfig의
+         * 경로 매처 대상이 아니므로 별도 보안 설정 변경이 필요 없다(설계 §9).
          */
 
         String email = extractOptionalEmail(authorization);
 
-        return ResponseEntity.ok(feedService.getFeed(email, cursor, size));
+        return ResponseEntity.ok(feedService.getFeed(email, cursor, size, linkedCourseId));
     }
 
     @GetMapping("/{postId}")

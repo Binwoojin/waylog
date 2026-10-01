@@ -51,6 +51,12 @@
   font-size: 13px;
 }
 
+.admin-feed-detail__course {
+  margin: 0 0 10px;
+  color: #2563eb;
+  font-size: 13px;
+}
+
 .admin-feed-detail__tags {
   display: flex;
   flex-wrap: wrap;

@@ -2,8 +2,10 @@ import { useEffect, useId, useRef, useState } from 'react'
 import { ApiError } from '../../api/client'
 import { createFeedPost } from '../../api/feedApi'
 import TourReferencePicker from '../common/TourReferencePicker'
+import CourseReferencePicker from '../common/CourseReferencePicker'
 import FeedImageEditor from './FeedImageEditor'
 import PlacePinIcon from '../icons/PlacePinIcon'
+import CourseRouteIcon from '../icons/CourseRouteIcon'
 import './FeedComposer.css'
 
 const MAX_IMAGE_COUNT = 5
@@ -19,6 +21,11 @@ const MAX_TAG_COUNT = 10
  * 자유 텍스트 입력을 함께 제공하고(Q-4), 이미지는 미리보기 + 드래그/버튼 순서변경을 제공한다(Q-5).
  * 클라이언트 검증 값(개수·용량·형식·글자수)은 FeedService.validateImages/FeedCreateRequest의
  * 서버 제한과 동일하게 맞춰, 실패를 업로드 전에 조기에 알린다.
+ *
+ * Design Ref: tour-course-feed-linking.design.md §6.2~§6.3 — 여행코스 태그(courseTag)는
+ * 위치 태그(locationTag, TourAPI 좌표)와 완전히 독립된 필드다. "어디서 찍은 사진인가"와
+ * "어느 여행코스를 참고했는가"는 서로 다른 질문이라 상호 배타로 두지 않는다 — 한 게시물이
+ * 둘 다, 하나만, 혹은 둘 다 없이 작성될 수 있다.
  */
 export default function FeedComposer({ open, onClose, onCreated }) {
   const [content, setContent] = useState('')
@@ -31,6 +38,8 @@ export default function FeedComposer({ open, onClose, onCreated }) {
   const [customName, setCustomName] = useState('')
   const [customAddress, setCustomAddress] = useState('')
   const [pickerOpen, setPickerOpen] = useState(false)
+  const [courseTag, setCourseTag] = useState(null)
+  const [coursePickerOpen, setCoursePickerOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
 
@@ -162,6 +171,15 @@ export default function FeedComposer({ open, onClose, onCreated }) {
     setLocationTag(null)
   }
 
+  function handleCoursePickerSelect(picked) {
+    setCourseTag(picked)
+    setCoursePickerOpen(false)
+  }
+
+  function clearCourseTag() {
+    setCourseTag(null)
+  }
+
   function resetForm() {
     imagesRef.current.forEach(image => URL.revokeObjectURL(image.previewUrl))
     setContent('')
@@ -173,6 +191,7 @@ export default function FeedComposer({ open, onClose, onCreated }) {
     setShowCustomLocationForm(false)
     setCustomName('')
     setCustomAddress('')
+    setCourseTag(null)
     setErrorMessage('')
   }
 
@@ -206,6 +225,8 @@ export default function FeedComposer({ open, onClose, onCreated }) {
         longitude: locationTag?.longitude ?? null,
         tourContentId: locationTag?.tourContentId ?? null,
         tourContentTypeId: locationTag?.tourContentTypeId ?? null,
+        linkedCourseDayId: courseTag?.dayId ?? null,
+        linkedCourseStopId: courseTag?.stopId ?? null,
         visibility,
         tags,
         images,
@@ -310,6 +331,24 @@ export default function FeedComposer({ open, onClose, onCreated }) {
           </div>
 
           <div className="feed-composer__field">
+            <p className="feed-composer__label">여행코스 태그(선택)</p>
+            {courseTag ? (
+              <div className="feed-composer__location-chip">
+                <CourseRouteIcon size={16} />
+                <span>
+                  {courseTag.courseTitle} · {courseTag.dayNumber}일차
+                  {courseTag.stopName ? ` · ${courseTag.stopName}` : ''}
+                </span>
+                <button type="button" onClick={clearCourseTag} aria-label="여행코스 태그 삭제">✕</button>
+              </div>
+            ) : (
+              <div className="feed-composer__location-actions">
+                <button type="button" onClick={() => setCoursePickerOpen(true)}>여행코스에서 선택</button>
+              </div>
+            )}
+          </div>
+
+          <div className="feed-composer__field">
             <p className="feed-composer__label">해시태그(선택, 최대 {MAX_TAG_COUNT}개)</p>
             <div className="feed-composer__tags">
               {tags.map(tag => (
@@ -374,6 +413,14 @@ export default function FeedComposer({ open, onClose, onCreated }) {
           open={pickerOpen}
           onCancel={() => setPickerOpen(false)}
           onSelect={handlePickerSelect}
+        />
+      )}
+
+      {coursePickerOpen && (
+        <CourseReferencePicker
+          open={coursePickerOpen}
+          onCancel={() => setCoursePickerOpen(false)}
+          onSelect={handleCoursePickerSelect}
         />
       )}
     </div>

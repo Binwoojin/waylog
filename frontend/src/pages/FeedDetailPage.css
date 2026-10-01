@@ -141,6 +141,26 @@
   text-decoration: underline;
 }
 
+.feed-detail-course {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 24px 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.feed-detail-course a {
+  color: #2563eb;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.feed-detail-course a:hover {
+  text-decoration: underline;
+}
+
 .feed-detail-tags {
   display: flex;
   flex-wrap: wrap;

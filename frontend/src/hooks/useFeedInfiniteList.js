@@ -51,7 +51,13 @@ function reducer(state, action) {
   }
 }
 
-export function useFeedInfiniteList(size = 10) {
+/**
+ * linkedCourseId: 지정하면 그 코스를 참조한 게시물만 가져온다(tour-course-feed-linking
+ * 설계 §4.4/D-4, §6.4 — 코스 상세의 "참조 피드" 섹션이 useCourseFeedPosts를 통해 이 훅을
+ * 재사용한다). 생략하면 기존과 완전히 동일하게 전체 공개 타임라인을 가져온다 — 기존
+ * 호출부(FeedPage)는 수정 없이 그대로 동작한다.
+ */
+export function useFeedInfiniteList(size = 10, { linkedCourseId } = {}) {
   const [state, dispatch] = useReducer(reducer, INITIAL_STATE)
   const loadingRef = useRef(false)
   const controllerRef = useRef(null)
@@ -65,7 +71,7 @@ export function useFeedInfiniteList(size = 10) {
     const controller = new AbortController()
     controllerRef.current = controller
 
-    fetchFeedTimeline({ cursor, size }, { signal: controller.signal })
+    fetchFeedTimeline({ cursor, size, linkedCourseId }, { signal: controller.signal })
       .then(result => {
         cursorRef.current = result.nextCursor
         dispatch({ type: isInitial ? 'INIT_SUCCESS' : 'MORE_SUCCESS', result })
@@ -78,7 +84,7 @@ export function useFeedInfiniteList(size = 10) {
       .finally(() => {
         loadingRef.current = false
       })
-  }, [size])
+  }, [size, linkedCourseId])
 
   useEffect(() => {
     load(null, true)

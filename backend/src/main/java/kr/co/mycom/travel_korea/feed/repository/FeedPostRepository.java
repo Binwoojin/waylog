@@ -55,6 +55,18 @@ public interface FeedPostRepository extends JpaRepository<FeedPost, Long> {
     List<FeedPost> findByVisibilityAndDeletedAtIsNullAndIdLessThanOrderByIdDesc(String visibility, Long cursorId, Pageable pageable);
 
     /*
+     * tour-course-feed-linking 설계 §4.4(D-4) — 코스 상세의 "참조 피드 목록"용.
+     * 신규 엔드포인트 대신 기존 커서 페이지네이션 메서드와 같은 패턴으로 linkedCourseId
+     * 조건만 추가한다. 일자/경유지 어느 단위로 참조했든(linkedCourseId만 일치하면) 모두
+     * 포함한다 — 코스 단위 집계이므로 day/stop별로 나누지 않는다(설계 §7.2).
+     */
+    @EntityGraph(attributePaths = "author")
+    List<FeedPost> findByLinkedCourseIdAndVisibilityAndDeletedAtIsNullOrderByIdDesc(Long linkedCourseId, String visibility, Pageable pageable);
+
+    @EntityGraph(attributePaths = "author")
+    List<FeedPost> findByLinkedCourseIdAndVisibilityAndDeletedAtIsNullAndIdLessThanOrderByIdDesc(Long linkedCourseId, String visibility, Long cursorId, Pageable pageable);
+
+    /*
      * feed-integration 설계 §4.4(P-6): 타인 프로필 조회는 PUBLIC 게시물만 노출한다
      * (본인 프로필의 findByAuthor_Id는 공개/비공개 모두 보여주는 것과 대비).
      */

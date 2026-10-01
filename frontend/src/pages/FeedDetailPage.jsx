@@ -10,6 +10,7 @@ import { buildKakaoMapLink } from '../lib/mapLink'
 import HeartIcon from '../components/icons/HeartIcon'
 import BookmarkIcon from '../components/icons/BookmarkIcon'
 import PlacePinIcon from '../components/icons/PlacePinIcon'
+import CourseRouteIcon from '../components/icons/CourseRouteIcon'
 import FeedConfirmDialog from '../components/feed/FeedConfirmDialog'
 import FeedCommentList from '../components/feed/FeedCommentList'
 import FeedCommentForm from '../components/feed/FeedCommentForm'
@@ -139,6 +140,24 @@ function FeedDetailContent({ id }) {
               <span>{post.locationName}{post.address ? ` · ${post.address}` : ''}</span>
               {referencePath && <Link to={referencePath}>여행지 상세 보기</Link>}
               {mapLink && <a href={mapLink} target="_blank" rel="noopener noreferrer">지도에서 보기</a>}
+            </div>
+          )}
+
+          {/*
+            Design Ref: tour-course-feed-linking.design.md §5.3 — courseTag.detailPath는
+            courseId가 있을 때만 만들어진다(courseApi.getCourseDetailPath). 참조 대상(코스)이
+            이후 삭제돼 courseId가 없어지는 경우에도 courseTitle 스냅샷은 남을 수 있으므로,
+            링크 없이 텍스트만 보여준다(거짓 링크를 만들지 않는다).
+          */}
+          {post.courseTag && (
+            <div className="feed-detail-course">
+              <CourseRouteIcon size={16} />
+              <span>
+                {post.courseTag.courseTitle}
+                {post.courseTag.dayNumber != null ? ` · ${post.courseTag.dayNumber}일차` : ''}
+                {post.courseTag.stopName ? ` · ${post.courseTag.stopName}` : ''}
+              </span>
+              {post.courseTag.detailPath && <Link to={post.courseTag.detailPath}>여행코스 상세 보기</Link>}
             </div>
           )}
 

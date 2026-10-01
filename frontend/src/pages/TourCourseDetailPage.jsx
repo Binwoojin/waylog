@@ -1,12 +1,16 @@
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useCourseDetail } from '../hooks/useCourseDetail'
+import { useCourseFeedPosts } from '../hooks/useCourseFeedPosts'
+import { useAuth } from '../context/AuthContext'
 import DetailStatus from '../components/detail/DetailStatus'
 import NotFoundPage from './NotFoundPage'
 import { DETAIL_NOT_FOUND_DESCRIPTION, DETAIL_NOT_FOUND_TITLE } from '../components/detail/detailMessages'
 import { getTourDetailPath } from '../data/tourContentTypes'
 import { formatCourseDuration } from '../api/courseApi'
+import { toggleFeedBookmark, toggleFeedLike } from '../api/feedApi'
 import { buildKakaoMapLink } from '../lib/mapLink'
 import PlacePinIcon from '../components/icons/PlacePinIcon'
+import FeedCard from '../components/feed/FeedCard'
 import defaultImage from '../assets/figma/destination-jeju.png'
 import './TourCourseDetailPage.css'
 
@@ -93,9 +97,101 @@ function TourCourseDetailView({ detail }) {
           </section>
         ))}
 
+        <CourseFeedSection courseId={detail.id} />
+
         <p className="course-detail-source"><b>WayLog</b>가 등록한 여행코스입니다.</p>
       </main>
     </div>
+  )
+}
+
+/**
+ * "이 코스를 참조한 피드" 섹션
+ *
+ * Design Ref: tour-course-feed-linking.design.md §6.4(Q-2 확정) — 신규 fetch 로직 없이
+ * useCourseFeedPosts(기존 useFeedInfiniteList를 감싼 얇은 래퍼)로 커서 페이지네이션
+ * 인프라를 그대로 재사용한다. 좋아요·북마크 토글은 FeedPage.jsx와 동일한 낙관적 업데이트
+ * 패턴(실패 시 롤백)을 따른다.
+ */
+function CourseFeedSection({ courseId }) {
+  const { member } = useAuth()
+  const navigate = useNavigate()
+  const { items, status, hasNext, loadMore, retryMore, updateItem } = useCourseFeedPosts(courseId)
+
+  function requireLogin() {
+    navigate('/login')
+  }
+
+  async function handleToggleLike(post) {
+    if (!member) return requireLogin()
+
+    const previousLiked = post.liked
+    const previousCount = post.likeCount
+    updateItem(post.id, { liked: !previousLiked, likeCount: Math.max(0, previousCount + (previousLiked ? -1 : 1)) })
+
+    try {
+      const active = await toggleFeedLike(post.id)
+      updateItem(post.id, { liked: active })
+    } catch (error) {
+      console.error('좋아요 처리에 실패했습니다.', error)
+      updateItem(post.id, { liked: previousLiked, likeCount: previousCount })
+    }
+  }
+
+  async function handleToggleBookmark(post) {
+    if (!member) return requireLogin()
+
+    const previousBookmarked = post.bookmarked
+    updateItem(post.id, { bookmarked: !previousBookmarked })
+
+    try {
+      const active = await toggleFeedBookmark(post.id)
+      updateItem(post.id, { bookmarked: active })
+    } catch (error) {
+      console.error('북마크 처리에 실패했습니다.', error)
+      updateItem(post.id, { bookmarked: previousBookmarked })
+    }
+  }
+
+  return (
+    <section className="course-detail-feed" aria-label="이 코스를 참조한 피드">
+      <h2 className="course-detail-feed__heading">이 코스를 다녀온 사람들의 이야기</h2>
+
+      {status === 'loading' && <p className="course-detail-feed__hint" role="status">불러오는 중입니다...</p>}
+
+      {status === 'error' && (
+        <p className="course-detail-feed__hint" role="alert">참조 피드를 불러오지 못했습니다.</p>
+      )}
+
+      {(status === 'success' || status === 'loading-more' || status === 'error-more') && items.length === 0 && (
+        <p className="course-detail-feed__empty">아직 이 코스로 남긴 이야기가 없어요.</p>
+      )}
+
+      {items.length > 0 && (
+        <ul className="course-detail-feed__list">
+          {items.map(post => (
+            <li key={post.id}>
+              <FeedCard post={post} onToggleLike={handleToggleLike} onToggleBookmark={handleToggleBookmark} />
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {status === 'loading-more' && <p className="course-detail-feed__hint" role="status">더 불러오는 중입니다...</p>}
+
+      {status === 'error-more' && (
+        <div className="course-detail-feed__more-error" role="alert">
+          <p>다음 게시물을 불러오지 못했습니다.</p>
+          <button type="button" onClick={retryMore}>다시 시도</button>
+        </div>
+      )}
+
+      {hasNext && status !== 'loading-more' && items.length > 0 && (
+        <button type="button" className="course-detail-feed__more-button" onClick={loadMore}>
+          더 보기
+        </button>
+      )}
+    </section>
   )
 }
 

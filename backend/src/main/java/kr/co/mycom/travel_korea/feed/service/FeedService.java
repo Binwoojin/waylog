@@ -33,6 +33,7 @@ public class FeedService {
     private final FeedBookMarkRepository feedBookMarkRepository;
     private final UserRepository userRepository;
     private final StorageService storageService;
+    private final CourseLinkResolver courseLinkResolver;
 
     // 피드 게시글 하나에 등록할 수 있는 최대 이미지 수
     private static final int MAX_IMAGE_COUNT = 5;
@@ -69,6 +70,21 @@ public class FeedService {
         );
 
         post.replaceTags(request.tags());
+
+        /*
+         * 여행코스 참조(tour-course-feed-linking 설계 §4.2). CourseLinkResolver가
+         * dayId→course 체인을 검증하고 스냅샷을 만든 뒤, post.linkCourse()로 생성자
+         * 밖에서 별도로 붙인다(§3.1 "replaceTags와 같은 레벨" 원칙). 유효하지 않은
+         * dayId/stopId 조합이면 여기서 IllegalArgumentException(400)이 던져진다.
+         */
+        CourseLinkResolver.CourseLinkSnapshot courseLinkSnapshot =
+                courseLinkResolver.resolve(request.linkedCourseDayId(), request.linkedCourseStopId());
+
+        post.linkCourse(
+                courseLinkSnapshot.courseId(), courseLinkSnapshot.courseTitle(),
+                courseLinkSnapshot.dayId(), courseLinkSnapshot.dayNumber(),
+                courseLinkSnapshot.stopId(), courseLinkSnapshot.stopName()
+        );
 
         /*
          * S3 업로드 도중 오류가 생기면
@@ -116,6 +132,16 @@ public class FeedService {
      * page 파라미터를 cursor로 대체하는 것은 하위 호환을 깨지 않는다.
      */
     public FeedTimelineResponse getFeed(String loginEmail, Long cursor, int size) {
+        return getFeed(loginEmail, cursor, size, null);
+    }
+
+    /*
+     * tour-course-feed-linking 설계 §4.4(D-4): linkedCourseId가 있으면 그 코스를
+     * 참조한(일자/경유지 어느 단위든) 게시물만 커서 페이지네이션으로 조회한다.
+     * linkedCourseId가 null일 때의 분기는 기존 쿼리·동작을 한 글자도 바꾸지 않는다
+     * (메인 피드 회귀 방지).
+     */
+    public FeedTimelineResponse getFeed(String loginEmail, Long cursor, int size, Long linkedCourseId) {
         int pageSize = Math.min(Math.max(size, 1), 30);
 
         /*
@@ -124,9 +150,17 @@ public class FeedService {
          */
         Pageable pageable = PageRequest.of(0, pageSize + 1);
 
-        List<FeedPost> fetched = (cursor == null)
-                ? feedPostRepository.findByVisibilityAndDeletedAtIsNullOrderByIdDesc("PUBLIC", pageable)
-                : feedPostRepository.findByVisibilityAndDeletedAtIsNullAndIdLessThanOrderByIdDesc("PUBLIC", cursor, pageable);
+        List<FeedPost> fetched;
+
+        if (linkedCourseId != null) {
+            fetched = (cursor == null)
+                    ? feedPostRepository.findByLinkedCourseIdAndVisibilityAndDeletedAtIsNullOrderByIdDesc(linkedCourseId, "PUBLIC", pageable)
+                    : feedPostRepository.findByLinkedCourseIdAndVisibilityAndDeletedAtIsNullAndIdLessThanOrderByIdDesc(linkedCourseId, "PUBLIC", cursor, pageable);
+        } else {
+            fetched = (cursor == null)
+                    ? feedPostRepository.findByVisibilityAndDeletedAtIsNullOrderByIdDesc("PUBLIC", pageable)
+                    : feedPostRepository.findByVisibilityAndDeletedAtIsNullAndIdLessThanOrderByIdDesc("PUBLIC", cursor, pageable);
+        }
 
         boolean hasNext = fetched.size() > pageSize;
         List<FeedPost> pageItems = hasNext ? fetched.subList(0, pageSize) : fetched;

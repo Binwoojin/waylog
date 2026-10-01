@@ -55,6 +55,25 @@ export async function fetchAdminFeedList({ page = 1, size = 20 } = {}, { signal 
   }
 }
 
+/**
+ * 응답의 linkedCourse → 읽기 전용 표시용 courseTag(tour-course-feed-linking 설계 §7.1/D-6).
+ * 관리자 코스 상세 화면이 없으므로(Q-3 확정) 링크는 만들지 않고 텍스트로만 쓴다.
+ */
+function toCourseTag(linkedCourse) {
+  if (!linkedCourse || typeof linkedCourse !== 'object') return null
+
+  const courseTitle = typeof linkedCourse.courseTitle === 'string' && linkedCourse.courseTitle.trim()
+    ? linkedCourse.courseTitle.trim()
+    : null
+  if (!courseTitle) return null
+
+  return {
+    courseTitle,
+    dayNumber: Number.isInteger(linkedCourse.dayNumber) ? linkedCourse.dayNumber : null,
+    stopName: typeof linkedCourse.stopName === 'string' && linkedCourse.stopName.trim() ? linkedCourse.stopName.trim() : null,
+  }
+}
+
 function toFeedDetail(data) {
   if (!data || typeof data.content !== 'string') {
     throw new Error('피드 상세 응답 형식이 올바르지 않습니다.')
@@ -67,6 +86,7 @@ function toFeedDetail(data) {
     content: data.content,
     locationName: typeof data.locationName === 'string' ? data.locationName : '',
     address: typeof data.address === 'string' ? data.address : '',
+    courseTag: toCourseTag(data.linkedCourse),
     images: Array.isArray(data.images) ? data.images.filter(url => typeof url === 'string') : [],
     tags: Array.isArray(data.tags) ? data.tags.filter(tag => typeof tag === 'string') : [],
     likeCount: data.likeCount,

@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import HeartIcon from '../icons/HeartIcon'
 import BookmarkIcon from '../icons/BookmarkIcon'
 import PlacePinIcon from '../icons/PlacePinIcon'
+import CourseRouteIcon from '../icons/CourseRouteIcon'
 import defaultAvatar from '../../assets/figma/destination-jeju.png'
 import './FeedCard.css'
 
@@ -60,6 +61,17 @@ export default function FeedCard({ post, onToggleLike, onToggleBookmark }) {
           <p className="feed-card__location">
             <PlacePinIcon size={14} />
             <span>{post.locationName}</span>
+          </p>
+        )}
+
+        {post.courseTag && (
+          <p className="feed-card__course-tag">
+            <CourseRouteIcon size={14} />
+            <span>
+              {post.courseTag.courseTitle}
+              {post.courseTag.dayNumber != null ? ` · ${post.courseTag.dayNumber}일차` : ''}
+              {post.courseTag.stopName ? ` · ${post.courseTag.stopName}` : ''}
+            </span>
           </p>
         )}
 

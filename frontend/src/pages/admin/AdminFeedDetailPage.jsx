@@ -121,6 +121,18 @@ function AdminFeedDetail({ post, onChanged }) {
           </p>
         )}
 
+        {/*
+          Design Ref: tour-course-feed-linking.design.md §7.2(D-6) — 읽기 전용 한 줄만
+          추가한다. 관리자 코스 상세 화면 자체가 없으므로(Q-3 확정) 별도 링크는 만들지 않는다.
+        */}
+        {post.courseTag && (
+          <p className="admin-feed-detail__course">
+            참조한 여행코스: {post.courseTag.courseTitle}
+            {post.courseTag.dayNumber != null ? ` · ${post.courseTag.dayNumber}일차` : ''}
+            {post.courseTag.stopName ? ` · ${post.courseTag.stopName}` : ''}
+          </p>
+        )}
+
         {post.tags.length > 0 && (
           <ul className="admin-feed-detail__tags">
             {post.tags.map(tag => <li key={tag}>#{tag}</li>)}
