@@ -71,7 +71,7 @@
   height: 170px;
   object-fit: cover;
 }
-.enjoy-card > a > div:lanpst-child { padding: 19px 18px 22px; }
+.enjoy-card > a > div:last-child { padding: 19px 18px 22px; }
 .enjoy-card h3 { font-size: 18px; }
 /*
  * 즐길거리 카드의 주소 영역입니다.
