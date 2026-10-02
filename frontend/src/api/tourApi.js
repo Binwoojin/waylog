@@ -1,6 +1,7 @@
 import { apiClient } from './client'
 import { getTourDetailPath, isTourContentId } from '../data/tourContentTypes'
 import { LIST_PAGE_SIZE, toTourApiParams } from '../lib/tourListQuery'
+import { ENJOY_LIST_PAGE_SIZE, toEnjoyApiParams } from '../lib/enjoyListQuery'
 
 /*
  * TourAPI 콘텐츠 API 모듈
@@ -148,6 +149,20 @@ export async function fetchTourList(query, { signal } = {}) {
   const params = toTourApiParams(query)
   const data = await apiClient.get(`/api/v1/search?${params}`, { signal })
   return toTourList(data, { size: LIST_PAGE_SIZE, page: query.page, contentTypeId: query.contentTypeId })
+}
+
+/**
+ * 즐길거리 목록 조회: GET /api/v1/search (contentTypeId만 다를 뿐 같은 엔드포인트·응답 모양)
+ *
+ * EnjoySearchResultsPage 전용입니다. lib/enjoyListQuery.js의 EnjoyListQuery({ contentTypeId, arrange, page })를
+ * 받아 같은 TourListResponse 모양을 돌려주므로 toTourList·toTourCard(위)를 그대로 재사용합니다.
+ * 목록 조건 모델은 lib/tourListQuery.js(TOUR_LIST_CONFIGS 전제)와 분리되어 있지만, 응답 파싱 로직까지
+ * 따로 둘 이유는 없습니다(§9 "같은 응답은 같은 변환 함수를 씁니다").
+ */
+export async function fetchEnjoyList(query, { signal } = {}) {
+  const params = toEnjoyApiParams(query)
+  const data = await apiClient.get(`/api/v1/search?${params}`, { signal })
+  return toTourList(data, { size: ENJOY_LIST_PAGE_SIZE, page: query.page, contentTypeId: query.contentTypeId })
 }
 
 /**

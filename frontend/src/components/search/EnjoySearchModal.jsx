@@ -1,53 +1,51 @@
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import SearchModal from './SearchModal'
 import { useSearchSelection } from '../../hooks/useSearchSelection'
+import { getEnjoyContentType } from '../../data/tourContentTypes'
+import { buildEnjoySearchPath, parseEnjoyListQuery } from '../../lib/enjoyListQuery'
 
 /*
- * 즐기기 검색 모달 — 공용 SearchModal에 "라벨 쿼리" 어댑터를 연결합니다.
+ * 즐기기 검색 모달 — 공용 SearchModal에 즐길거리 목록 query 모델(lib/enjoyListQuery.js)을 연결합니다.
  *
- * Design Ref: §3.6 — EnjoySearchResultsPage.jsx는 수정하지 않습니다. 이 어댑터가 만드는
- * 쿼리 문자열·이동 방식(location.href, 전체 새로고침)·키 순서·빈 값 유지가 기존과 바이트 단위로
- * 같아야 결과 페이지가 그대로 동작합니다. 어댑터 함수는 이 파일 안의 모듈 함수로만 두고
- * export하지 않습니다(react-refresh/only-export-components).
+ * Design Ref: EnjoySearchResultsPage.jsx가 useEnjoyListSearchParams(URL이 유일한 조건 원천)로
+ * 전환되면서, 이 모달도 TravelSearchModal과 같은 방식(navigate() 이동, 라벨이 아닌 코드 값 쿼리)으로
+ * 맞춥니다. 예전에는 EnjoySearchResultsPage가 렌더 중 window.location.search를 직접 읽어서
+ * window.location.href(전체 새로고침)로만 이동할 수 있었지만, 이제는 다른 검색 모달과 같은 SPA
+ * 이동을 씁니다.
+ *
+ * 지역·시군구·세부 항목은 실제 선택지가 없고 "전체" 하나뿐이라(현재 즐길거리 검색은 유형만 실제로
+ * 동작) 쿼리에 포함하지 않습니다. 화면의 세 단계 구성 자체는 바꾸지 않았습니다.
  */
 
-const ENJOY_SEARCH_PATH = '/enjoy/search'
-
-// 시·도·시군구·세부 항목은 실제 선택지가 없고 "전체" 하나뿐입니다(기존 SearchModal과 같음).
 const ALL_OPTION = { value: '전체', label: '전체' }
 
+// value = 카테고리 slug(festivals 등). tourContentTypes.js의 ENJOY_CONTENT_TYPES 키와 같아서
+// getEnjoyContentType으로 바로 contentTypeId를 구할 수 있습니다.
 const enjoyTypes = [
-  { id: 'festival', icon: '🎉', title: '축제 · 행사' },
+  { id: 'festivals', icon: '🎉', title: '축제 · 행사' },
   { id: 'leports', icon: '🚴', title: '레포츠' },
   { id: 'food', icon: '🍽️', title: '음식점' },
   { id: 'shopping', icon: '🛍️', title: '쇼핑' },
   { id: 'stay', icon: '🛏️', title: '숙박' },
 ]
 
-// title(라벨) 목록 → Option 목록. value = label(기존 SearchModal의 "선택값 = title" 규칙과 같음)
-function toLabelOptions(items) {
-  return items.map(item => ({ value: item.title, label: item.title, icon: item.icon }))
+const TYPE_OPTIONS = {
+  status: 'ready',
+  options: enjoyTypes.map(item => ({ value: item.id, label: item.title, icon: item.icon })),
 }
 
-// 기존과 같은 코드로 쿼리 문자열을 만듭니다: 키 순서 region·district·type·detail 고정, 빈 값도 키를 남깁니다.
-function buildEnjoySearchUrl(selection) {
-  const params = new URLSearchParams({
-    region: selection.region,
-    district: selection.district,
-    type: selection.type,
-    detail: selection.detail,
-  })
-  return `${ENJOY_SEARCH_PATH}?${params.toString()}`
+function findLabel(optionList, value) {
+  return optionList.options.find(option => option.value === value)?.label ?? null
 }
 
-// 모달이 열릴 때 URL에서 초기 선택값을 읽습니다(기존은 페이지 마운트 시 window.location.search를 읽었습니다).
+// 모달이 열릴 때 URL(검색 결과 쿼리)에서 초기 유형을 읽습니다. 지역·시군구·세부 항목은 실제
+// 선택지가 없어 항상 빈 값입니다.
 function readEnjoySelection(searchParams) {
-  return {
-    region: searchParams.get('region') || '',
-    district: searchParams.get('district') || '',
-    type: searchParams.get('type') || '',
-    detail: searchParams.get('detail') || '',
-  }
+  const query = parseEnjoyListQuery(searchParams)
+  const type = query
+    ? TYPE_OPTIONS.options.find(option => getEnjoyContentType(option.value) === query.contentTypeId)?.value ?? ''
+    : ''
+  return { region: '', district: '', type, detail: '' }
 }
 
 export default function EnjoySearchModal({ isOpen, onClose }) {
@@ -57,25 +55,31 @@ export default function EnjoySearchModal({ isOpen, onClose }) {
 }
 
 function EnjoySearchDialog({ onClose }) {
+  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [selection, actions] = useSearchSelection(readEnjoySelection(searchParams))
 
   const regionOptions = { status: 'ready', options: [ALL_OPTION] }
   const districtOptions = { status: 'ready', options: [ALL_OPTION] }
-  const typeOptions = { status: 'ready', options: toLabelOptions(enjoyTypes) }
   const detailOptions = { status: 'ready', options: [ALL_OPTION] }
 
-  // Design Ref: §3.6 — 지역은 시·도와 시군구가 둘 다 있을 때만 표시(기존과 같음).
+  const typeLabel = selection.type ? findLabel(TYPE_OPTIONS, selection.type) : null
+
   const summaryItems = [
     selection.region && selection.district ? { label: '지역', value: `${selection.region} ${selection.district}` } : null,
-    selection.type ? { label: '즐길거리 유형', value: selection.type } : null,
+    typeLabel ? { label: '즐길거리 유형', value: typeLabel } : null,
     selection.detail ? { label: '상세 항목', value: selection.detail } : null,
   ].filter(Boolean)
 
+  // Design Ref: TravelSearchModal.jsx와 같은 규칙 — 유형을 고르기 전에는 제출할 수 없습니다.
+  const canSubmit = Boolean(selection.type)
+
   const handleSubmit = () => {
-    // Design Ref: §3.6 — EnjoySearchResultsPage는 렌더 중 window.location.search를 직접 읽으므로
-    // navigate()로 바꾸지 않고 전체 새로고침(location.href)을 그대로 유지합니다.
-    window.location.href = buildEnjoySearchUrl(selection)
+    if (!canSubmit) return
+    navigate(buildEnjoySearchPath({ contentTypeId: getEnjoyContentType(selection.type) }))
+    // Design Ref: §5.3 — 같은 라우트에서 쿼리만 바뀌면 ScrollToTop이 동작하지 않으므로 직접 맨 위로 올립니다.
+    window.scrollTo({ top: 0 })
+    onClose()
   }
 
   return (
@@ -91,19 +95,19 @@ function EnjoySearchDialog({ onClose }) {
       steps={{
         step1Title: '1. 어디에서 즐길까요?',
         step2Title: '2. 무엇을 찾고 있나요?',
-        detailHeading: selection.type ? `어떤 ${selection.type} 항목을 찾고 있나요?` : '어떤 세부 항목을 찾고 있나요?',
+        detailHeading: typeLabel ? `어떤 ${typeLabel} 항목을 찾고 있나요?` : '어떤 세부 항목을 찾고 있나요?',
       }}
       selection={selection}
       actions={actions}
       regionOptions={regionOptions}
       districtOptions={districtOptions}
-      typeOptions={typeOptions}
+      typeOptions={TYPE_OPTIONS}
       detailOptions={detailOptions}
       typeGridClassName="enjoy-search-modal__type-grid"
       regionGroupClassName="enjoy-search-modal__region-options"
       summaryItems={summaryItems}
-      canSubmit
-      submitHint="조건에 맞는 여행 정보를 확인해 보세요."
+      canSubmit={canSubmit}
+      submitHint={canSubmit ? '조건에 맞는 여행 정보를 확인해 보세요.' : '즐길거리 유형을 선택해 주세요.'}
       onSubmit={handleSubmit}
     />
   )

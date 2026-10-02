@@ -186,24 +186,16 @@ export default function SignupPage() {
         verificationCode: '', // 인증번호 입력 필드 초기화
       }))
       window.alert('인증번호를 발송했습니다.')
-       window.alert("emailChecked : " + emailChecked)
-      window.alert("emailVerified : " + emailVerified)
     } catch (error) {
       window.alert(error.message || '인증번호 발송 중 문제가 발생했습니다.')
     }
   }
 
   const verifyEmail = async() => {
-    // if (!emailChecked || !emailVerified || !emailVerificationToken) {
-    // if (emailChecked || emailVerified) {
-    //   window.alert('이메일 중복 확인과 인증을 완료해 주세요.')
-    //   window.alert(emailChecked)
-    //   window.alert(emailVerified)
-    //   return
-    // }
     if (!emailChecked) {
-      window.alert("먼저 이메일 중복확인을 진행해야합니다")
-      return}
+      window.alert('먼저 이메일 중복확인을 진행해야합니다')
+      return
+    }
     // 인증번호 발송 여부를 모두 검사하도록 변경
     if (!verificationSent) {
       window.alert('먼저 인증번호를 받아 주세요.')

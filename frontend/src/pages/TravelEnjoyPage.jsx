@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 import PageHero from '../components/common/PageHero'
 import PlacePinIcon from '../components/icons/PlacePinIcon'
 import EnjoySearchModal from '../components/search/EnjoySearchModal'
@@ -84,6 +85,13 @@ function InfoCards({ items, badge, category, columns = 4 }) {
 export default function TravelEnjoyPage() {
   // 각 배열은 추후 백엔드 TourAPI 응답으로 대체하되 카드 마크업은 그대로 재사용할 수 있습니다.
   const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const { member } = useAuth()
+  const navigate = useNavigate()
+
+  // 피드의 글쓰기 버튼과 동일한 로그인 유도 패턴: 비로그인 상태면 로그인 화면으로, 로그인 상태면 피드로 이동합니다.
+  function handleGoToRecord() {
+    navigate(member ? '/feed' : '/login')
+  }
 
   return <div className="travel-enjoy-page">
     <PageHero
@@ -121,7 +129,7 @@ export default function TravelEnjoyPage() {
       <section className="enjoy-detail-section"><SectionHeading title="여행지에서 즐기는 쇼핑" description="전통시장부터 지역 특산품까지 여행의 즐거움을 담아보세요." href="/enjoy/shopping" /><InfoCards items={shoppingCards} badge="쇼핑" category="shopping" columns={3} /></section>
       <section className="enjoy-detail-section enjoy-detail-section--stay"><SectionHeading title="여행의 하루를 마무리할 곳" description="지역별 숙박시설의 기본정보를 확인해 보세요." href="/enjoy/stay" /><InfoCards items={stayCards} badge="숙박" category="stay" /><p className="enjoy-disclaimer">실시간 객실 가격과 예약 가능 여부는 제공하지 않습니다.</p></section>
 
-      <section className="enjoy-record"><img src={record} alt="여행 기록 일러스트" /><h2>여행의 순간을 기록하고, 함께 나눠요</h2><button type="button">여행 기록하기</button></section>
+      <section className="enjoy-record"><img src={record} alt="여행 기록 일러스트" /><h2>여행의 순간을 기록하고, 함께 나눠요</h2><button type="button" onClick={handleGoToRecord}>여행 기록하기</button></section>
     </main>
     <EnjoySearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
   </div>
