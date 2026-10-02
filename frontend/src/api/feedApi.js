@@ -14,11 +14,12 @@ import { getCourseDetailPath } from './courseApi'
  *   둘 다 이 파일에서만 흡수하고, 나머지 프론트 코드는 tourContentTypeId라는 정상 철자만 사용한다.
  *
  * Design Ref: tour-course-feed-linking.design.md §4.3, §5.3 — 응답의 `linkedCourse`는
- * courseId/dayNumber/stopName이 전부 있으면 "일자 또는 경유지 단위로 유효하게 참조 중",
- * 필드 자체가 null이면 "코스 미태그"다(설계 §5.2 — 참조 대상인 일자가 삭제되면 FK가
- * ON DELETE SET NULL로 linkedCourseDayId까지 null이 되고, 그러면 백엔드의
- * hasCourseLink()가 false가 되어 linkedCourse 전체가 내려오지 않는다). 경유지만 삭제된
- * 경우는 courseId/dayNumber는 남고 stopId/stopName만 null로 내려올 수 있다.
+ * courseTitle이 있으면 "코스 참조 있음"이다(백엔드 FeedPost.hasCourseLink()가
+ * linkedCourseTitle 기준으로 판단 — 코드 리뷰 Must Fix로 FK 컬럼 기준에서 스냅샷 컬럼
+ * 기준으로 수정됨). 참조 대상인 코스/일자가 삭제돼도 courseId/dayId 등 FK는
+ * ON DELETE SET NULL로 null이 되지만, courseTitle 등 스냅샷 텍스트는 그대로 남아
+ * linkedCourse 자체는 계속 내려온다(courseId만 null인 "삭제된 참조" 상태로 표시 가능).
+ * 경유지만 삭제된 경우는 courseId/dayNumber는 남고 stopId/stopName만 null로 내려온다.
  */
 
 const FEED_POSTS_PATH = '/api/v1/feed/posts'

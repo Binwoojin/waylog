@@ -54,6 +54,8 @@ function toEnjoyMockDetail(item, config) {
     infos: [],
     contact: null,
     meta: item.meta,
+    // 목업은 TourDetailResponse를 호출하지 않아 서버의 bookmarked 값이 없습니다. 항상 false로 시작합니다.
+    bookmarked: false,
   }
 }
 
@@ -97,7 +99,9 @@ export default function EnjoyDetailPage() {
 function EnjoyDetailContent({ category, config, detail }) {
   const navigate = useNavigate()
   const { member } = useAuth()
-  const [saved,setSaved]=useState(false)
+  // Design Ref: bookmark-initial-state(백엔드 완료) — 상세 응답의 detail.bookmarked를 초기값으로 씁니다.
+  // 이 컴포넌트는 id가 바뀔 때 key로 재마운트되므로(§2.3) effect 없이 초기값만으로 충분합니다.
+  const [saved,setSaved]=useState(Boolean(detail.bookmarked))
   const isMock = detail.source === 'mock'
   // Design Ref: §5.2 — 외부 이미지 URL이 깨지면 카테고리 커버로 한 번만 바꿉니다(무한 onError 방지).
   const [isImageBroken, setIsImageBroken] = useState(false)

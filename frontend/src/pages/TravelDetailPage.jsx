@@ -58,6 +58,8 @@ function toDestinationMockDetail(item) {
     infos: [],
     contact: null,
     meta: item.meta,
+    // 목업은 TourDetailResponse를 호출하지 않아 서버의 bookmarked 값이 없습니다. 항상 false로 시작합니다.
+    bookmarked: false,
   }
 }
 
@@ -125,7 +127,9 @@ function TravelDetailView({ detail, backTo, contentTypeId }) {
   const [isImageBroken, setIsImageBroken] = useState(false)
   const image = detail.image && !isImageBroken ? detail.image : defaultDestinationImage
   const telHref = toTelHref(detail.contact)
-  const [saved, setSaved] = useState(false)
+  // Design Ref: bookmark-initial-state(백엔드 완료) — 상세 응답의 detail.bookmarked를 초기값으로 씁니다.
+  // 이 컴포넌트는 id가 바뀔 때 key로 재마운트되므로(§2.3) effect 없이 초기값만으로 충분합니다.
+  const [saved, setSaved] = useState(Boolean(detail.bookmarked))
   // Design Ref: mypage-bookmarks.design.md §2.2 제외 목록 — "주변에서 함께 둘러볼 곳" 카드의 북마크는
   // 의도적으로 로컬 전용 상태다(서버 연동 범위 밖, 후속 과제). 위 `saved`(헤더, 실제 서버 연동)와
   // 혼동하지 않도록 변수명도 분리해 둔다. 실제 연동 전까지는 새로고침하면 초기화된다.

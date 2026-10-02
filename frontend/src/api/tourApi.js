@@ -53,6 +53,9 @@ export function toTourDetail(data) {
     description: toPlainText(data.overview),
     infos,
     contact: contactInfo ? contactInfo.value : null,
+    // Design Ref: bookmark-initial-state(백엔드 완료) — 컨트롤러가 캐시 결과에 요청자 개인화 값을
+    // 덮어써서 내려주므로 프론트는 이 필드를 그대로 신뢰합니다. 비로그인이면 항상 false입니다.
+    bookmarked: Boolean(data.bookmarked),
   }
 }
 

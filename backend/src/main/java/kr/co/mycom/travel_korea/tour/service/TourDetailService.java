@@ -64,7 +64,13 @@ public class TourDetailService {
                 common.overview(),
                 parseDouble(common.mapx()),
                 parseDouble(common.mapy()),
-                detailInfos
+                detailInfos,
+                // 이 메서드는 @Cacheable(tourLists)로 사용자 구분 없이 공유 캐시됩니다.
+                // 여기서 로그인 사용자의 북마크 여부를 채우면 한 사용자가 북마크한 콘텐츠가
+                // 캐시를 통해 다른 사용자·비로그인 사용자에게도 true로 보이는 정보 유출이 생깁니다.
+                // 그래서 항상 false로 채우고, 실제 값은 캐시를 거치지 않는 컨트롤러에서
+                // withBookmarked()로 덮어씁니다.
+                false
         );
     }
 
