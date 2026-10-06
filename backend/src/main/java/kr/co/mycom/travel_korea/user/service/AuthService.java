@@ -50,6 +50,8 @@ public class AuthService {
         requireText(userInput.getEmail(), "이메일을 입력해 주세요.");
         requireText(userInput.getPassword(), "비밀번호를 입력해 주세요.");
         requireText(userInput.getNickname(), "닉네임을 입력해 주세요.");
+        // 약관 거부는 인증 티켓을 소모하기 전에 해야, 사용자가 같은 티켓으로 동의를 바로잡아 재요청할 수 있습니다.
+        requireRequiredTerms(userInput.getAgreements());
         consumeVerificationTicket(userInput.getEmail(), userInput.getVerificationToken());
         UserEntity rep = new UserEntity(
                 userInput.getEmail(),
@@ -327,6 +329,15 @@ public class AuthService {
     private static void requireText(String value, String message) {
         if (value == null || value.isBlank()) {
             throw new IllegalArgumentException(message);
+        }
+    }
+
+    // 필수 약관(서비스 이용, 개인정보)은 true여야 합니다. 선택 약관(마케팅)은 가입을 막지 않습니다.
+    private static void requireRequiredTerms(UserRequest.TermsAgreement agreements) {
+        if (agreements == null
+                || !Boolean.TRUE.equals(agreements.service())
+                || !Boolean.TRUE.equals(agreements.privacy())) {
+            throw new IllegalArgumentException("필수 약관에 동의해 주세요.");
         }
     }
 

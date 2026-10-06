@@ -43,6 +43,14 @@ public class UserRequest {
     private String verificationToken;
 
     /*
+     * 가입 약관 동의. 프론트 SignupPage가 보내는 키(service, privacy, marketing)와 이름을 맞춥니다.
+     * 필수 동의(service, privacy) 검사는 AuthService.signup에서 인증 티켓을 소모하기 전에 합니다.
+     */
+    private TermsAgreement agreements;
+
+    public record TermsAgreement(Boolean service, Boolean privacy, Boolean marketing) {}
+
+    /*
      * 로그인 화면의 "로그인 상태 유지" 체크 여부입니다.
      *
      * Boolean(래퍼)을 쓰는 이유: 값을 보내지 않는 기존 클라이언트는 null이 되고,
