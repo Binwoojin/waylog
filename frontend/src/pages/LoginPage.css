@@ -31,9 +31,6 @@
 .login-form__submit { width: 100%; height: 60px; border: 0; border-radius: 20px; color: #fff; background: #3b82f6; font: inherit; font-size: 18px; font-weight: 600; cursor: pointer; transition: background .18s ease, transform .18s ease; }
 .login-form__submit:hover { background: #2563eb; }
 .login-form__submit:active { transform: translateY(1px); }
-.login-page__divider { display: flex; align-items: center; gap: 25px; margin: 27px 0; color: #999; font-size: 15px; }
-.login-page__divider::before, .login-page__divider::after { height: 1px; flex: 1; background: #c5cbd4; content: ''; }
-.login-page__kakao { width: 100%; height: 60px; border: 1px solid #999; border-radius: 15px; color: #1f1f1f; background: #f9f9f9; font: inherit; font-size: 17px; font-weight: 600; cursor: pointer; }
 .login-page__signup-copy { margin: 38px 0 0; color: #666; font-size: 16px; font-weight: 600; }
 .login-page__signup-copy a { margin-left: 5px; color: #3b82f6; text-decoration: none; }
 .login-page__footer { position: absolute; right: 35px; bottom: 24px; left: 35px; display: flex; justify-content: center; gap: 28px; color: #999; font-size: 12px; }

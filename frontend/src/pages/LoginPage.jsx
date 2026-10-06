@@ -155,18 +155,12 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="login-page__divider"><span>또는</span></div>
-          <button className="login-page__kakao" type="button">카카오로 시작하기</button>
-
           <p className="login-page__signup-copy">
             아직 WayLog 회원이 아니신가요? <Link to="/signup">회원가입</Link>
           </p>
         </div>
 
         <footer className="login-page__footer">
-          <a href="#terms">이용약관</a>
-          <a href="#privacy">개인정보처리방침</a>
-          <a href="#support">고객센터</a>
           <span>ⓒ 2026 WayLog</span>
         </footer>
       </section>

@@ -245,7 +245,6 @@ export default function ForgotPasswordPage() {
               <div className={`forgot-field ${emailError ? 'is-error' : ''}`}><img src={mailIcon} alt="" /><input id="forgot-email" type="email" value={email} onChange={event => { setEmail(event.target.value); setEmailError('') }} placeholder="이메일 주소를 입력하세요..." autoComplete="email" /></div>
               <small className={emailError ? 'forgot-message--error' : ''}>{emailError || '회원가입 시 등록한 이메일 주소를 입력해주세요.'}</small>
               <button className="forgot-button" type="submit" disabled={isRequestingCode}>{isRequestingCode ? '처리 중...' : '다음'}</button>
-              <div className="forgot-support"><span>이메일이 기억나지 않으시나요?</span><a href="#support">고객센터 문의</a></div>
               <Link className="forgot-back-link" to="/login">로그인 화면으로 돌아가기</Link>
             </form>
           )}
@@ -302,7 +301,7 @@ export default function ForgotPasswordPage() {
             </form>
           )}
         </div>
-        <footer className="forgot-page__footer"><a href="#terms">이용약관</a><a href="#privacy">개인정보처리방침</a><a href="#support">고객센터</a><span>ⓒ 2026 WayLog</span></footer>
+        <footer className="forgot-page__footer"><span>ⓒ 2026 WayLog</span></footer>
       </section>
     </main>
   )
