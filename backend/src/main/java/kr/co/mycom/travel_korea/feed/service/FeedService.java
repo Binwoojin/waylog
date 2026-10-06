@@ -1,6 +1,7 @@
 package kr.co.mycom.travel_korea.feed.service;
 
 import kr.co.mycom.travel_korea.board.storage.StorageService;
+import kr.co.mycom.travel_korea.common.exception.ForbiddenException;
 import kr.co.mycom.travel_korea.board.storage.StoredObject;
 import kr.co.mycom.travel_korea.user.entity.UserEntity;
 import kr.co.mycom.travel_korea.feed.domain.*;
@@ -377,7 +378,7 @@ public class FeedService {
 
     private void validateAuthor(FeedPost post, String loginEmail) {
         if (!post.getAuthor().getEmail().equals(loginEmail)) {
-            throw new IllegalArgumentException("게시글 작성자만 수정하거나 삭제할 수 있습니다.");
+            throw new ForbiddenException("게시글 작성자만 수정하거나 삭제할 수 있습니다.");
         }
     }
 

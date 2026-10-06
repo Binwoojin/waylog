@@ -1,5 +1,6 @@
 package kr.co.mycom.travel_korea.feed;
 
+import kr.co.mycom.travel_korea.common.exception.ForbiddenException;
 import kr.co.mycom.travel_korea.feed.domain.FeedComment;
 import kr.co.mycom.travel_korea.feed.domain.FeedPost;
 import kr.co.mycom.travel_korea.feed.dto.FeedCommentCreateRequest;
@@ -170,7 +171,7 @@ class FeedCommentServiceTest {
         FeedCommentResponse comment = feedCommentService.create(
                 post.getId(), commenter.getEmail(), new FeedCommentCreateRequest("내 댓글", null));
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+        ForbiddenException exception = assertThrows(ForbiddenException.class, () ->
                 feedCommentService.delete(post.getId(), comment.id(), stranger.getEmail()));
 
         assertEquals("본인 댓글만 삭제할 수 있습니다.", exception.getMessage());

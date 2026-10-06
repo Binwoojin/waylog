@@ -1,5 +1,6 @@
 package kr.co.mycom.travel_korea.feed.service;
 
+import kr.co.mycom.travel_korea.common.exception.ForbiddenException;
 import kr.co.mycom.travel_korea.feed.domain.FeedComment;
 import kr.co.mycom.travel_korea.feed.domain.FeedPost;
 import kr.co.mycom.travel_korea.feed.dto.FeedCommentCreateRequest;
@@ -102,7 +103,7 @@ public class FeedCommentService {
             throw new IllegalArgumentException("잘못된 댓글 요청입니다.");
         }
         if (!comment.getAuthor().getEmail().equals(loginEmail)) {
-            throw new IllegalArgumentException("본인 댓글만 삭제할 수 있습니다.");
+            throw new ForbiddenException("본인 댓글만 삭제할 수 있습니다.");
         }
 
         // 최상위 댓글을 지우면 replies도 orphanRemoval로 함께 삭제되므로, 감소량은 1 + 답글 수.

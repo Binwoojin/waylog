@@ -2,6 +2,7 @@ package kr.co.mycom.travel_korea.common.exception;
 
 import kr.co.mycom.travel_korea.tourcourse.exception.TourCourseValidationException;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -21,6 +22,17 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, String>> handleIllegalArgument(IllegalArgumentException exception) {
         return ResponseEntity.badRequest().body(
+                Map.of("message", exception.getMessage())
+        );
+    }
+
+    /**
+     * 권한이 없는 변경 요청(타인의 게시물·댓글 수정·삭제)을 403으로 반환합니다.
+     * 입력값 오류(400)와 구분해 프론트가 권한 안내를 따로 표시할 수 있게 합니다.
+     */
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<Map<String, String>> handleForbidden(ForbiddenException exception) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
                 Map.of("message", exception.getMessage())
         );
     }
