@@ -4,13 +4,15 @@ WayLog는 국내 여행지를 탐색하고 기록하는 서비스입니다. 이 
 
 ```
 waylog/
-├── backend/    Spring Boot 4 (Java 17) REST API
+├── backend/    Spring Boot 4 (Java 25) REST API
 └── frontend/   React 19 + Vite 웹 클라이언트
 ```
 
 ## Backend (`backend/`)
 
-Spring Boot 4 / Java 17 / Spring Data JPA / Spring Security 기반 REST API입니다.
+Spring Boot 4 / Java 25 / Spring Data JPA / Spring Security 기반 REST API입니다.
+
+> **JDK 25가 필요합니다.** `pom.xml`의 `java.version`은 25이며, `JAVA_HOME`이 JDK 17을 가리키면 빌드가 실패합니다. 빌드 전에 `java -version`이 25인지 확인하세요. Windows에서 JDK 25 경로를 직접 지정하려면 `$env:JAVA_HOME = "C:\path\to\jdk-25"`처럼 현재 셸에만 설정할 수 있습니다.
 
 ```bash
 cd backend
@@ -54,6 +56,7 @@ npm install
 npm run dev     # 개발 서버
 npm run build   # 프로덕션 빌드
 npm run lint    # ESLint 검사
+npm test        # Vitest 회귀 테스트(순수 로직, 182개)
 ```
 
 ## 이번 재구축 범위
