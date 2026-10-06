@@ -73,22 +73,30 @@ export function useFeedInfiniteList(size = 10, { linkedCourseId } = {}) {
 
     fetchFeedTimeline({ cursor, size, linkedCourseId }, { signal: controller.signal })
       .then(result => {
+        // 취소된 구 요청의 성공 결과가 새 요청 상태(items/cursor)에 섞이지 않도록 가드합니다.
+        if (controller.signal.aborted) return
         cursorRef.current = result.nextCursor
         dispatch({ type: isInitial ? 'INIT_SUCCESS' : 'MORE_SUCCESS', result })
       })
       .catch(error => {
-        if (isAbortError(error)) return
+        // 취소된 요청은 재발급 단계의 401 등 다른 ApiError로 실패할 수 있으므로, 에러 종류와 무관하게 취소 여부로 먼저 거릅니다.
+        if (controller.signal.aborted || isAbortError(error)) return
         console.error('피드 타임라인을 불러오지 못했습니다.', error)
         dispatch({ type: isInitial ? 'INIT_ERROR' : 'MORE_ERROR' })
       })
       .finally(() => {
-        loadingRef.current = false
+        // 취소된 이전 요청이 뒤늦게 끝나도 현재 요청의 진행 상태를 지우지 않도록 같은 요청일 때만 해제합니다.
+        if (controllerRef.current === controller) loadingRef.current = false
       })
   }, [size, linkedCourseId])
 
   useEffect(() => {
     load(null, true)
-    return () => controllerRef.current?.abort()
+    return () => {
+      // StrictMode의 mount → cleanup → mount 중 두 번째 최초 로드가 취소된 첫 요청의 가드에 막히지 않도록 해제합니다.
+      controllerRef.current?.abort()
+      loadingRef.current = false
+    }
     // 최초 1회만 실행합니다 — size와 linkedCourseId 모두 마운트 후에는 바뀌지 않는다는 전제입니다.
     // 바뀌는 사용례가 생기면 이 훅을 재마운트하는 호출부(FeedDetailPage의 key={id} 패턴 등)에서 처리해야 합니다.
     // eslint-disable-next-line react-hooks/exhaustive-deps

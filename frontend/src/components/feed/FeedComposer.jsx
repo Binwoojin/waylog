@@ -13,6 +13,14 @@ const MAX_IMAGE_SIZE = 5 * 1024 * 1024
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 const MAX_CONTENT_LENGTH = 2000
 const MAX_TAG_COUNT = 10
+const FOCUSABLE_SELECTOR = [
+  'a[href]',
+  'button:not([disabled])',
+  'input:not([disabled]):not([type="hidden"])',
+  'textarea:not([disabled])',
+  'select:not([disabled])',
+  '[tabindex]:not([tabindex="-1"])',
+].join(',')
 
 /**
  * 피드 게시물 작성 모달
@@ -48,8 +56,15 @@ export default function FeedComposer({ open, onClose, onCreated }) {
   const imageIdRef = useRef(0)
   const imagesRef = useRef(images)
 
+  // 모달이 열리면 입력창으로 포커스를 옮기고, 닫히면 열기 전에 포커스가 있던 트리거(글쓰기 버튼)로 돌려줍니다.
+  // 돌려주지 않으면 키보드·스크린 리더 사용자가 문서 맨 위(BODY)로 떨어집니다.
   useEffect(() => {
-    if (open) contentRef.current?.focus()
+    if (!open) return undefined
+    const trigger = document.activeElement
+    contentRef.current?.focus()
+    return () => {
+      if (trigger instanceof HTMLElement && trigger.isConnected) trigger.focus()
+    }
   }, [open])
 
   // 언마운트 시 정리용 effect(아래)가 항상 최신 images를 읽을 수 있도록, 렌더 중이 아니라
@@ -73,6 +88,24 @@ export default function FeedComposer({ open, onClose, onCreated }) {
   }, [open, pickerOpen, onClose])
 
   if (!open) return null
+
+  // aria-modal="true"이므로 Tab/Shift+Tab이 모달 밖(배경)으로 빠지지 않도록 첫·마지막 포커스 요소에서 순환시킵니다.
+  function handleDialogKeyDown(event) {
+    if (event.key !== 'Tab') return
+    const focusable = Array.from(event.currentTarget.querySelectorAll(FOCUSABLE_SELECTOR))
+    if (focusable.length === 0) return
+    const first = focusable[0]
+    const last = focusable[focusable.length - 1]
+    const active = document.activeElement
+    const isOutside = !event.currentTarget.contains(active)
+    if (event.shiftKey && (active === first || isOutside)) {
+      event.preventDefault()
+      last.focus()
+    } else if (!event.shiftKey && (active === last || isOutside)) {
+      event.preventDefault()
+      first.focus()
+    }
+  }
 
   function addFiles(fileList) {
     const files = Array.from(fileList ?? [])
@@ -249,6 +282,7 @@ export default function FeedComposer({ open, onClose, onCreated }) {
         aria-modal="true"
         aria-labelledby={titleId}
         onClick={event => event.stopPropagation()}
+        onKeyDown={handleDialogKeyDown}
       >
         <header className="feed-composer__header">
           <h2 id={titleId}>여행 이야기 작성</h2>

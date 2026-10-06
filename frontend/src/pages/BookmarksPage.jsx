@@ -197,7 +197,7 @@ function TourBookmarkTab({ group, emptyLabel, browseTo }) {
   const isPageChanging = currentPage !== page
 
   if (items.length === 0) {
-    return <EmptyBookmarks message={`아직 북마크한 ${emptyLabel}이 없습니다.`} browseTo={browseTo} browseLabel={`${emptyLabel} 둘러보기`} />
+    return <EmptyBookmarks message={`아직 ${emptyLabel} 북마크가 없습니다.`} browseTo={browseTo} browseLabel={`${emptyLabel} 둘러보기`} />
   }
 
   return (

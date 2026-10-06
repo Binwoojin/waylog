@@ -104,22 +104,31 @@ export function useFeedComments(postId, size = 20) {
 
     fetchFeedComments(postId, { page, size }, { signal: controller.signal })
       .then(result => {
+        // 취소된 구 요청의 성공 결과가 새 요청 상태(comments/page)에 섞이지 않도록 가드합니다.
+        if (controller.signal.aborted) return
         pageRef.current = result.currentPage
         dispatch({ type: isInitial ? 'INIT_SUCCESS' : 'MORE_SUCCESS', result })
       })
       .catch(error => {
-        if (isAbortError(error)) return
+        // 취소된 요청은 재발급 단계의 401 등 다른 ApiError로 실패할 수 있으므로, 에러 종류와 무관하게 취소 여부로 먼저 거릅니다.
+        if (controller.signal.aborted || isAbortError(error)) return
         console.error('댓글을 불러오지 못했습니다.', error)
         dispatch({ type: isInitial ? 'INIT_ERROR' : 'MORE_ERROR' })
       })
       .finally(() => {
-        loadingRef.current = false
+        // 취소된 이전 요청이 뒤늦게 끝나도 현재 요청의 진행 상태를 지우지 않도록 같은 요청일 때만 해제합니다.
+        if (controllerRef.current === controller) loadingRef.current = false
       })
   }, [postId, size])
 
   useEffect(() => {
     load(1, true)
-    return () => controllerRef.current?.abort()
+    return () => {
+      // StrictMode는 effect를 mount → cleanup → mount로 한 번 더 실행합니다. 취소된 첫 요청의 finally는
+      // 두 번째 mount보다 늦게 실행되므로, 여기서 가드를 풀지 않으면 두 번째 최초 로드가 막혀 "불러오는 중"이 남습니다.
+      controllerRef.current?.abort()
+      loadingRef.current = false
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- postId가 바뀌면 부모가 key로 재마운트한다(useFeedDetail과 동일 관례).
   }, [])
 
