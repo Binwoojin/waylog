@@ -1,6 +1,7 @@
 package kr.co.mycom.travel_korea.user.controller;
 
 import com.nimbusds.jose.JOSEException;
+import jakarta.validation.Valid;
 
 import kr.co.mycom.travel_korea.config.JwtConfig;
 import kr.co.mycom.travel_korea.user.entity.UserEntity;
@@ -13,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -25,8 +27,13 @@ public class AuthController {
     private final AuthService service;
     private final UserService userService;
 
+    /*
+     * 입력 검증 실패는 MethodArgumentNotValidException → GlobalExceptionHandler가
+     * 400 { "message": "한글 문구" }로 변환합니다. (null이 서비스까지 내려가 500이 되지 않도록 컨트롤러에서 먼저 막습니다.)
+     */
     @PostMapping("/signup")
-    public ResponseEntity<Map<String, Object>> signup(@RequestBody UserRequest request) {
+    public ResponseEntity<Map<String, Object>> signup(
+            @Validated(UserRequest.Signup.class) @RequestBody UserRequest request) {
         UserEntity user = service.signup(request);
         /*
          * 비밀번호 해시가 포함된 UserEntity 전체를 그대로 반환하면 안 되므로
@@ -41,7 +48,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity login(@RequestBody UserRequest request) throws JOSEException {
+    public ResponseEntity login(@Validated(UserRequest.Login.class) @RequestBody UserRequest request) throws JOSEException {
         return service.login(request);
     }
 
@@ -60,23 +67,23 @@ public class AuthController {
     }
 
     @PostMapping("/email-verification")
-    public void sendMessage(@RequestBody UserRequest request){
+    public void sendMessage(@Validated(UserRequest.SendCode.class) @RequestBody UserRequest request){
         service.sendCodeToEmail(request.getEmail());
     }
 
     @PostMapping("/email-verification/confirm")
-    public ResponseEntity verificationEmail(@RequestBody MailRequest request) {
+    public ResponseEntity verificationEmail(@Valid @RequestBody MailRequest request) {
         ResponseEntity response = service.emailVerificationConfirm(request);
         return response;
     }
 
     @PostMapping("/password-reset-requests")
-    public void sendPasswordResetMessage(@RequestBody UserRequest request){
+    public void sendPasswordResetMessage(@Validated(UserRequest.SendCode.class) @RequestBody UserRequest request){
         service.sendCodeToEmail(request.getEmail());
     }
 
     @PutMapping("/password")
-    public void changePassword(@RequestBody UserRequest request) {
+    public void changePassword(@Validated(UserRequest.PasswordChange.class) @RequestBody UserRequest request) {
          service.changePassword(request);
     }
 }

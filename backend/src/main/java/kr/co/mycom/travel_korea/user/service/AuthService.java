@@ -46,6 +46,10 @@ public class AuthService {
     private final Cache<String, String> emailVerificationTicketCache;
 
     public UserEntity signup(UserRequest userInput) {
+        // 컨트롤러 @Validated가 1차로 막지만, 서비스가 null을 캐시 키로 쓰지 않도록 가드합니다.
+        requireText(userInput.getEmail(), "이메일을 입력해 주세요.");
+        requireText(userInput.getPassword(), "비밀번호를 입력해 주세요.");
+        requireText(userInput.getNickname(), "닉네임을 입력해 주세요.");
         consumeVerificationTicket(userInput.getEmail(), userInput.getVerificationToken());
         UserEntity rep = new UserEntity(
                 userInput.getEmail(),
@@ -57,6 +61,9 @@ public class AuthService {
     }
 
     public ResponseEntity login(@RequestBody UserRequest request) throws JOSEException {
+        // passwordEncoder.matches(null, ...)는 IllegalArgumentException(영문 내부 문구)을 던지므로 먼저 막습니다.
+        requireText(request.getEmail(), "이메일을 입력해 주세요.");
+        requireText(request.getPassword(), "비밀번호를 입력해 주세요.");
         UserEntity dbUser = repo.findByEmail(request.getEmail()).orElse(null);
         if (dbUser ==null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -269,6 +276,10 @@ public class AuthService {
 
     public ResponseEntity emailVerificationConfirm(MailRequest request) {
 //        이메일 인증번호 확인
+        requireText(request.getEmail(), "이메일을 입력해 주세요.");
+        if (request.getAuthCode() == null) {
+            throw new IllegalArgumentException("인증번호를 입력해 주세요.");
+        }
         Integer verifiedCode = emailVerificationCache.getIfPresent(request.getEmail());
         if (verifiedCode != null && verifiedCode.equals(request.getAuthCode())) {
             emailVerificationCache.invalidate(request.getEmail());
@@ -285,6 +296,8 @@ public class AuthService {
     }
 
     public void changePassword(UserRequest request) {
+        requireText(request.getEmail(), "이메일을 입력해 주세요.");
+        requireText(request.getPassword(), "비밀번호를 입력해 주세요.");
         consumeVerificationTicket(request.getEmail(), request.getVerificationToken());
         UserEntity user = repo.findByEmail(request.getEmail()).orElseThrow(() -> new IllegalArgumentException("해당 이메일의 회원을 찾을 수 없습니다."));
         user.changePassword(passwordEncoder.encode(request.getPassword()));
@@ -298,6 +311,8 @@ public class AuthService {
      * 검증에 성공한 티켓은 재사용을 막기 위해 즉시 무효화합니다.
      */
     private void consumeVerificationTicket(String email, String verificationToken) {
+        // Caffeine 캐시는 null 키를 허용하지 않으므로(NPE) 조회 전에 반드시 가드합니다.
+        requireText(email, "이메일을 입력해 주세요.");
         String ticket = emailVerificationTicketCache.getIfPresent(email);
         if (ticket == null || verificationToken == null || !ticket.equals(verificationToken)) {
             throw new IllegalArgumentException("이메일 인증이 필요합니다.");
@@ -305,7 +320,18 @@ public class AuthService {
         emailVerificationTicketCache.invalidate(email);
     }
 
+    /*
+     * 필수 문자열이 null이거나 공백이면 400으로 매핑되는 IllegalArgumentException을 던집니다.
+     * (GlobalExceptionHandler가 { "message": ... } 형식으로 응답합니다.)
+     */
+    private static void requireText(String value, String message) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException(message);
+        }
+    }
+
     public void sendCodeToEmail(String email) {
+        requireText(email, "이메일을 입력해 주세요.");
         // 확인코드 담긴 이메일 발송
         String title = "Waylog 이메일 인증 번호";
         Random random = new Random();
