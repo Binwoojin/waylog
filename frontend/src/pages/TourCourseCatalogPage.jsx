@@ -8,8 +8,8 @@ import './TourCourseCatalogPage.css'
 /**
  * 여행코스 카탈로그 (`/destinations/courses`)
  *
- * Design Ref: tour-course-list-integration.design.md §7.1 — DestinationCatalogPage의 course 목업 분기를
- * 대체합니다. 관광지·문화시설이 이미 TourCatalogPage로 분리돼 있는 것과 대칭입니다.
+ * Design Ref: tour-course-list-integration.design.md §7.1 — 여행코스 목록을 실제 공개 API(/api/v1/courses)로
+ * 조회합니다. 관광지·문화시설이 TourCatalogPage로 분리돼 있는 것과 대칭입니다.
  * 코스는 탭(테마별)이 없습니다. TourCourse.theme이 자유 텍스트라 정형 탭을 만들 근거 데이터가
  * 없기 때문입니다(계획 §7.1 위험 분석). 대신 키워드 검색창 하나로 제목·테마를 함께 검색합니다.
  */

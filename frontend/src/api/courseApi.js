@@ -25,8 +25,8 @@ export function getCourseDetailPath(id) {
   return `/destinations/courses/${encodeURIComponent(String(id))}`
 }
 
-// Design Ref: §12 O-3 — 목업은 "당일치기"/"1박 2일"/"2박 이상" 세 문구뿐이었지만,
-// 실제 dayCount는 임의 정수라 "N박 (N+1)일" 일반식으로 확장합니다. CourseCard·TourCourseDetailPage가 공유합니다.
+// Design Ref: §12 O-3 — 실제 dayCount는 임의 정수라 "N박 (N+1)일" 일반식으로 만듭니다.
+// 당일치기(1일)만 별도 문구를 씁니다. CourseCard·TourCourseDetailPage가 공유합니다.
 export function formatCourseDuration(dayCount) {
   if (!Number.isInteger(dayCount) || dayCount <= 0) return '일정 미정'
   if (dayCount === 1) return '당일치기'

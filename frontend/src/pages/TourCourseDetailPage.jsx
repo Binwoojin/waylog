@@ -20,8 +20,8 @@ const COURSE_LIST_PATH = '/destinations/courses'
  * 여행코스 상세 (`/destinations/courses/:id`)
  *
  * Design Ref: tour-course-list-integration.design.md §6, §8 — 기존 `/destinations/detail/:id`와
- * 완전히 분리된 라우트입니다(Q-5, ID 네임스페이스 충돌 방지). 목업 전용이던 TravelCourseDetailPage.jsx를
- * 대체합니다. 로딩·오류·없음 화면은 TourApiDetail과 같은 공용 컴포넌트(DetailStatus, NotFoundPage)를 씁니다.
+ * 완전히 분리된 라우트입니다(Q-5, ID 네임스페이스 충돌 방지). 로딩·오류·없음 화면은 TourApiDetail과 같은
+ * 공용 컴포넌트(DetailStatus, NotFoundPage)를 씁니다.
  */
 export default function TourCourseDetailPage() {
   const { id } = useParams()

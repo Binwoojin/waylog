@@ -20,11 +20,13 @@ import { toTourApiParams } from '../lib/tourListQuery'
 
 const IDLE_STATE = { status: 'idle', data: null, errorKind: null }
 
-export function useTourList(query) {
+// options.size: 미리보기처럼 건수를 줄일 때만 씁니다. 생략하면 목록 페이지 크기입니다.
+export function useTourList(query, { size } = {}) {
   // Design Ref: §2.4 — query 객체가 아니라 직렬화한 문자열에 의존합니다. 객체는 렌더마다 새로 만들어질 수 있습니다.
   // 설계 초안의 serializeTourListQuery 대신 실제 요청 파라미터를 key로 씁니다.
   // 카탈로그 URL에는 contentTypeId가 없어 관광지·문화시설의 기본 조건이 같은 문자열이 되기 때문입니다.
-  const queryKey = query ? toTourApiParams(query).toString() : null
+  // size도 실제 요청 파라미터에 들어가므로 key에 포함됩니다(미리보기와 목록의 캐시 key가 섞이지 않습니다).
+  const queryKey = query ? toTourApiParams(query, { size }).toString() : null
 
   // 재시도 횟수는 조건별로 셉니다. 다른 조건으로 바뀌면 0부터 다시 셉니다(hasRetried가 새 조건의 첫 실패에 남지 않게).
   const [retryState, setRetryState] = useState({ key: null, count: 0 })
@@ -36,7 +38,7 @@ export function useTourList(query) {
 
   // effect는 requestKey가 바뀔 때만 다시 실행하고, 요청에는 그 렌더의 최신 query를 씁니다.
   // URL 정규화(replace)로 query 객체만 새로 만들어져도 같은 조건이면 다시 요청하지 않습니다.
-  const requestList = useEffectEvent(signal => fetchTourList(query, { signal }))
+  const requestList = useEffectEvent(signal => fetchTourList(query, { signal, size }))
 
   useEffect(() => {
     if (requestKey == null) return undefined

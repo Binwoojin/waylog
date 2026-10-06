@@ -4,7 +4,7 @@
  * Design Ref: tour-course-list-integration.design.md §8.2 — 기존 TravelCourseDetailPage.css의
  * 히어로·통계·이전 페이지 버튼 레이아웃(course-detail-page/main/crumb/hero/stats/back/source)을
  * 그대로 재사용하고, 일자별 섹션과 경유지 카드(course-detail-day, course-detail-stop)는 새로 만듭니다.
- * (목업은 단일 목록이었지만 실제 스키마는 일자별로 중첩돼 있어 구조가 다릅니다.)
+ * (실제 스키마는 코스 → 일자 → 경유지로 중첩돼 있어 일자 단위 섹션으로 나눕니다.)
  */
 
 .course-detail-page { color: #27364b; background: #fff; }

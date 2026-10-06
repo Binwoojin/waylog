@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { ApiError, isAbortError } from '../api/client'
 import { fetchTourBookmarks, toggleTourBookmark } from '../api/tourBookmarkApi'
+import { useAuth } from '../context/AuthContext'
 
 /*
  * 여행지/여행 즐기기 북마크 탭 상태 훅 (/bookmarks)
@@ -11,36 +12,46 @@ import { fetchTourBookmarks, toggleTourBookmark } from '../api/tourBookmarkApi'
  *
  * status: 'loading' | 'success' | 'login-required' | 'error'
  */
+const LOADING_VIEW = { status: 'loading', items: [], currentPage: 1, totalPages: 0, hasNext: false }
+
 export function useTourBookmarks(group, page = 1) {
-  const [state, setState] = useState({ status: 'loading', items: [], currentPage: 1, totalPages: 0, hasNext: false })
+  // ownerId: 이 목록을 받아 온 회원(memberId, 비로그인은 null). 현재 회원과 다르면 이전 사용자의 목록이므로 버리고 로딩으로 보입니다.
+  const [state, setState] = useState({ ownerId: undefined, ...LOADING_VIEW })
   const [attempt, setAttempt] = useState(0)
 
+  const { isRestoring, memberId } = useAuth()
+  const view = state.ownerId === memberId ? state : LOADING_VIEW
+
   useEffect(() => {
+    // 인증 복원(AuthContext.isRestoring)이 끝나기 전에 보내면 Authorization 없이 나가 401을 받습니다.
+    // 복원이 끝난 뒤에만 요청해 토큰이 실린 요청 한 번으로 결과를 받습니다.
+    if (isRestoring) return undefined
+
     let isActive = true
     const controller = new AbortController()
 
     fetchTourBookmarks(group, { page }, { signal: controller.signal })
       .then(result => {
-        if (isActive) setState({ status: 'success', ...result })
+        if (isActive) setState({ ownerId: memberId, status: 'success', ...result })
       })
       .catch(error => {
         if (!isActive) return
         if (isAbortError(error)) return
 
         if (error instanceof ApiError && error.status === 401) {
-          setState(current => ({ ...current, status: 'login-required', items: [] }))
+          setState(current => ({ ...current, ownerId: memberId, status: 'login-required', items: [] }))
           return
         }
 
         console.error('여행지/여행 즐기기 북마크 목록을 불러오지 못했습니다.', error)
-        setState(current => ({ ...current, status: 'error', items: [] }))
+        setState(current => ({ ...current, ownerId: memberId, status: 'error', items: [] }))
       })
 
     return () => {
       isActive = false
       controller.abort()
     }
-  }, [group, page, attempt])
+  }, [group, page, attempt, isRestoring, memberId])
 
   const retry = useCallback(() => {
     setState(current => ({ ...current, status: 'loading' }))
@@ -75,5 +86,5 @@ export function useTourBookmarks(group, page = 1) {
     }
   }, [])
 
-  return { ...state, retry, removeBookmark }
+  return { ...view, retry, removeBookmark }
 }

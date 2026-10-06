@@ -138,8 +138,6 @@
 .notice-section li a { color: #333; text-decoration: none; }
 .notice-section time { color: #999; font-size: 14px; }
 .notice-badge { padding: 6px 10px; border-radius: 14px; background: #edf3ff; color: #3b82f6; font-size: 13px; text-align: center; }
-.notice-badge--중요 { color: #e05252; background: #fff0f0; }
-.notice-badge--정책 { color: #666; background: #eee; }
 .footer { padding: 72px max(24px, calc((100vw - 1480px) / 2)) 26px; color: rgba(255,255,255,.74); background: #14345f; }
 .footer__inner { display: flex; justify-content: space-between; gap: 70px; padding-bottom: 54px; }
 .footer__brand img { width: 70px; height: 54px; object-fit: contain; }

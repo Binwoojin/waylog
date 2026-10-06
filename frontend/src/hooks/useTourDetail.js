@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { ApiError } from '../api/client'
 import { fetchTourDetail } from '../api/tourApi'
+import { useAuth } from '../context/AuthContext'
 
 /*
  * TourAPI 상세 조회 상태 훅
@@ -10,8 +11,9 @@ import { fetchTourDetail } from '../api/tourApi'
  *
  * status: 'loading' | 'success' | 'not-found' | 'error'
  *
- * 전제: 호출하는 쪽(TourApiDetail)이 key={`${contentId}:${contentTypeId}`}로 재마운트합니다.
+ * 전제: 호출하는 쪽(TourApiDetail)이 key={`${contentId}:${contentTypeId}:${memberId}`}로 재마운트합니다.
  * 그래서 id가 바뀔 때 state를 effect에서 초기화하지 않아도 항상 'loading'부터 시작합니다.
+ * 로그인 상태가 바뀌면(S1) 같은 key 규칙으로 재마운트되어 bookmarked를 다시 받습니다.
  */
 
 // Design Ref: §2.4, §4.2 — 상태 코드로만 판정합니다. 오류 code 문자열(TOUR_CONTENT_NOT_FOUND)은 로그 확인용입니다.
@@ -24,9 +26,17 @@ export function useTourDetail(contentId, contentTypeId) {
   const [state, setState] = useState({ status: 'loading', detail: null })
   const [attempt, setAttempt] = useState(0)
 
+  const { isRestoring } = useAuth()
+
   useEffect(() => {
+    // 상세 API는 공개 API지만, 응답의 bookmarked가 토큰 기반 개인화 값이라 복원이 끝난 뒤에 요청합니다.
+    // 복원 전에 보내면 Authorization 없이 나가 bookmarked가 잘못된 값으로 옵니다.
+    // 트레이드오프: 복원 왕복(/auth/refresh)만큼 비로그인 방문자의 상세 로딩도 늦어집니다.
+    if (isRestoring) return undefined
+
     // Design Ref: §2.4 경쟁 조건 — cleanup 이후 도착한 응답(이전 id, 이전 재시도)은 무시합니다.
-    // client.js가 AbortSignal을 받지 않아 요청 자체는 취소하지 않습니다(후속 과제).
+    // fetchTourDetail이 AbortSignal을 넘기지 않아 요청 자체는 취소하지 않습니다(후속 과제).
+    // client.js의 request는 signal을 받으므로, fetchTourDetail에 인자를 추가하면 바로 연결할 수 있습니다.
     let isActive = true
 
     fetchTourDetail(contentId, contentTypeId)
@@ -48,7 +58,7 @@ export function useTourDetail(contentId, contentTypeId) {
     return () => {
       isActive = false
     }
-  }, [contentId, contentTypeId, attempt])
+  }, [contentId, contentTypeId, attempt, isRestoring])
 
   // 로딩 상태 전환은 effect가 아니라 이벤트 핸들러에서 합니다(react-hooks set-state-in-effect 규칙).
   const retry = useCallback(() => {

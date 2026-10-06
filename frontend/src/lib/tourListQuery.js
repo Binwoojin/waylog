@@ -158,17 +158,18 @@ export function applyQueryPatch(query, patch = {}) {
 /**
  * query → /api/v1/search 요청 파라미터
  *
- * Design Ref: §4.2 — size는 URL에 두지 않는 화면 설정(9)입니다.
+ * Design Ref: §4.2 — size는 URL에 두지 않는 화면 설정입니다. 기본은 목록 페이지 크기(9)이고,
+ * 미리보기처럼 적은 건수만 필요한 화면은 options.size로 줄입니다(URL 조건이 아니므로 query 모델에는 넣지 않습니다).
  * 문화시설(중분류)은 분류 코드의 앞 2자리를 lclsSystm1로 함께 보냅니다.
  * 백엔드 보정(BE-1)이 없어도 원본 조회가 대분류 범위로 좁혀지고, 서버 캐시 키가 요청 경로와 관계없이 같아집니다.
  */
-export function toTourApiParams(query) {
+export function toTourApiParams(query, { size = LIST_PAGE_SIZE } = {}) {
   const config = query ? getListConfigByContentType(query.contentTypeId) : null
   if (!config) throw new Error('목록 조건의 여행지 유형이 올바르지 않습니다.')
 
   const params = new URLSearchParams()
   params.set('page', String(query.page))
-  params.set('size', String(LIST_PAGE_SIZE))
+  params.set('size', String(size))
   params.set('contentTypeId', String(config.contentTypeId))
   if (query.lDongRegnCd) params.set('lDongRegnCd', query.lDongRegnCd)
   if (query.lDongRegnCd && query.lDongSignguCd) params.set('lDongSignguCd', query.lDongSignguCd)

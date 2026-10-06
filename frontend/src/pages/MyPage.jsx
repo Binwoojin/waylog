@@ -20,7 +20,14 @@ import './MyPage.css'
  * FeedUserProfilePage.jsx와 같은 원칙을 재사용하되, 인증이 필수이고 PATCH를 쓴다는 점이 다르다
  * (그래서 useFeedUserProfile이 아니라 useMyFeedProfile을 쓴다, 설계 §2.2).
  */
+// 회원이 바뀌면(로그아웃·세션 만료 포함) 화면 전체를 새로 그립니다. 페이지 번호·좋아요 overrides처럼
+// 훅 밖에 있는 상태가 이전 회원의 값을 들고 가지 않도록 memberId를 key로 씁니다.
 export default function MyPage() {
+  const { memberId } = useAuth()
+  return <MyPageContent key={memberId ?? 'guest'} />
+}
+
+function MyPageContent() {
   const { member } = useAuth()
   const navigate = useNavigate()
   const [page, setPage] = useState(1)

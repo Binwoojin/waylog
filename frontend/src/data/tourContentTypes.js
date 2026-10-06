@@ -2,7 +2,6 @@
  * TourAPI 콘텐츠 유형(contentTypeId)과 WayLog 상세 라우트의 대응표입니다.
  *
  * Design Ref: §9 — 홈 카드, 상세 페이지의 id 해석, 상세 API 호출이 모두 이 파일의 규칙 하나를 따릅니다.
- * 목업 데이터는 import하지 않습니다. 목록 페이지가 API로 전환돼도 이 파일은 그대로 씁니다.
  */
 
 // 여행지 상세(/destinations/detail/:id?type=)에서 다루는 유형
@@ -11,7 +10,7 @@ export const DESTINATION_CONTENT_TYPES = { attraction: 12, culture: 14 }
 // 즐기기 상세(/enjoy/:category/:id)의 카테고리 slug별 유형
 export const ENJOY_CONTENT_TYPES = { festivals: 15, leports: 28, food: 39, shopping: 38, stay: 32 }
 
-// Design Ref: §2.2 — 목업 slug는 모두 숫자가 아니므로 이 형식과 겹치지 않습니다.
+// Design Ref: §2.2 — 숫자가 아닌 slug는 이 형식과 겹치지 않으므로 상세 API 대상이 아니라 404로 처리됩니다.
 const TOUR_CONTENT_ID_PATTERN = /^\d{1,12}$/
 
 export function isTourContentId(id) {

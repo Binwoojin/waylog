@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import EnjoyListView from '../components/tour-list/EnjoyListView'
 import ListFilterBar from '../components/tour-list/ListFilterBar'
-import { enjoyCategories, enjoyConfigs } from '../data/enjoyMocks'
+import { enjoyCategories, enjoyConfigs } from '../data/enjoyCategoryConfig'
 import { getEnjoyContentType } from '../data/tourContentTypes'
 import { DEFAULT_ENJOY_ARRANGE, applyEnjoyQueryPatch, createEnjoyListQuery } from '../lib/enjoyListQuery'
 import NotFoundPage from './NotFoundPage'
@@ -15,9 +15,8 @@ import './EnjoyCategoryPageOverrides.css'
  *
  * Design Ref: EnjoySearchResultsPage.jsx·TourCatalogPage.jsx와 같은 패턴입니다 — 목록 조회와
  * 로딩·빈·오류 상태는 EnjoyListView(실제 /api/v1/search 응답)가 맡고, 이 페이지는 라우트 해석과
- * 화면 조립만 합니다. 카드 목록이 목업(data/enjoyMocks.js의 items를 45장으로 복제)이었던 것을
- * 실제 TourAPI 데이터로 바꿉니다. config.title·description·cover·enjoyCategories(탭 목록)는
- * 목업 "여행 콘텐츠"가 아니라 하드코딩된 정적 소개 문구·이미지·분류표이므로 그대로 둡니다.
+ * 화면 조립만 합니다. 카드 목록은 실제 TourAPI 데이터(/api/v1/search)에서 받습니다.
+ * config.title·description·cover·enjoyCategories(탭 목록)는 data/enjoyCategoryConfig.js의 정적 화면 설정입니다.
  *
  * 유형(contentTypeId)은 검색 결과 화면과 달리 사용자가 바꿀 수 없고 :category 라우트가 고정값으로
  * 정합니다(TourCatalogPage가 config.contentTypeId로 "카탈로그 모드"를 쓰는 것과 같은 원칙). 하지만
@@ -29,7 +28,7 @@ import './EnjoyCategoryPageOverrides.css'
  * (createEnjoyListQuery·applyEnjoyQueryPatch)만 가져다 arrange·page만 URL에 두는 조립을
  * 이 페이지 안에서 합니다(CourseListView가 useCourseList를 병렬로 둔 것과 같은 이유).
  *
- * 지역 필터는 제거했습니다. 기존 "지역" select는 목업 location 문자열을 파싱해 만든 가짜 선택지였고,
+ * 지역 필터는 두지 않습니다. 과거의 "지역" select는 임시 데이터의 location 문자열을 파싱해 만든 가짜 선택지였고,
  * EnjoySearchModal(§조사)도 같은 이유로 지역·시군구 조건을 두지 않습니다 — TourSearchRequest는
  * lDongRegnCd·lDongSignguCd를 실제로 받지만(TourController가 service.getTours에 그대로 전달),
  * 즐기기 쪽 쿼리 모델(enjoyListQuery.js)과 검색 모달에는 아직 실제 지역 선택지가 연결되어 있지

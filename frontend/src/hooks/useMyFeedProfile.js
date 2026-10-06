@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { ApiError, isAbortError } from '../api/client'
 import { fetchMyFeedProfile, updateMyFeedProfile } from '../api/feedApi'
+import { useAuth } from '../context/AuthContext'
 
 /*
  * 내 피드 프로필 조회/수정 상태 훅
@@ -10,43 +11,53 @@ import { fetchMyFeedProfile, updateMyFeedProfile } from '../api/feedApi'
  *
  * status: 'loading' | 'success' | 'login-required' | 'error'
  */
+const LOADING_VIEW = { status: 'loading', profile: null }
+
 export function useMyFeedProfile(page = 1) {
-  const [state, setState] = useState({ status: 'loading', profile: null })
+  // ownerId: 이 프로필을 받아 온 회원(memberId, 비로그인은 null). 현재 회원과 다르면 이전 사용자의 프로필이므로 버리고 로딩으로 보입니다.
+  const [state, setState] = useState({ ownerId: undefined, ...LOADING_VIEW })
   const [attempt, setAttempt] = useState(0)
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
 
+  const { isRestoring, memberId } = useAuth()
+  const view = state.ownerId === memberId ? state : LOADING_VIEW
+
   useEffect(() => {
+    // 인증 복원(AuthContext.isRestoring)이 끝나기 전에 보내면 Authorization 없이 나가 401을 받습니다.
+    // 복원이 끝난 뒤에만 요청해 토큰이 실린 요청 한 번으로 결과를 받습니다.
+    if (isRestoring) return undefined
+
     let isActive = true
     const controller = new AbortController()
 
     fetchMyFeedProfile({ page }, { signal: controller.signal })
       .then(profile => {
-        if (isActive) setState({ status: 'success', profile })
+        if (isActive) setState({ ownerId: memberId, status: 'success', profile })
       })
       .catch(error => {
         if (!isActive) return
         if (isAbortError(error)) return
 
         if (error instanceof ApiError && error.status === 401) {
-          setState({ status: 'login-required', profile: null })
+          setState({ ownerId: memberId, status: 'login-required', profile: null })
           return
         }
 
         console.error('내 프로필 정보를 불러오지 못했습니다.', error)
-        setState({ status: 'error', profile: null })
+        setState({ ownerId: memberId, status: 'error', profile: null })
       })
 
     return () => {
       isActive = false
       controller.abort()
     }
-  }, [page, attempt])
+  }, [page, attempt, isRestoring, memberId])
 
   const retry = useCallback(() => {
-    setState({ status: 'loading', profile: null })
+    setState({ ownerId: memberId, ...LOADING_VIEW })
     setAttempt(value => value + 1)
-  }, [])
+  }, [memberId])
 
   /*
    * 프로필 수정 저장.
@@ -64,7 +75,8 @@ export function useMyFeedProfile(page = 1) {
     try {
       const updated = await updateMyFeedProfile({ nickname, introduce, feedHandle, profileImageFile })
       setState(current => {
-        if (!current.profile) return current
+        // 저장 도중 로그아웃·다른 회원 로그인이 일어났다면 그 사이의 응답을 현재 프로필에 겹치지 않습니다.
+        if (!current.profile || current.ownerId !== memberId) return current
         return {
           ...current,
           profile: {
@@ -83,7 +95,7 @@ export function useMyFeedProfile(page = 1) {
     } finally {
       setIsSaving(false)
     }
-  }, [])
+  }, [memberId])
 
-  return { ...state, retry, isSaving, saveError, saveProfile }
+  return { ...view, retry, isSaving, saveError, saveProfile }
 }

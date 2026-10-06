@@ -27,8 +27,8 @@ const PAGE_PATTERN = /^[1-9]\d{0,3}$/
 
 const ENJOY_CONTENT_TYPE_IDS = new Set(Object.values(ENJOY_CONTENT_TYPES))
 
-// 결과 배너·제목에 쓰는 유형 이름. data/enjoyMocks.js(목업)는 import하지 않습니다 — 목록이 API로
-// 전환되어도 이 파일이 목업에 의존하지 않도록 하기 위해서입니다(tourListConfigs.js와 같은 원칙).
+// 결과 배너·제목에 쓰는 유형 이름. 화면 설정 모듈(data/enjoyCategoryConfig.js)을 import하지 않습니다.
+// 이 파일이 화면 설정에 의존하지 않도록 하기 위해서입니다(tourListConfigs.js와 같은 원칙).
 const ENJOY_TYPE_LABELS = {
   [ENJOY_CONTENT_TYPES.festivals]: '축제 · 행사',
   [ENJOY_CONTENT_TYPES.leports]: '레포츠',
@@ -123,13 +123,14 @@ export function buildEnjoySearchPath(query) {
 
 /**
  * query → /api/v1/search 요청 파라미터
+ * options.size는 미리보기처럼 건수를 줄일 때만 씁니다(기본 ENJOY_LIST_PAGE_SIZE).
  */
-export function toEnjoyApiParams(query) {
+export function toEnjoyApiParams(query, { size = ENJOY_LIST_PAGE_SIZE } = {}) {
   if (!query) throw new Error('즐길거리 목록 조건이 올바르지 않습니다.')
 
   const params = new URLSearchParams()
   params.set('page', String(query.page))
-  params.set('size', String(ENJOY_LIST_PAGE_SIZE))
+  params.set('size', String(size))
   params.set('contentTypeId', String(query.contentTypeId))
   params.set('arrange', query.arrange || DEFAULT_ENJOY_ARRANGE)
   return params

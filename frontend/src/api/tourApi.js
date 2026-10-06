@@ -1,5 +1,5 @@
 import { apiClient } from './client'
-import { getTourDetailPath, isTourContentId } from '../data/tourContentTypes'
+import { ENJOY_CONTENT_TYPES, getTourDetailPath, isTourContentId } from '../data/tourContentTypes'
 import { LIST_PAGE_SIZE, toTourApiParams } from '../lib/tourListQuery'
 import { ENJOY_LIST_PAGE_SIZE, toEnjoyApiParams } from '../lib/enjoyListQuery'
 
@@ -7,7 +7,7 @@ import { ENJOY_LIST_PAGE_SIZE, toEnjoyApiParams } from '../lib/enjoyListQuery'
  * TourAPI 콘텐츠 API 모듈
  *
  * Design Ref: §9 — 화면은 상세 API URL을 직접 쓰지 않고 이 함수만 호출합니다.
- * 응답은 출처(목업/API)와 관계없이 상세 화면이 쓰는 view model(§3.1)로 바꿔 돌려줍니다.
+ * 응답은 상세 화면이 쓰는 view model(§3.1)로 바꿔 돌려줍니다.
  */
 
 const EMPTY_ADDRESS = '주소 정보 없음'
@@ -144,11 +144,11 @@ function toNonEmptyText(value) {
  * 성공: TourListResult { items: TourCard[], totalCount, page, totalPages }
  * 실패: ApiError(400·502 등), 형식이 다른 응답이면 Error, 취소되면 AbortError(DOMException)
  */
-export async function fetchTourList(query, { signal } = {}) {
+export async function fetchTourList(query, { signal, size = LIST_PAGE_SIZE } = {}) {
   // Design Ref: §7 — 쿼리 문자열은 URLSearchParams로만 만듭니다(화이트리스트를 통과한 값만 들어감).
-  const params = toTourApiParams(query)
+  const params = toTourApiParams(query, { size })
   const data = await apiClient.get(`/api/v1/search?${params}`, { signal })
-  return toTourList(data, { size: LIST_PAGE_SIZE, page: query.page, contentTypeId: query.contentTypeId })
+  return toTourList(data, { size, page: query.page, contentTypeId: query.contentTypeId })
 }
 
 /**
@@ -159,10 +159,35 @@ export async function fetchTourList(query, { signal } = {}) {
  * 목록 조건 모델은 lib/tourListQuery.js(TOUR_LIST_CONFIGS 전제)와 분리되어 있지만, 응답 파싱 로직까지
  * 따로 둘 이유는 없습니다(§9 "같은 응답은 같은 변환 함수를 씁니다").
  */
-export async function fetchEnjoyList(query, { signal } = {}) {
-  const params = toEnjoyApiParams(query)
+export async function fetchEnjoyList(query, { signal, size = ENJOY_LIST_PAGE_SIZE } = {}) {
+  const params = toEnjoyApiParams(query, { size })
   const data = await apiClient.get(`/api/v1/search?${params}`, { signal })
-  return toTourList(data, { size: ENJOY_LIST_PAGE_SIZE, page: query.page, contentTypeId: query.contentTypeId })
+  return toTourList(data, { size, page: query.page, contentTypeId: query.contentTypeId })
+}
+
+// 축제 미리보기 건수입니다. 여행즐기기 화면의 카드 그리드(3열)에 맞춘 값이며, 로딩 자리 표시도 이 값을 씁니다.
+export const FESTIVAL_PREVIEW_SIZE = 3
+
+/**
+ * 축제 미리보기 조회: GET /api/v1/festivals?status=&page=1&size=&arrange=Q
+ *
+ * 축제 API는 기간 필터(status)와 행사 기간(startDate·endDate)을 줘서 "진행 중" 같은 표시를 실제 데이터로 만듭니다.
+ * 항목 변환은 검색 API와 같은 toTourCard를 쓰고, 기간 필드만 덧붙입니다. 변환에 실패한 항목은 버립니다.
+ *
+ * 성공: FestivalPreviewItem[] (TourCard + startDate, endDate)
+ * 실패: ApiError, 형식이 다른 응답이면 Error, 취소되면 AbortError(DOMException)
+ */
+export async function fetchFestivalPreview(status, { signal, size = FESTIVAL_PREVIEW_SIZE } = {}) {
+  const params = new URLSearchParams({ status, page: '1', size: String(size), arrange: 'Q' })
+  const data = await apiClient.get(`/api/v1/festivals?${params}`, { signal })
+  if (!data || !Array.isArray(data.items)) throw new Error('축제 목록 응답 형식이 올바르지 않습니다.')
+
+  return data.items
+    .map(item => {
+      const card = toTourCard(item, ENJOY_CONTENT_TYPES.festivals)
+      return card ? { ...card, startDate: item.startDate ?? null, endDate: item.endDate ?? null } : null
+    })
+    .filter(Boolean)
 }
 
 /**

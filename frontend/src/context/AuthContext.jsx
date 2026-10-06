@@ -107,9 +107,13 @@ export function AuthProvider({ children }) {
     }
   }, [applyMember])
 
+  // Design Ref: S1 — 개인화 데이터(북마크·프로필·상세의 bookmarked)를 가진 화면이 "누구의 상태인가"를 비교하는 값입니다.
+  // member 객체는 복원·재발급 때마다 새로 만들어지므로 identity 대신 memberId(원시값)를 씁니다.
+  const memberId = member?.memberId ?? null
+
   const value = useMemo(
-    () => ({ member, isRestoring, login, logout }),
-    [member, isRestoring, login, logout],
+    () => ({ member, memberId, isRestoring, login, logout }),
+    [member, memberId, isRestoring, login, logout],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

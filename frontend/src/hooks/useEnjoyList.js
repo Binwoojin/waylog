@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useEffectEvent, useState } from 'react'
 import { ApiError, isAbortError } from '../api/client'
 import { fetchEnjoyList } from '../api/tourApi'
-import { serializeEnjoyListQuery } from '../lib/enjoyListQuery'
+import { toEnjoyApiParams } from '../lib/enjoyListQuery'
 
 /*
  * 즐길거리 목록 조회 상태 훅
@@ -19,8 +19,10 @@ import { serializeEnjoyListQuery } from '../lib/enjoyListQuery'
 
 const IDLE_STATE = { status: 'idle', data: null, errorKind: null }
 
-export function useEnjoyList(query) {
-  const queryKey = query ? serializeEnjoyListQuery(query).toString() : null
+// options.size: 미리보기처럼 건수를 줄일 때만 씁니다. 생략하면 목록 페이지 크기입니다.
+// key는 실제 요청 파라미터(size 포함)로 만듭니다. useTourList와 같은 기준입니다.
+export function useEnjoyList(query, { size } = {}) {
+  const queryKey = query ? toEnjoyApiParams(query, { size }).toString() : null
 
   // 재시도 횟수는 조건별로 셉니다. 다른 조건으로 바뀌면 0부터 다시 셉니다.
   const [retryState, setRetryState] = useState({ key: null, count: 0 })
@@ -29,7 +31,7 @@ export function useEnjoyList(query) {
 
   const [settled, setSettled] = useState({ key: null, status: null, data: null, errorKind: null })
 
-  const requestList = useEffectEvent(signal => fetchEnjoyList(query, { signal }))
+  const requestList = useEffectEvent(signal => fetchEnjoyList(query, { signal, size }))
 
   useEffect(() => {
     if (requestKey == null) return undefined

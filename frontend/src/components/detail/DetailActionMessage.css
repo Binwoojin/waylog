@@ -1,0 +1,11 @@
+/*
+ * 상세 화면 북마크·공유 결과 문구. 버튼 줄 아래에 오른쪽 정렬로 놓입니다(.detail-action-group 등 부모가 배치를 맡습니다).
+ */
+.detail-action-message {
+  min-height: 1.5em;
+  margin: 0;
+  color: #4d6178;
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: right;
+}
