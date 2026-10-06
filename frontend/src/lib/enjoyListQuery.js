@@ -25,7 +25,8 @@ const ENJOY_SEARCH_PATH = '/enjoy/search'
 // 1 ~ 9999. lib/tourListQuery.js의 PAGE_PATTERN과 같은 규칙(앞자리 0·부호·소수점 금지).
 const PAGE_PATTERN = /^[1-9]\d{0,3}$/
 
-const ENJOY_CONTENT_TYPE_IDS = new Set(Object.values(ENJOY_CONTENT_TYPES))
+// 문자열로 비교합니다(Number() 변환 금지). '0x0f'나 '15.0'이 15로 인정되지 않게 하며, lib/tourListQuery.js와 같은 규칙입니다.
+const ENJOY_CONTENT_TYPE_ID_TEXTS = new Set(Object.values(ENJOY_CONTENT_TYPES).map(String))
 
 // 결과 배너·제목에 쓰는 유형 이름. 화면 설정 모듈(data/enjoyCategoryConfig.js)을 import하지 않습니다.
 // 이 파일이 화면 설정에 의존하지 않도록 하기 위해서입니다(tourListConfigs.js와 같은 원칙).
@@ -43,8 +44,9 @@ function toText(value) {
 
 // 원시 값(문자열·숫자 혼합) → 정규화된 query. 유형이 허용값이 아니면 null
 function normalizeQuery(raw) {
-  const typeId = Number(raw.contentTypeId)
-  if (!ENJOY_CONTENT_TYPE_IDS.has(typeId)) return null
+  const typeText = toText(raw.contentTypeId)
+  if (!ENJOY_CONTENT_TYPE_ID_TEXTS.has(typeText)) return null
+  const typeId = Number(typeText)
 
   const arrangeText = toText(raw.arrange)
   const arrange = SORT_OPTIONS.some(option => option.value === arrangeText) ? arrangeText : DEFAULT_ENJOY_ARRANGE

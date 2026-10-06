@@ -77,13 +77,16 @@ export function applyCourseQueryPatch(query, patch = {}) {
   const base = query ?? createCourseListQuery()
   const next = { ...base }
 
+  let keywordChanged = false
   if (Object.hasOwn(patch, 'keyword')) {
     const keyword = normalizeKeyword(patch.keyword)
-    if (keyword !== base.keyword) next.page = 1
+    keywordChanged = keyword !== base.keyword
+    if (keywordChanged) next.page = 1
     next.keyword = keyword
   }
 
-  if (Object.hasOwn(patch, 'page') && !Object.hasOwn(patch, 'keyword')) {
+  // 검색어가 실제로 바뀐 경우에만 page patch를 무시합니다(바뀌지 않았다면 함께 온 page를 적용).
+  if (Object.hasOwn(patch, 'page') && !keywordChanged) {
     next.page = patch.page
   }
 

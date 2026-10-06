@@ -37,9 +37,9 @@ export async function runOptimisticToggle({ key, apply, optimisticPatch, revertP
     pendingKeys.add(key)
   }
 
-  apply(optimisticPatch)
-
+  // apply도 try 안에 둡니다. 여기서 던져도 finally가 키를 풀어야 이후 토글이 막히지 않습니다.
   try {
+    apply(optimisticPatch)
     const result = await request()
     apply(reconcile ? reconcile(result) : result)
   } catch (error) {
