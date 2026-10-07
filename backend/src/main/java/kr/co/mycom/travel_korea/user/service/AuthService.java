@@ -313,7 +313,7 @@ public class AuthService {
             emailVerificationTicketCache.put(key, verificationToken);
             return ResponseEntity.ok(Map.of("verificationToken", verificationToken));
         }
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "인증번호가 일치하지 않습니다."));
     }
 
     public void changePassword(UserRequest request) {
@@ -430,6 +430,7 @@ public class AuthService {
             createEmailForm(email, title, content);
             // 인증번호 관련 정보를 캐시에 저장
             emailVerificationCache.put(key, checkNum);
+            verificationLimiter.recordSent(key);
         } catch (Exception e) {
             // 또는 로거를 사용하여 상세한 예외 정보 로깅
             verificationLimiter.releaseSend(key);

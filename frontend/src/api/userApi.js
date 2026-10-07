@@ -12,13 +12,13 @@ import { apiClient } from './client'
  */
 
 /**
- * 이메일 인증번호 발송: POST /api/v1/auth/email-verification
+ * 이메일 인증번호 발송(비밀번호 재설정 용도): POST /api/v1/auth/password-reset-requests
  *
  * 로그인된 사용자의 본인 이메일만 쓴다(ForgotPasswordPage처럼 임의 이메일을 입력받지 않음).
  * 성공 응답 본문은 없다.
  */
 export function sendMyEmailCode(email) {
-  return apiClient.post('/api/v1/auth/email-verification', { email })
+  return apiClient.post('/api/v1/auth/password-reset-requests', { email })
 }
 
 /**
@@ -28,7 +28,7 @@ export function sendMyEmailCode(email) {
  * 실패(불일치·만료): ApiError(401)
  */
 export async function confirmMyEmailCode(email, authCode) {
-  const data = await apiClient.post('/api/v1/auth/email-verification/confirm', { email, authCode })
+  const data = await apiClient.post('/api/v1/auth/email-verification/confirm', { email, authCode, purpose: 'RESET_PASSWORD' })
   if (!data || typeof data.verificationToken !== 'string' || !data.verificationToken) {
     throw new Error('인증 응답 형식이 올바르지 않습니다.')
   }

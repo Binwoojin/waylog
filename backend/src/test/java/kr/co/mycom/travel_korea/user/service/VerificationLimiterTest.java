@@ -51,6 +51,19 @@ class VerificationLimiterTest {
     }
 
     @Test
+    void failedSendDoesNotResetAttemptsOfTheStillValidCode() {
+        VerificationLimiter limiter = new VerificationLimiter(180_000, 0);
+        for (int i = 0; i < VerificationLimiter.MAX_FAILED_ATTEMPTS; i++) {
+            limiter.reserveAttempt(KEY);
+        }
+        // 재발송이 메일 오류로 실패하면 이전 인증번호는 그대로 유효하고, 시도 횟수도 그대로여야 한다
+        limiter.reserveSend(KEY);
+        limiter.releaseSend(KEY);
+
+        assertThrows(TooManyRequestsException.class, () -> limiter.reserveAttempt(KEY));
+    }
+
+    @Test
     void sixthAttemptIsBlockedEvenWithTheRightCode() {
         VerificationLimiter limiter = new VerificationLimiter(180_000, 0);
         for (int i = 0; i < VerificationLimiter.MAX_FAILED_ATTEMPTS; i++) {
@@ -69,8 +82,9 @@ class VerificationLimiterTest {
         for (int i = 0; i < VerificationLimiter.MAX_FAILED_ATTEMPTS; i++) {
             limiter.reserveAttempt(KEY);
         }
-        // 재발송은 시도 횟수를 초기화한다
+        // 새 인증번호가 저장된 뒤에만 시도 횟수를 초기화한다
         limiter.reserveSend(KEY);
+        limiter.recordSent(KEY);
         assertDoesNotThrow(() -> limiter.reserveAttempt(KEY));
 
         // 성공 후에도 발송 횟수는 유지되므로 한도(5회)에 도달해 있다

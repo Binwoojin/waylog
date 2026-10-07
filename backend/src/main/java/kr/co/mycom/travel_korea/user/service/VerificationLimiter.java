@@ -60,7 +60,13 @@ public class VerificationLimiter {
         if (cooldowns != null) {
             cooldowns.put(key, System.currentTimeMillis());
         }
-        // 재발송은 새 인증번호이므로 이전 번호의 확인 시도 횟수를 이어받지 않는다.
+    }
+
+    /*
+     * 새 인증번호가 실제로 저장된 뒤에만 호출한다. 확인 시도 횟수는 이때 초기화한다.
+     * 발송이 실패한 경우에는 이전 인증번호의 시도 횟수가 그대로 남아야 하므로 reserveSend에서 초기화하지 않는다.
+     */
+    public synchronized void recordSent(String key) {
         attempts.invalidate(key);
     }
 

@@ -18,10 +18,9 @@
 -- 롤백: ALTER TABLE users DROP INDEX uk_users_email; ALTER TABLE users DROP INDEX uk_users_nickname;
 -- ============================================================
 
+-- 두 제약을 한 문장으로 묶어 중간에 한쪽만 적용되는 부분 적용을 피한다(MySQL DDL은 문장 단위로 커밋됨).
 ALTER TABLE users
-    ADD CONSTRAINT uk_users_email UNIQUE (EMAIL);
-
-ALTER TABLE users
+    ADD CONSTRAINT uk_users_email UNIQUE (EMAIL),
     ADD CONSTRAINT uk_users_nickname UNIQUE (NICKNAME);
 
 -- 적용 후 확인 (읽기 전용)
