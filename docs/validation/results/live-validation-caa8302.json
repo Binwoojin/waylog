@@ -1,0 +1,78 @@
+{
+  "commit": "caa8302",
+  "environment": "local H2 profile, single backend instance, mail sink on 3025",
+  "results": [
+    {
+      "id": "S1-signup-ui",
+      "mode": "real-server browser",
+      "ok": true,
+      "evidence": "필수 미동의 alert=true, 동의 후 /login 이동 성공 (email=[test-email])"
+    },
+    {
+      "id": "S1b-signup-then-login",
+      "mode": "real-server browser",
+      "ok": true,
+      "evidence": "가입 직후 로그인 url=http://localhost:5173/"
+    },
+    {
+      "id": "S2-session-restore",
+      "mode": "real-server browser",
+      "ok": true,
+      "evidence": "새로고침 후 url=/mypage, verifyA 표시=true"
+    },
+    {
+      "id": "S3-bookmark-save-persist-list",
+      "mode": "real-server browser",
+      "ok": true,
+      "evidence": "버튼 전→후(새로고침)=저장→저장됨, POST=200, 목록 노출=true"
+    },
+    {
+      "id": "S3b-bookmark-unsave",
+      "mode": "real-server browser",
+      "ok": true,
+      "evidence": "해제 요청=200, 새로고침 후 버튼=저장"
+    },
+    {
+      "id": "S4a-post-create",
+      "mode": "real-server browser",
+      "ok": true,
+      "evidence": "POST=201, postId=1"
+    },
+    {
+      "id": "S4b-comment-create-count",
+      "mode": "real-server browser",
+      "ok": true,
+      "evidence": "댓글 수 0→1, POST=201"
+    },
+    {
+      "id": "S4c-comment-delete-count",
+      "mode": "real-server browser",
+      "ok": true,
+      "evidence": "댓글 수 1→0"
+    },
+    {
+      "id": "S5a-api-foreign-post-delete",
+      "mode": "real-server API",
+      "ok": true,
+      "evidence": "B가 A 글 삭제 → HTTP 403"
+    },
+    {
+      "id": "S5b-api-foreign-comment-delete",
+      "mode": "real-server API",
+      "ok": true,
+      "evidence": "B가 A 댓글 삭제 → HTTP 403"
+    },
+    {
+      "id": "S5c-ui-foreign-controls-hidden",
+      "mode": "real-server browser",
+      "ok": true,
+      "evidence": "B 화면의 삭제 0개, 수정 0개"
+    },
+    {
+      "id": "S6-password-reset-ui",
+      "mode": "real-server browser",
+      "ok": true,
+      "evidence": "새 비밀번호 로그인=200, 이전 비밀번호 로그인=401"
+    }
+  ]
+}
