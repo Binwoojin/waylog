@@ -298,7 +298,7 @@ public class AuthService {
             throw new IllegalArgumentException("인증번호를 입력해 주세요.");
         }
         String key = purpose.keyOf(request.getEmail());
-        verificationLimiter.checkAttemptAllowed(key);
+        verificationLimiter.reserveAttempt(key);
 
         Integer issuedCode = emailVerificationCache.getIfPresent(key);
         if (issuedCode != null && issuedCode.equals(request.getAuthCode())
@@ -313,7 +313,6 @@ public class AuthService {
             emailVerificationTicketCache.put(key, verificationToken);
             return ResponseEntity.ok(Map.of("verificationToken", verificationToken));
         }
-        verificationLimiter.recordFailure(key);
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
 
@@ -384,7 +383,7 @@ public class AuthService {
     public void sendCodeToEmail(String email, EmailVerificationPurpose purpose) {
         requireText(email, "이메일을 입력해 주세요.");
         String key = purpose.keyOf(email);
-        verificationLimiter.checkSendAllowed(key);
+        verificationLimiter.reserveSend(key);
         // 확인코드 담긴 이메일 발송
         String title = "Waylog 이메일 인증 번호";
         int checkNum = newCode(SECURE_RANDOM);
@@ -431,9 +430,9 @@ public class AuthService {
             createEmailForm(email, title, content);
             // 인증번호 관련 정보를 캐시에 저장
             emailVerificationCache.put(key, checkNum);
-            verificationLimiter.recordSend(key);
         } catch (Exception e) {
             // 또는 로거를 사용하여 상세한 예외 정보 로깅
+            verificationLimiter.releaseSend(key);
             throw new RuntimeException("Unable to send email in sendCodeToEmail", e); // 원인 예외를 포함시키기
         }
     }
