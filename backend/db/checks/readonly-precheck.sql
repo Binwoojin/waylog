@@ -109,3 +109,28 @@ SELECT table_name
 FROM information_schema.TABLES
 WHERE table_schema = DATABASE()
   AND table_name IN ('flyway_schema_history', 'schema_migrations', 'databasechangelog');
+
+-- ------------------------------------------------------------
+-- 8. 가입 식별자 중복 점검 (EMAIL, NICKNAME)
+--    서버 중복 검사(3ae69f1) 이후에도 기존 데이터에 중복이 남아 있을 수 있다.
+--    DB 유니크 제약(users.EMAIL, users.NICKNAME)을 추가하기 전에 이 결과가 0행이어야 한다.
+--    행이 나오면 유니크 제약 적용을 멈추고 중복 행을 먼저 정리한다(운영 DB를 직접 고치지 않는다).
+-- ------------------------------------------------------------
+SELECT 'EMAIL' AS duplicated_column, EMAIL AS duplicated_value, COUNT(*) AS row_count
+FROM users
+GROUP BY EMAIL
+HAVING COUNT(*) > 1;
+
+SELECT 'NICKNAME' AS duplicated_column, NICKNAME AS duplicated_value, COUNT(*) AS row_count
+FROM users
+GROUP BY NICKNAME
+HAVING COUNT(*) > 1;
+
+-- 8-1. users 의 현재 유니크 인덱스 (이미 유니크 제약이 있는지 확인)
+--      엔티티에는 unique 설정이 없으므로(UserEntity) 보통 아무 행도 나오지 않는다.
+SELECT index_name, GROUP_CONCAT(column_name ORDER BY seq_in_index) AS columns_in_order
+FROM information_schema.STATISTICS
+WHERE table_schema = DATABASE()
+  AND table_name = 'users'
+  AND non_unique = 0
+GROUP BY index_name;
