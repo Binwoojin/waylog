@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import banner from '../../assets/figma/record-banner.png'
+import banner from '../../assets/enjoy/record.png'
 import './HomeSections.css'
 
 export default function TravelRecordBanner() {
