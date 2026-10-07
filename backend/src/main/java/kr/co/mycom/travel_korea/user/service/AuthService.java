@@ -18,6 +18,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -27,7 +28,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import java.text.ParseException;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Random;
+import java.security.SecureRandom;
 import java.util.UUID;
 
 @Slf4j
@@ -44,6 +45,8 @@ public class AuthService {
     private final JavaMailSender emailSender;
     private final Cache<String, Integer> emailVerificationCache;
     private final Cache<String, String> emailVerificationTicketCache;
+    private final VerificationLimiter verificationLimiter;
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     public UserEntity signup(UserRequest userInput) {
         // 컨트롤러 @Validated가 1차로 막지만, 서비스가 null을 캐시 키로 쓰지 않도록 가드합니다.
@@ -59,14 +62,19 @@ public class AuthService {
         if (repo.existsByNickname(userInput.getNickname())) {
             throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
         }
-        consumeVerificationTicket(userInput.getEmail(), userInput.getVerificationToken());
+        consumeVerificationTicket(EmailVerificationPurpose.SIGNUP, userInput.getEmail(), userInput.getVerificationToken());
         UserEntity rep = new UserEntity(
                 userInput.getEmail(),
                 passwordEncoder.encode(userInput.getPassword()),
                 userInput.getNickname(),
                 "user"
         );
-        return repo.save(rep);
+        try {
+            // 동시에 같은 닉네임·이메일로 가입하면 서버 검사를 둘 다 통과할 수 있으므로, DB 유니크 제약 위반도 같은 메시지로 바꾼다.
+            return repo.saveAndFlush(rep);
+        } catch (DataIntegrityViolationException e) {
+            throw duplicateAccountError(e);
+        }
     }
 
     public ResponseEntity login(@RequestBody UserRequest request) throws JOSEException {
@@ -284,30 +292,35 @@ public class AuthService {
 
 
     public ResponseEntity emailVerificationConfirm(MailRequest request) {
-//        이메일 인증번호 확인
         requireText(request.getEmail(), "이메일을 입력해 주세요.");
+        EmailVerificationPurpose purpose = EmailVerificationPurpose.from(request.getPurpose());
         if (request.getAuthCode() == null) {
             throw new IllegalArgumentException("인증번호를 입력해 주세요.");
         }
-        Integer verifiedCode = emailVerificationCache.getIfPresent(request.getEmail());
-        if (verifiedCode != null && verifiedCode.equals(request.getAuthCode())) {
-            emailVerificationCache.invalidate(request.getEmail());
+        String key = purpose.keyOf(request.getEmail());
+        verificationLimiter.checkAttemptAllowed(key);
+
+        Integer issuedCode = emailVerificationCache.getIfPresent(key);
+        if (issuedCode != null && issuedCode.equals(request.getAuthCode())
+                && emailVerificationCache.asMap().remove(key, issuedCode)) {
+            // 같은 인증번호를 두 요청이 동시에 확인해도 remove가 한 번만 성공한다.
+            verificationLimiter.recordSuccess(key);
             /*
-             * 인증 성공 시 일회용 티켓을 발급합니다.
-             * signup/changePassword는 이 티켓을 제시해야만 처리되며,
-             * 한 번 사용된 티켓은 즉시 무효화됩니다.
+             * 인증 성공 시 용도별 일회용 티켓을 발급합니다.
+             * 티켓은 발급받은 용도의 흐름(가입 또는 비밀번호 재설정)에서만 소모할 수 있습니다.
              */
             String verificationToken = UUID.randomUUID().toString();
-            emailVerificationTicketCache.put(request.getEmail(), verificationToken);
+            emailVerificationTicketCache.put(key, verificationToken);
             return ResponseEntity.ok(Map.of("verificationToken", verificationToken));
         }
+        verificationLimiter.recordFailure(key);
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
 
     public void changePassword(UserRequest request) {
         requireText(request.getEmail(), "이메일을 입력해 주세요.");
         requireText(request.getPassword(), "비밀번호를 입력해 주세요.");
-        consumeVerificationTicket(request.getEmail(), request.getVerificationToken());
+        consumeVerificationTicket(EmailVerificationPurpose.RESET_PASSWORD, request.getEmail(), request.getVerificationToken());
         UserEntity user = repo.findByEmail(request.getEmail()).orElseThrow(() -> new IllegalArgumentException("해당 이메일의 회원을 찾을 수 없습니다."));
         user.changePassword(passwordEncoder.encode(request.getPassword()));
         repo.save(user);
@@ -319,14 +332,34 @@ public class AuthService {
      * 티켓이 없거나 일치하지 않으면 signup/changePassword를 진행할 수 없습니다.
      * 검증에 성공한 티켓은 재사용을 막기 위해 즉시 무효화합니다.
      */
-    private void consumeVerificationTicket(String email, String verificationToken) {
+    private void consumeVerificationTicket(EmailVerificationPurpose purpose, String email, String verificationToken) {
         // Caffeine 캐시는 null 키를 허용하지 않으므로(NPE) 조회 전에 반드시 가드합니다.
         requireText(email, "이메일을 입력해 주세요.");
-        String ticket = emailVerificationTicketCache.getIfPresent(email);
-        if (ticket == null || verificationToken == null || !ticket.equals(verificationToken)) {
+        if (verificationToken == null) {
             throw new IllegalArgumentException("이메일 인증이 필요합니다.");
         }
-        emailVerificationTicketCache.invalidate(email);
+        // 값이 일치할 때만 제거하므로, 같은 티켓을 동시에 제시해도 한 요청만 통과한다.
+        boolean consumed = emailVerificationTicketCache.asMap().remove(purpose.keyOf(email), verificationToken);
+        if (!consumed) {
+            throw new IllegalArgumentException("이메일 인증이 필요합니다.");
+        }
+    }
+
+    // 중복 가입 충돌 메시지. 제약 이름으로 어느 값이 겹쳤는지 구분하고, 알 수 없으면 일반 문구를 쓴다.
+    private static IllegalArgumentException duplicateAccountError(DataIntegrityViolationException e) {
+        String detail = e.getMostSpecificCause() == null ? "" : String.valueOf(e.getMostSpecificCause().getMessage()).toLowerCase();
+        if (detail.contains("uk_users_email")) {
+            return new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+        }
+        if (detail.contains("uk_users_nickname")) {
+            return new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
+        }
+        return new IllegalArgumentException("이미 사용 중인 정보가 있습니다. 다시 확인해 주세요.");
+    }
+
+    // 인증번호는 보안용 난수로 만든다(java.util.Random은 예측 가능하므로 사용하지 않는다). 범위는 6자리 숫자다.
+    static int newCode(SecureRandom random) {
+        return 100_000 + random.nextInt(900_000);
     }
 
     /*
@@ -348,12 +381,13 @@ public class AuthService {
         }
     }
 
-    public void sendCodeToEmail(String email) {
+    public void sendCodeToEmail(String email, EmailVerificationPurpose purpose) {
         requireText(email, "이메일을 입력해 주세요.");
+        String key = purpose.keyOf(email);
+        verificationLimiter.checkSendAllowed(key);
         // 확인코드 담긴 이메일 발송
         String title = "Waylog 이메일 인증 번호";
-        Random random = new Random();
-        int checkNum = random.nextInt(888888) + 111111;
+        int checkNum = newCode(SECURE_RANDOM);
         String content =
                 "<!DOCTYPE html>"
                         + "<html>"
@@ -396,7 +430,8 @@ public class AuthService {
         try {
             createEmailForm(email, title, content);
             // 인증번호 관련 정보를 캐시에 저장
-            emailVerificationCache.put(email, checkNum);
+            emailVerificationCache.put(key, checkNum);
+            verificationLimiter.recordSend(key);
         } catch (Exception e) {
             // 또는 로거를 사용하여 상세한 예외 정보 로깅
             throw new RuntimeException("Unable to send email in sendCodeToEmail", e); // 원인 예외를 포함시키기

@@ -16,7 +16,7 @@ import './ForgotPasswordPage.css'
  * - POST /api/v1/auth/password-reset-requests      { email } → 응답 본문 없음(200이면 발송 성공)
  *   이 API는 가입 여부를 확인하지 않고 그냥 인증코드를 발송합니다. 존재하지 않는 이메일이어도 200이 오며,
  *   최종 비밀번호 변경 단계(PUT /password)에서야 "해당 이메일의 회원을 찾을 수 없습니다" 오류가 납니다.
- * - POST /api/v1/auth/email-verification/confirm   { email, authCode } → 성공 시 { verificationToken }, 실패 시 401
+ * - POST /api/v1/auth/email-verification/confirm   { email, authCode, purpose: 'RESET_PASSWORD' } → 성공 시 { verificationToken }, 실패 시 401
  * - PUT  /api/v1/auth/password                     { email, password, verificationToken } → 성공 시 200(본문 없음)
  *   verificationToken이 없거나 틀렸거나 이미 소모됐으면 "이메일 인증이 필요합니다" 오류가 납니다.
  */
@@ -142,6 +142,7 @@ export default function ForgotPasswordPage() {
       const data = await apiClient.post('/api/v1/auth/email-verification/confirm', {
         email,
         authCode: Number(verificationCode),
+        purpose: 'RESET_PASSWORD',
       })
 
       setVerificationToken(data.verificationToken)

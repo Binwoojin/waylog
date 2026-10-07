@@ -8,6 +8,7 @@ import kr.co.mycom.travel_korea.user.entity.UserEntity;
 import kr.co.mycom.travel_korea.user.dto.MailRequest;
 import kr.co.mycom.travel_korea.user.dto.UserRequest;
 import kr.co.mycom.travel_korea.user.service.AuthService;
+import kr.co.mycom.travel_korea.user.service.EmailVerificationPurpose;
 import kr.co.mycom.travel_korea.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 
@@ -68,7 +69,7 @@ public class AuthController {
 
     @PostMapping("/email-verification")
     public void sendMessage(@Validated(UserRequest.SendCode.class) @RequestBody UserRequest request){
-        service.sendCodeToEmail(request.getEmail());
+        service.sendCodeToEmail(request.getEmail(), EmailVerificationPurpose.SIGNUP);
     }
 
     @PostMapping("/email-verification/confirm")
@@ -79,7 +80,7 @@ public class AuthController {
 
     @PostMapping("/password-reset-requests")
     public void sendPasswordResetMessage(@Validated(UserRequest.SendCode.class) @RequestBody UserRequest request){
-        service.sendCodeToEmail(request.getEmail());
+        service.sendCodeToEmail(request.getEmail(), EmailVerificationPurpose.RESET_PASSWORD);
     }
 
     @PutMapping("/password")

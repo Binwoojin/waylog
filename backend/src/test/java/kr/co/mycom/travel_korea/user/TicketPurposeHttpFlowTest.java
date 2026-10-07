@@ -3,6 +3,7 @@ package kr.co.mycom.travel_korea.user;
 import com.github.benmanes.caffeine.cache.Cache;
 import kr.co.mycom.travel_korea.user.entity.UserEntity;
 import kr.co.mycom.travel_korea.user.repository.UserRepository;
+import kr.co.mycom.travel_korea.user.service.EmailVerificationPurpose;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -22,19 +23,12 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 
 /*
- * 인증 티켓의 용도(가입 vs 비밀번호 재설정) 정책을 현재 코드 기준으로 고정하는 테스트입니다.
+ * 인증 티켓의 용도(가입 SIGNUP vs 비밀번호 재설정 RESET_PASSWORD) 교차 사용을 거부하는지 확인합니다.
  *
- * 확인된 사실 (AuthController·AuthService):
- * - POST /auth/email-verification 과 POST /auth/password-reset-requests 는 둘 다 sendCodeToEmail(email)을 호출합니다.
- *   발급되는 인증번호는 용도 없이 emailVerificationCache(email → 코드)에 저장됩니다.
- * - POST /auth/email-verification/confirm 은 용도 없이 emailVerificationTicketCache(email → 티켓)에 저장합니다.
- * - signup 과 PUT /auth/password 는 둘 다 같은 티켓을 consumeVerificationTicket 으로 소모합니다. 용도를 확인하지 않습니다.
- * - 가입 흐름은 계정 존재 여부를 발급 단계에서 확인하지 않고, 재설정 흐름은 계정 존재 여부를 최종 변경 단계에서 확인합니다.
+ * 이전에는 용도가 없어서 가입용 인증번호로 얻은 티켓으로 비밀번호를 바꾸거나, 재설정용 티켓으로 가입할 수 있었습니다.
+ * 용도를 연결한 뒤에는 발급받은 용도의 흐름에서만 티켓을 쓸 수 있어야 합니다.
  *
- * 따라서 테스트는 "현재 정책이 무엇을 허용하는가"를 기록합니다.
- * 용도 분리(purpose binding)를 구현하면 아래 A·B 테스트는 실패하도록 바뀌며, 그때 기대값을 거부로 고쳐야 합니다.
- *
- * 인증번호는 테스트에서 메일 발송 대신 emailVerificationCache에 직접 넣습니다. 두 발급 엔드포인트가 같은 캐시를 쓰므로 같은 상태가 됩니다.
+ * 인증번호는 메일로 보내지 않고 같은 용도 키로 캐시에 직접 넣습니다. 발급과 확인 경로는 실제 엔드포인트를 쓴다.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles({"test", "local-mock"})
@@ -53,37 +47,32 @@ class TicketPurposeHttpFlowTest {
     private PasswordEncoder passwordEncoder;
     @Autowired
     private Cache<String, Integer> emailVerificationCache;
-    @Autowired
-    private Cache<String, String> emailVerificationTicketCache;
 
     private final HttpClient client = HttpClient.newHttpClient();
     private final ObjectMapper mapper = new ObjectMapper();
 
-    // A. 가입 흐름으로 발급된 인증번호로 기존 계정의 비밀번호를 바꿀 수 있는가 (현재 정책: 가능)
+    // A. 가입용 인증번호로 얻은 티켓은 비밀번호 재설정에 쓸 수 없다
     @Test
-    void signupIssuedCodeCanChangePasswordOfExistingAccount() throws Exception {
+    void signupTicketCannotChangePassword() throws Exception {
         String email = "purpose-a-" + UUID.randomUUID() + "@example.com";
         userRepository.save(new UserEntity(email, passwordEncoder.encode(RAW_PASSWORD), uniqueNickname(), "user"));
-
-        // /email-verification 으로 발급된 코드를 흉내 낸다(같은 sendCodeToEmail 경로)
-        emailVerificationCache.put(email, CODE);
-        String ticket = confirmCode(email);
+        emailVerificationCache.put(EmailVerificationPurpose.SIGNUP.keyOf(email), CODE);
+        String ticket = confirmCode(email, EmailVerificationPurpose.SIGNUP);
 
         HttpResponse<String> changed = send("PUT", "/api/v1/auth/password", Map.of(
                 "email", email, "password", NEW_PASSWORD, "verificationToken", ticket));
 
-        assertEquals(200, changed.statusCode(), "현재 정책: 가입용 티켓이 비밀번호 변경에 쓰일 수 있음. " + changed.body());
-        assertTrue(login(email, NEW_PASSWORD) == 200, "변경된 비밀번호로 로그인되어야 함");
+        assertEquals(400, changed.statusCode(), changed.body());
+        assertTrue(changed.body().contains("이메일 인증이 필요합니다."), changed.body());
+        assertEquals(200, login(email, RAW_PASSWORD), "거부되면 기존 비밀번호가 그대로여야 함");
     }
 
-    // B. 재설정 흐름으로 발급된 인증번호로 가입을 완료할 수 있는가 (현재 정책: 가능, 계정이 없을 때)
+    // B. 재설정용 인증번호로 얻은 티켓은 가입에 쓸 수 없다
     @Test
-    void resetIssuedCodeCanCompleteSignupForUnregisteredEmail() throws Exception {
+    void resetTicketCannotCompleteSignup() throws Exception {
         String email = "purpose-b-" + UUID.randomUUID() + "@example.com";
-
-        // /password-reset-requests 로 발급된 코드를 흉내 낸다(같은 sendCodeToEmail 경로)
-        emailVerificationCache.put(email, CODE);
-        String ticket = confirmCode(email);
+        emailVerificationCache.put(EmailVerificationPurpose.RESET_PASSWORD.keyOf(email), CODE);
+        String ticket = confirmCode(email, EmailVerificationPurpose.RESET_PASSWORD);
 
         Map<String, Object> agreements = new HashMap<>();
         agreements.put("service", true);
@@ -98,19 +87,19 @@ class TicketPurposeHttpFlowTest {
 
         HttpResponse<String> signup = send("POST", "/api/v1/auth/signup", body);
 
-        assertEquals(200, signup.statusCode(), "현재 정책: 재설정용 티켓이 가입에 쓰일 수 있음. " + signup.body());
-        assertTrue(userRepository.findByEmail(email).isPresent());
+        assertEquals(400, signup.statusCode(), signup.body());
+        assertTrue(signup.body().contains("이메일 인증이 필요합니다."), signup.body());
+        assertFalse(userRepository.findByEmail(email).isPresent(), "거부되면 계정이 만들어지면 안 됨");
     }
 
-    // C. 티켓은 발급받은 이메일에서만 쓸 수 있다 (현재 정책: 이메일 불일치는 거부)
+    // C. 티켓은 발급받은 이메일에서만 쓸 수 있다
     @Test
     void ticketIssuedForOneEmailIsRejectedForAnother() throws Exception {
         String issuedFor = "purpose-c1-" + UUID.randomUUID() + "@example.com";
         String otherEmail = "purpose-c2-" + UUID.randomUUID() + "@example.com";
         userRepository.save(new UserEntity(otherEmail, passwordEncoder.encode(RAW_PASSWORD), uniqueNickname(), "user"));
-
-        emailVerificationCache.put(issuedFor, CODE);
-        String ticket = confirmCode(issuedFor);
+        emailVerificationCache.put(EmailVerificationPurpose.RESET_PASSWORD.keyOf(issuedFor), CODE);
+        String ticket = confirmCode(issuedFor, EmailVerificationPurpose.RESET_PASSWORD);
 
         HttpResponse<String> response = send("PUT", "/api/v1/auth/password", Map.of(
                 "email", otherEmail, "password", NEW_PASSWORD, "verificationToken", ticket));
@@ -120,10 +109,10 @@ class TicketPurposeHttpFlowTest {
         assertEquals(200, login(otherEmail, RAW_PASSWORD), "다른 이메일의 비밀번호는 바뀌면 안 됨");
     }
 
-    // 인증번호 확인 후 티켓을 돌려받는다. 확인이 실패하면 테스트가 실패한다.
-    private String confirmCode(String email) throws Exception {
+    // 인증번호를 확인해 티켓을 받는다. 확인이 실패하면 테스트가 실패한다.
+    private String confirmCode(String email, EmailVerificationPurpose purpose) throws Exception {
         HttpResponse<String> response = send("POST", "/api/v1/auth/email-verification/confirm", Map.of(
-                "email", email, "authCode", CODE));
+                "email", email, "authCode", CODE, "purpose", purpose.name()));
         assertEquals(200, response.statusCode(), response.body());
         return mapper.readTree(response.body()).get("verificationToken").asString();
     }

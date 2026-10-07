@@ -2,6 +2,7 @@ package kr.co.mycom.travel_korea.user;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import kr.co.mycom.travel_korea.user.repository.UserRepository;
+import kr.co.mycom.travel_korea.user.service.EmailVerificationPurpose;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -123,27 +124,27 @@ class TermsAgreementHttpFlowTest {
     @Test
     void rejectedSignupCanBeRetriedWithSameTicketAfterFixingAgreements() throws Exception {
         String email = prepareTicket();
-        String token = emailVerificationTicketCache.getIfPresent(email);
+        String token = emailVerificationTicketCache.getIfPresent(EmailVerificationPurpose.SIGNUP.keyOf(email));
         assertNotNull(token);
 
         HttpResponse<String> rejected = signup(signupBody(email, agreements(true, false, false)));
         assertEquals(400, rejected.statusCode());
         assertFalse(userRepository.findByEmail(email).isPresent());
         // 거부 시점에 티켓이 소모되면 안 됩니다.
-        assertEquals(token, emailVerificationTicketCache.getIfPresent(email));
+        assertEquals(token, emailVerificationTicketCache.getIfPresent(EmailVerificationPurpose.SIGNUP.keyOf(email)));
 
         HttpResponse<String> retried = signup(signupBody(email, agreements(true, true, false)));
 
         assertEquals(200, retried.statusCode(), retried.body());
         assertTrue(userRepository.findByEmail(email).isPresent());
         // 성공 후에는 티켓이 소모되어 재사용할 수 없습니다.
-        assertNull(emailVerificationTicketCache.getIfPresent(email));
+        assertNull(emailVerificationTicketCache.getIfPresent(EmailVerificationPurpose.SIGNUP.keyOf(email)));
     }
 
     // 이메일별 유효 인증 티켓을 캐시에 넣고 이메일을 돌려줍니다.
     private String prepareTicket() {
         String email = "terms-" + UUID.randomUUID() + "@example.com";
-        emailVerificationTicketCache.put(email, UUID.randomUUID().toString());
+        emailVerificationTicketCache.put(EmailVerificationPurpose.SIGNUP.keyOf(email), UUID.randomUUID().toString());
         return email;
     }
 
@@ -152,7 +153,7 @@ class TermsAgreementHttpFlowTest {
         body.put("email", email);
         body.put("password", RAW_PASSWORD);
         body.put("nickname", "t" + UUID.randomUUID().toString().substring(0, 8));
-        body.put("verificationToken", emailVerificationTicketCache.getIfPresent(email));
+        body.put("verificationToken", emailVerificationTicketCache.getIfPresent(EmailVerificationPurpose.SIGNUP.keyOf(email)));
         body.put("agreements", agreements);
         return body;
     }

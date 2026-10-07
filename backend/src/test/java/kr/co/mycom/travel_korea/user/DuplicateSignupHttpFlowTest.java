@@ -2,6 +2,7 @@ package kr.co.mycom.travel_korea.user;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import kr.co.mycom.travel_korea.user.entity.UserEntity;
+import kr.co.mycom.travel_korea.user.service.EmailVerificationPurpose;
 import kr.co.mycom.travel_korea.user.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,14 +50,14 @@ class DuplicateSignupHttpFlowTest {
     void duplicateEmailIsRejectedWithoutConsumingTicket() throws Exception {
         String existingEmail = "dup-existing-" + UUID.randomUUID() + "@example.com";
         userRepository.save(new UserEntity(existingEmail, passwordEncoder.encode(RAW_PASSWORD), uniqueNickname(), "user"));
-        emailVerificationTicketCache.put(existingEmail, UUID.randomUUID().toString());
+        emailVerificationTicketCache.put(EmailVerificationPurpose.SIGNUP.keyOf(existingEmail), UUID.randomUUID().toString());
 
         HttpResponse<String> response = signup(signupBody(existingEmail, uniqueNickname()));
 
         assertEquals(400, response.statusCode(), response.body());
         assertTrue(response.body().contains("이미 사용 중인 이메일입니다."), response.body());
         assertEquals(1, userRepository.findAll().stream().filter(u -> existingEmail.equals(u.getEmail())).count());
-        assertNotNull(emailVerificationTicketCache.getIfPresent(existingEmail), "중복 거부는 인증 티켓을 소모하면 안 됩니다");
+        assertNotNull(emailVerificationTicketCache.getIfPresent(EmailVerificationPurpose.SIGNUP.keyOf(existingEmail)), "중복 거부는 인증 티켓을 소모하면 안 됩니다");
     }
 
     @Test
@@ -64,14 +65,14 @@ class DuplicateSignupHttpFlowTest {
         String takenNickname = uniqueNickname();
         userRepository.save(new UserEntity("dup-nick-" + UUID.randomUUID() + "@example.com", passwordEncoder.encode(RAW_PASSWORD), takenNickname, "user"));
         String newEmail = "dup-new-" + UUID.randomUUID() + "@example.com";
-        emailVerificationTicketCache.put(newEmail, UUID.randomUUID().toString());
+        emailVerificationTicketCache.put(EmailVerificationPurpose.SIGNUP.keyOf(newEmail), UUID.randomUUID().toString());
 
         HttpResponse<String> rejected = signup(signupBody(newEmail, takenNickname));
 
         assertEquals(400, rejected.statusCode(), rejected.body());
         assertTrue(rejected.body().contains("이미 사용 중인 닉네임입니다."), rejected.body());
         assertFalse(userRepository.findByEmail(newEmail).isPresent());
-        assertNotNull(emailVerificationTicketCache.getIfPresent(newEmail));
+        assertNotNull(emailVerificationTicketCache.getIfPresent(EmailVerificationPurpose.SIGNUP.keyOf(newEmail)));
 
         HttpResponse<String> retried = signup(signupBody(newEmail, uniqueNickname()));
 
@@ -85,10 +86,10 @@ class DuplicateSignupHttpFlowTest {
 
     // 인증 티켓을 캐시에 넣고, 약관에 모두 동의한 가입 요청 본문을 만든다.
     private Map<String, Object> signupBody(String email, String nickname) {
-        String ticket = emailVerificationTicketCache.getIfPresent(email);
+        String ticket = emailVerificationTicketCache.getIfPresent(EmailVerificationPurpose.SIGNUP.keyOf(email));
         if (ticket == null) {
             ticket = UUID.randomUUID().toString();
-            emailVerificationTicketCache.put(email, ticket);
+            emailVerificationTicketCache.put(EmailVerificationPurpose.SIGNUP.keyOf(email), ticket);
         }
         Map<String, Object> agreements = new HashMap<>();
         agreements.put("service", true);

@@ -15,4 +15,8 @@ public class MailRequest {
 
     @NotNull(message = "인증번호를 입력해 주세요.")
     Integer authCode;
+
+    /* 인증번호의 용도(SIGNUP 또는 RESET_PASSWORD). 용도가 다른 티켓은 소모할 수 없다. */
+    @NotBlank(message = "인증 용도를 확인해 주세요.")
+    String purpose;
 }

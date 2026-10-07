@@ -30,6 +30,13 @@ public class GlobalExceptionHandler {
      * 권한이 없는 변경 요청(타인의 게시물·댓글 수정·삭제)을 403으로 반환합니다.
      * 입력값 오류(400)와 구분해 프론트가 권한 안내를 따로 표시할 수 있게 합니다.
      */
+    @ExceptionHandler(TooManyRequestsException.class)
+    public ResponseEntity<Map<String, String>> handleTooManyRequests(TooManyRequestsException exception) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(
+                Map.of("message", exception.getMessage())
+        );
+    }
+
     @ExceptionHandler(ForbiddenException.class)
     public ResponseEntity<Map<String, String>> handleForbidden(ForbiddenException exception) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
