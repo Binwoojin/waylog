@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { apiClient } from '../api/client'
+import { ApiError, apiClient } from '../api/client'
 import logo from '../assets/figma/logo.png'
 import signupBackground from '../assets/auth/login-background.png'
 import mailIcon from '../assets/auth/mail.svg'
@@ -13,11 +13,13 @@ import './SignupPage.css'
  * 1단계에서 계정 정보를 검증하고 2단계에서 약관 동의를 받은 뒤 회원가입을 요청합니다.
  *
  * 백엔드 API 연결 권장 순서
- * - GET  /api/v1/members/check-email?email=...       이메일 중복 확인
- * - POST /api/v1/auth/email-verifications             인증번호 발송 { email, purpose: 'SIGNUP' }
- * - POST /api/v1/auth/email-verifications/confirm     인증번호 확인 { email, code, purpose: 'SIGNUP' }
- * - GET  /api/v1/members/check-nickname?nickname=...  닉네임 중복 확인
- * - POST /api/v1/members                              최종 회원가입
+ * - GET  /api/v1/users/check-email?email=...         이메일 중복 확인 → { available: boolean }
+ * - POST /api/v1/auth/email-verification              인증번호 발송 { email } → 응답 본문 없음
+ * - POST /api/v1/auth/email-verification/confirm      인증번호 확인 { email, authCode } → { verificationToken }, 불일치 시 401
+ * - GET  /api/v1/users/check-nickname?nickname=...    닉네임 중복 확인 → { available: boolean }
+ * - POST /api/v1/auth/signup                          최종 회원가입 { email, password, nickname, verificationToken }
+ *                                                     → { memberId, email, nickname, role }
+ *   (프론트가 함께 보내는 purpose, agreements는 현재 백엔드 DTO에 없는 필드라 서버에서 사용되지 않습니다.)
  *
  * 프론트의 중복확인 boolean만 신뢰하지 말고 최종 POST 시 서버가 이메일·닉네임 중복,
  * 인증 완료 여부, 비밀번호 정책, 필수 약관 동의를 반드시 다시 검사해야 합니다.
@@ -52,6 +54,11 @@ export default function SignupPage() {
   const [nicknameChecked, setNicknameChecked] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false) // 최종 회원가입 요청 중 여부(버튼 disabled 표시용)
+  // 중복 제출 가드. state는 다음 렌더 후에야 바뀌므로 같은 사이클의 두 번째 호출을 막지 못합니다.
+  // ref는 값이 즉시 바뀌므로 함수 시작 시점의 검사에 씁니다. 성공 시에는 풀지 않습니다(이동 전 중복 클릭 방지).
+  const submittingRef = useRef(false)
+  const [signupError, setSignupError] = useState('') // 최종 회원가입 실패 시 인라인으로 보여 줄 메시지
 
 
   // 인증번호 타이머 추가
@@ -125,7 +132,14 @@ export default function SignupPage() {
         `/api/v1/users/check-email?email=${encodeURIComponent(form.email)}`
       )
 
-      if (data.email!==null) {
+      // 백엔드는 { available: boolean } 형태로 응답합니다. (UserController.checkEmail)
+      // 예상과 다른 응답이면 사용 가능으로 오인하지 않도록 확인 완료 처리를 하지 않습니다.
+      if (typeof data.available !== 'boolean') {
+        window.alert('이메일 중복확인 응답을 확인할 수 없습니다. 잠시 후 다시 시도해 주세요.')
+        return
+      }
+
+      if (!data.available) {
         window.alert('이미 사용 중인 이메일입니다.')
         return
       }
@@ -149,10 +163,6 @@ export default function SignupPage() {
     }
 
     try {
-      /*
-     * 실제 백엔드 연결 예시
-      */
-
      await apiClient.post(
        '/api/v1/auth/email-verification',
        { email: form.email, purpose: 'SIGNUP' },
@@ -166,35 +176,21 @@ export default function SignupPage() {
       // 3분 설정
       setVerificationSecondsLeft(180)
 
-             /*
-        * 서버에서 유효시간을 내려준다면 다음처럼 사용합니다.
-        *
-        * setVerificationSecondsLeft(data.expiresIn)
-     */
-
       setForm(current => ({
         ...current,
         verificationCode: '', // 인증번호 입력 필드 초기화
       }))
       window.alert('인증번호를 발송했습니다.')
-       window.alert("emailChecked : " + emailChecked)
-      window.alert("emailVerified : " + emailVerified)
     } catch (error) {
       window.alert(error.message || '인증번호 발송 중 문제가 발생했습니다.')
     }
   }
 
   const verifyEmail = async() => {
-    // if (!emailChecked || !emailVerified || !emailVerificationToken) {
-    // if (emailChecked || emailVerified) {
-    //   window.alert('이메일 중복 확인과 인증을 완료해 주세요.')
-    //   window.alert(emailChecked)
-    //   window.alert(emailVerified)
-    //   return
-    // }
     if (!emailChecked) {
-      window.alert("먼저 이메일 중복확인을 진행해야합니다")
-      return}
+      window.alert('먼저 이메일 중복확인을 진행해야합니다')
+      return
+    }
     // 인증번호 발송 여부를 모두 검사하도록 변경
     if (!verificationSent) {
       window.alert('먼저 인증번호를 받아 주세요.')
@@ -212,10 +208,6 @@ export default function SignupPage() {
     }
 
     try {
-      /*
-      * 실제 백엔드 연결 예시
-      */
-
      const response = await apiClient.post(
        '/api/v1/auth/email-verification/confirm',
        {
@@ -288,7 +280,11 @@ export default function SignupPage() {
   }
 
   const completeSignup = async() => {
+    // 요청이 진행 중이면 버튼이 비활성화돼도 키보드 등으로 한 번 더 호출될 수 있어 함수에서도 막습니다.
+    if (submittingRef.current) return
+
     if (!terms.service || !terms.privacy) {
+      setSignupError('')
       window.alert('필수 약관에 모두 동의해야 회원가입을 완료할 수 있습니다.')
       return
     }
@@ -300,20 +296,34 @@ export default function SignupPage() {
     }
 
     const requestBody = {
-    email: form.email,
-    verificationToken: emailVerificationToken,
-    password: form.password,
-    // phoneNumber: `${form.phonePrefix}${form.phone}`,
-    nickname: form.nickname,
-    agreements: {
-      service: terms.service,
-      privacy: terms.privacy,
-      marketing: terms.marketing,
-    },
-  }
+      email: form.email,
+      verificationToken: emailVerificationToken,
+      password: form.password,
+      nickname: form.nickname,
+      agreements: {
+        service: terms.service,
+        privacy: terms.privacy,
+        marketing: terms.marketing,
+      },
+    }
 
-  await apiClient.post('/api/v1/auth/signup', requestBody)
+    submittingRef.current = true
+    setIsSubmitting(true)
+    setSignupError('')
+    try {
+      await apiClient.post('/api/v1/auth/signup', requestBody)
+    } catch (error) {
+      // 실패해도 입력값은 그대로 두어 사용자가 약관 화면에서 바로 다시 제출할 수 있게 합니다.
+      console.error('회원가입 요청에 실패했습니다.', error)
+      // ApiError는 서버가 준 메시지라 그대로 보여 줍니다. 네트워크 단절 등 그 밖의 오류는
+      // 원문(예: "Failed to fetch")을 노출하지 않고 한글 기본 문구를 씁니다.
+      setSignupError(error instanceof ApiError ? error.message : '회원가입 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.')
+      submittingRef.current = false
+      setIsSubmitting(false)
+      return
+    }
 
+    // 성공 후에는 페이지를 떠나므로 isSubmitting과 submittingRef를 풀지 않아 중복 클릭을 계속 막습니다.
     window.alert('회원가입이 완료되었습니다. 로그인해 주세요.')
     navigate('/login')
   }
@@ -498,17 +508,23 @@ export default function SignupPage() {
             </label>
 
             <div className="signup-terms__list">
-              <label><input name="service" type="checkbox" checked={terms.service} onChange={toggleTerm} /><span>[필수] 서비스 이용약관 동의</span><a href="#service-terms">보기 <b>›</b></a></label>
-              <label><input name="privacy" type="checkbox" checked={terms.privacy} onChange={toggleTerm} /><span>[필수] 개인정보 수집 및 이용 동의</span><a href="#privacy-terms">보기 <b>›</b></a></label>
-              <label><input name="marketing" type="checkbox" checked={terms.marketing} onChange={toggleTerm} /><span>[선택] 여행 소식 및 이벤트 알림 수신</span><a href="#marketing-terms">보기 <b>›</b></a></label>
+              <label><input name="service" type="checkbox" checked={terms.service} onChange={toggleTerm} /><span>[필수] 서비스 이용약관 동의</span></label>
+              <label><input name="privacy" type="checkbox" checked={terms.privacy} onChange={toggleTerm} /><span>[필수] 개인정보 수집 및 이용 동의</span></label>
+              <label><input name="marketing" type="checkbox" checked={terms.marketing} onChange={toggleTerm} /><span>[선택] 여행 소식 및 이벤트 알림 수신</span></label>
             </div>
 
-            <button className="signup-terms__complete" type="button" onClick={completeSignup}>회원가입 완료</button>
+            {signupError && (
+              <p className="signup-terms__error" role="alert">{signupError}</p>
+            )}
+
+            <button className="signup-terms__complete" type="button" onClick={completeSignup} disabled={isSubmitting}>
+              {isSubmitting ? '가입 처리 중...' : '회원가입 완료'}
+            </button>
           </div>
         )}
 
         <p className="signup-page__login-copy">이미 WayLog 계정이 있으신가요? <Link to="/login">로그인</Link></p>
-        <footer className="signup-page__footer"><a href="#terms">이용약관</a><a href="#privacy">개인정보처리방침</a><a href="#support">고객센터</a><span>ⓒ 2026 WayLog</span></footer>
+        <footer className="signup-page__footer"><span>ⓒ 2026 WayLog</span></footer>
       </section>
     </main>
   )

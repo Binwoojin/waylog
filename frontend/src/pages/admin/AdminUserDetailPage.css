@@ -1,0 +1,127 @@
+.admin-user-detail {
+  max-width: 640px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.admin-user-detail__empty {
+  padding: 60px 16px;
+  color: #64748b;
+  text-align: center;
+}
+
+.admin-user-detail__empty p {
+  margin-bottom: 16px;
+}
+
+.admin-user-detail__summary h1 {
+  margin: 0 0 4px;
+  font-size: 22px;
+}
+
+.admin-user-detail__summary p {
+  margin: 0;
+  color: #64748b;
+}
+
+.admin-user-detail__meta {
+  font-size: 13px;
+}
+
+.admin-user-detail__self-notice {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #fffbeb;
+  color: #92400e;
+  font-size: 14px;
+}
+
+.admin-user-detail__card {
+  padding: 20px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.admin-user-detail__card h2 {
+  margin: 0 0 12px;
+  font-size: 16px;
+}
+
+.admin-user-detail__card p {
+  margin: 0 0 8px;
+  font-size: 14px;
+  color: #334155;
+}
+
+.admin-user-detail__inline-form {
+  display: flex;
+  gap: 8px;
+}
+
+.admin-user-detail__inline-form select {
+  height: 40px;
+  padding: 0 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font: inherit;
+}
+
+.admin-user-detail__suspend-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-user-detail__presets {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-user-detail__presets .admin-button.is-active {
+  border-color: transparent;
+  color: #fff;
+  background: #2563eb;
+}
+
+.admin-user-detail__custom-days {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #334155;
+}
+
+.admin-user-detail__custom-days input {
+  width: 70px;
+  height: 36px;
+  padding: 0 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font: inherit;
+}
+
+.admin-user-detail__reason-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.admin-user-detail__suspend-form textarea {
+  padding: 10px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 14px;
+  resize: vertical;
+}
+
+.admin-user-detail__error {
+  margin: 8px 0 0;
+  color: #b91c1c;
+  font-size: 13px;
+}

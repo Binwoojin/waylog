@@ -6,6 +6,7 @@ import food from '../../assets/figma/enjoy-food.png'
 import shopping from '../../assets/figma/enjoy-shopping.png'
 import stay from '../../assets/figma/enjoy-stay.png'
 import PlacePinIcon from '../icons/PlacePinIcon'
+import { getTourDetailPath } from '../../data/tourContentTypes'
 import './HomeSections.css'
 
 /**
@@ -142,10 +143,11 @@ export default function ThemeDestinationSection({
         {filteredItems.map((item) => (
           <article className="enjoy-card" key={item.contentId}>
             {/*
-              * 상세 API가 완성되면 contentId를 이용해
-              * 상세 화면으로 이동할 수 있습니다.
+              * Design Ref: §5.3 — contentTypeId로 상세 경로를 정합니다.
+              * 12·14는 여행지 상세, 축제·레포츠·음식·쇼핑·숙박은 즐기기 상세로 갑니다.
+              * 경로를 정할 수 없는 유형이면 즐기기 메인으로 보냅니다.
             */}
-            <Link to={`/destinations/detail/${item.contentId}`}>
+            <Link to={getTourDetailPath(item.contentId, item.contentTypeId) ?? '/enjoy'}>
               <img src={item.image || fallbackImages[item.category] || stay} alt={item.title} />
               <div>
                 <h3>{item.title}</h3>

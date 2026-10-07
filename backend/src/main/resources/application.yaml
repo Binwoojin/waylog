@@ -1,4 +1,8 @@
 spring:
+  config:
+    # 실행 디렉터리(backend/)의 .env를 properties 형식으로 읽습니다.
+    # 파일이 없어도 기동되도록 optional로 둡니다. (.env는 git에서 무시됩니다)
+    import: optional:file:.env[.properties]
   cache:
     type: caffeine
     cache-names:
@@ -47,6 +51,17 @@ spring:
     database-platform: org.hibernate.dialect.MySQLDialect
   application:
     name: travel_korea
+  web:
+    error:
+      # 운영 기본값: 에러 응답에 Java 스택트레이스(trace)를 포함하지 않습니다.
+      # spring-boot-devtools(로컬 실행 시)는 spring.web.error.include-stacktrace=always 를
+      # 기본값으로 주입하므로, 이 설정이 그 기본값을 덮어씁니다.
+      include-stacktrace: never
+      # 같은 이유로 include-message / include-binding-errors 도 devtools 기본값(always)을 덮어씁니다.
+      # 내부 예외 문구(Jackson 파싱 상세, NPE 메시지 등)가 응답 message로 새지 않게 합니다.
+      # GlobalExceptionHandler가 직접 만든 응답 본문의 message(한글 문구)는 이 설정과 무관합니다.
+      include-message: never
+      include-binding-errors: never
 server:
   servlet:
     multipart:

@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { apiClient } from '../api/client'
 import logo from '../assets/figma/logo.png'
 import background from '../assets/auth/login-background.png'
 import mailIcon from '../assets/auth/mail.svg'
@@ -9,30 +10,61 @@ import './ForgotPasswordPage.css'
 
 /**
  * 비밀번호 찾기 페이지 /forgot-password
- * 1) 가입 이메일 확인 → 2) 이메일 인증 → 3) 새 비밀번호 저장 순서로 진행합니다.
+ * 1) 가입 이메일로 인증번호 요청 → 2) 인증번호 확인(verificationToken 발급) → 3) 새 비밀번호 저장 순서로 진행합니다.
  *
- * 백엔드 API 예시
- * - POST /api/v1/auth/password-reset/requests { email }
- * - POST /api/v1/auth/password-reset/verify   { email, code }
- * - PATCH /api/v1/auth/password               { resetToken, newPassword }
- *
- * 보안을 위해 실제 서비스에서는 가입 여부를 노출하지 않고 동일한 안내를 반환하는 방식도
- * 고려할 수 있습니다. 현재 화면은 기획 요구에 따라 미가입 이메일 오류를 구분합니다.
+ * 백엔드 API
+ * - POST /api/v1/auth/password-reset-requests      { email } → 응답 본문 없음(200이면 발송 성공)
+ *   이 API는 가입 여부를 확인하지 않고 그냥 인증코드를 발송합니다. 존재하지 않는 이메일이어도 200이 오며,
+ *   최종 비밀번호 변경 단계(PUT /password)에서야 "해당 이메일의 회원을 찾을 수 없습니다" 오류가 납니다.
+ * - POST /api/v1/auth/email-verification/confirm   { email, authCode, purpose: 'RESET_PASSWORD' } → 성공 시 { verificationToken }, 실패 시 401
+ * - PUT  /api/v1/auth/password                     { email, password, verificationToken } → 성공 시 200(본문 없음)
+ *   verificationToken이 없거나 틀렸거나 이미 소모됐으면 "이메일 인증이 필요합니다" 오류가 납니다.
  */
-const DEMO_REGISTERED_EMAILS = ['waylog_admin@test.co.kr', 'test@test.com']
+
+// 서버가 인증번호 유효시간을 내려주지 않으므로, 회원가입 화면과 동일하게 3분으로 가정합니다.
+const VERIFICATION_SECONDS = 180
 
 export default function ForgotPasswordPage() {
   const navigate = useNavigate()
-  // DEMO_REGISTERED_EMAILS와 임의의 숫자 6자리는 API 연결 전 UI 테스트용입니다.
   const [step, setStep] = useState(1)
+
   const [email, setEmail] = useState('')
   const [emailError, setEmailError] = useState('')
+  const [isRequestingCode, setIsRequestingCode] = useState(false)
+
   const [verificationCode, setVerificationCode] = useState('')
-  const [verified, setVerified] = useState(false)
+  const [verificationToken, setVerificationToken] = useState('')
+  const [codeError, setCodeError] = useState('')
+  const [isVerifying, setIsVerifying] = useState(false)
+  const [hasSentCode, setHasSentCode] = useState(false)
+  const [verificationSecondsLeft, setVerificationSecondsLeft] = useState(0)
+
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
+  const [passwordError, setPasswordError] = useState('')
+  const [isSubmittingPassword, setIsSubmittingPassword] = useState(false)
+  const [successMessage, setSuccessMessage] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false)
+
+  const verified = Boolean(verificationToken)
+
+  // 인증번호 발송 후 남은 시간을 1초 단위로 줄입니다(회원가입 화면과 동일한 패턴).
+  useEffect(() => {
+    if (!hasSentCode || verified) {
+      return undefined
+    }
+
+    const timerId = window.setInterval(() => {
+      setVerificationSecondsLeft(current => Math.max(current - 1, 0))
+    }, 1000)
+
+    return () => window.clearInterval(timerId)
+  }, [hasSentCode, verified])
+
+  const verificationMinutes = Math.floor(verificationSecondsLeft / 60)
+  const verificationSeconds = verificationSecondsLeft % 60
+  const verificationTimeText = `${verificationMinutes.toString().padStart(2, '0')}:${verificationSeconds.toString().padStart(2, '0')}`
 
   const passwordRules = {
     letter: /[A-Za-z]/.test(password),
@@ -49,7 +81,17 @@ export default function ForgotPasswordPage() {
     return ''
   }
 
-  const checkRegisteredEmail = event => {
+  // 1단계와 2단계(재발송)에서 공용으로 쓰는 인증번호 발송 요청입니다.
+  async function requestVerificationCode(targetEmail) {
+    await apiClient.post('/api/v1/auth/password-reset-requests', { email: targetEmail })
+
+    setVerificationCode('')
+    setVerificationToken('')
+    setVerificationSecondsLeft(VERIFICATION_SECONDS)
+    setHasSentCode(true)
+  }
+
+  const checkRegisteredEmail = async event => {
     event.preventDefault()
     const normalizedEmail = email.trim().toLowerCase()
     const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)
@@ -59,57 +101,104 @@ export default function ForgotPasswordPage() {
       return
     }
 
-    /*
-     * password-reset/requests 호출 성공 시 바로 step=2로 이동합니다.
-     * 서버는 인증번호 원문을 저장하지 말고 해시 및 짧은 만료시간과 시도 횟수를 관리해야 합니다.
-     */
-    if (!DEMO_REGISTERED_EMAILS.includes(normalizedEmail)) {
-      setEmailError('회원가입이 되지 않은 계정입니다.')
-      return
+    setIsRequestingCode(true)
+    try {
+      await requestVerificationCode(normalizedEmail)
+      setEmail(normalizedEmail)
+      setEmailError('')
+      setStep(2)
+    } catch (error) {
+      setEmailError(error.message || '인증번호 발송 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.')
+    } finally {
+      setIsRequestingCode(false)
     }
-
-    setEmail(normalizedEmail)
-    setEmailError('')
-    setStep(2)
   }
 
-  const verifyCode = () => {
+  const resendCode = async () => {
+    setIsRequestingCode(true)
+    try {
+      await requestVerificationCode(email)
+      setCodeError('')
+    } catch (error) {
+      setCodeError(error.message || '인증번호 재발송 중 문제가 발생했습니다.')
+    } finally {
+      setIsRequestingCode(false)
+    }
+  }
+
+  const verifyCode = async () => {
     if (!/^\d{6}$/.test(verificationCode)) {
-      window.alert('인증번호 6자리를 입력해 주세요.')
+      setCodeError('인증번호 6자리를 입력해 주세요.')
       return
     }
 
-    // verify 성공 응답의 일회용 resetToken을 state에 보관하고 최종 PATCH 요청에 사용합니다.
-    setVerified(true)
+    if (verificationSecondsLeft <= 0) {
+      setCodeError('인증번호가 만료되었습니다. 다시 받아 주세요.')
+      return
+    }
+
+    setIsVerifying(true)
+    try {
+      const data = await apiClient.post('/api/v1/auth/email-verification/confirm', {
+        email,
+        authCode: Number(verificationCode),
+        purpose: 'RESET_PASSWORD',
+      })
+
+      setVerificationToken(data.verificationToken)
+      setVerificationSecondsLeft(0)
+      setCodeError('')
+    } catch (error) {
+      setVerificationToken('')
+      setCodeError(error.message || '인증번호 확인에 실패했습니다.')
+    } finally {
+      setIsVerifying(false)
+    }
   }
 
   const moveToPasswordReset = event => {
     event.preventDefault()
     if (!verified) {
-      window.alert('이메일 인증을 완료해 주세요.')
+      setCodeError('이메일 인증을 완료해 주세요.')
       return
     }
     setStep(3)
   }
 
-  const completePasswordReset = event => {
+  const completePasswordReset = async event => {
     event.preventDefault()
     if (!passwordValid) {
-      window.alert('비밀번호 조건을 모두 충족해 주세요.')
+      setPasswordError('비밀번호 조건을 모두 충족해 주세요.')
       return
     }
     if (!passwordMatches) {
-      window.alert('비밀번호가 일치하지 않습니다.')
+      setPasswordError('비밀번호가 일치하지 않습니다.')
       return
     }
 
-    /*
-     * PATCH 요청에는 비밀번호 원문 두 개가 아니라 newPassword와 resetToken만 전송합니다.
-     * 서버가 비밀번호 정책을 재검증하고 성공하면 resetToken을 즉시 폐기해야 합니다.
-     * 성공 후 기존 refresh token/로그인 세션을 모두 만료시키는 것도 권장합니다.
-     */
-    window.alert('비밀번호가 완료되었습니다.')
-    navigate('/login')
+    setIsSubmittingPassword(true)
+    try {
+      await apiClient.put('/api/v1/auth/password', {
+        email,
+        password,
+        verificationToken,
+      })
+
+      setPasswordError('')
+      setSuccessMessage('비밀번호가 변경되었습니다. 로그인 화면으로 이동합니다.')
+      window.setTimeout(() => navigate('/login'), 1500)
+    } catch (error) {
+      // verificationToken이 만료되었거나 이미 소모된 경우를 포함하므로, 처음부터 다시 인증하도록 되돌립니다.
+      setVerificationToken('')
+      setHasSentCode(false)
+      setVerificationCode('')
+      setPassword('')
+      setPasswordConfirm('')
+      setEmailError(error.message || '비밀번호 변경에 실패했습니다. 이메일 인증을 다시 진행해 주세요.')
+      setStep(1)
+    } finally {
+      setIsSubmittingPassword(false)
+    }
   }
 
   const moveBack = () => {
@@ -118,8 +207,10 @@ export default function ForgotPasswordPage() {
       setStep(2)
       return
     }
-    setVerified(false)
+    setVerificationToken('')
     setVerificationCode('')
+    setHasSentCode(false)
+    setCodeError('')
     setStep(1)
   }
 
@@ -154,22 +245,39 @@ export default function ForgotPasswordPage() {
               <label htmlFor="forgot-email">이메일</label>
               <div className={`forgot-field ${emailError ? 'is-error' : ''}`}><img src={mailIcon} alt="" /><input id="forgot-email" type="email" value={email} onChange={event => { setEmail(event.target.value); setEmailError('') }} placeholder="이메일 주소를 입력하세요..." autoComplete="email" /></div>
               <small className={emailError ? 'forgot-message--error' : ''}>{emailError || '회원가입 시 등록한 이메일 주소를 입력해주세요.'}</small>
-              <button className="forgot-button" type="submit">다음</button>
-              <div className="forgot-support"><span>이메일이 기억나지 않으시나요?</span><a href="#support">고객센터 문의</a></div>
+              <button className="forgot-button" type="submit" disabled={isRequestingCode}>{isRequestingCode ? '처리 중...' : '다음'}</button>
               <Link className="forgot-back-link" to="/login">로그인 화면으로 돌아가기</Link>
             </form>
           )}
 
           {step > 1 && (
-            <div className="forgot-account"><span className="forgot-account__icon" aria-hidden="true" /><span><small>확인된 이메일 계정</small><strong>{email}</strong></span><button type="button" onClick={() => { setStep(1); setVerified(false); setVerificationCode('') }}>변경</button></div>
+            <div className="forgot-account"><span className="forgot-account__icon" aria-hidden="true" /><span><small>확인된 이메일 계정</small><strong>{email}</strong></span><button type="button" onClick={() => { setStep(1); setVerificationToken(''); setVerificationCode(''); setHasSentCode(false) }}>변경</button></div>
           )}
 
           {step === 2 && (
             <form className="forgot-form forgot-form--verification" onSubmit={moveToPasswordReset}>
               <label htmlFor="forgot-code">인증번호</label>
-              <div className="forgot-code-row"><div className="forgot-field"><input id="forgot-code" inputMode="numeric" maxLength="6" value={verificationCode} onChange={event => { setVerificationCode(event.target.value.replace(/\D/g, '').slice(0, 6)); setVerified(false) }} placeholder="인증번호 6자리" />{!verified && <span>02:58</span>}</div><button type="button" onClick={verifyCode}>인증 확인</button></div>
-              <div className="forgot-verification-meta"><button type="button">인증번호 재발송</button>{verified && <strong>이메일 인증이 완료되었습니다.</strong>}</div>
-              <button className="forgot-button" type="submit">다음</button>
+              <div className="forgot-code-row">
+                <div className={`forgot-field ${codeError ? 'is-error' : ''}`}>
+                  <input
+                    id="forgot-code"
+                    inputMode="numeric"
+                    maxLength="6"
+                    value={verificationCode}
+                    onChange={event => { setVerificationCode(event.target.value.replace(/\D/g, '').slice(0, 6)); setVerificationToken('') }}
+                    placeholder="인증번호 6자리"
+                    disabled={!hasSentCode || verified}
+                  />
+                  {hasSentCode && !verified && <span>{verificationTimeText}</span>}
+                </div>
+                <button type="button" onClick={verifyCode} disabled={isVerifying || verified}>{isVerifying ? '확인 중...' : verified ? '인증 완료' : '인증 확인'}</button>
+              </div>
+              <div className="forgot-verification-meta">
+                <button type="button" onClick={resendCode} disabled={isRequestingCode}>{isRequestingCode ? '발송 중...' : '인증번호 재발송'}</button>
+                {verified && <strong>이메일 인증이 완료되었습니다.</strong>}
+              </div>
+              {codeError && <small className="forgot-message--error">{codeError}</small>}
+              <button className="forgot-button" type="submit" disabled={!verified}>다음</button>
               <button className="forgot-back-link" type="button" onClick={moveBack}>이전 단계로 돌아가기</button>
             </form>
           )}
@@ -187,12 +295,14 @@ export default function ForgotPasswordPage() {
               <label htmlFor="new-password-confirm">새 비밀번호 확인</label>
               <div className="forgot-field"><img src={lockIcon} alt="" /><input id="new-password-confirm" type={showPasswordConfirm ? 'text' : 'password'} value={passwordConfirm} onChange={event => setPasswordConfirm(event.target.value)} autoComplete="new-password" /><button className="forgot-eye" type="button" onClick={() => setShowPasswordConfirm(value => !value)}><img src={eyeIcon} alt="" /></button></div>
               {passwordConfirm && <small className={passwordMatches ? 'forgot-message--success' : 'forgot-message--error'}>{passwordMatches ? '✓ 비밀번호가 일치합니다.' : '비밀번호가 일치하지 않습니다.'}</small>}
-              <button className="forgot-button" type="submit">비밀번호 변경 완료</button>
+              {passwordError && <small className="forgot-message--error">{passwordError}</small>}
+              {successMessage && <small className="forgot-message--success">{successMessage}</small>}
+              <button className="forgot-button" type="submit" disabled={isSubmittingPassword || Boolean(successMessage)}>{isSubmittingPassword ? '변경 중...' : '비밀번호 변경 완료'}</button>
               <button className="forgot-back-link" type="button" onClick={moveBack}>이전 단계로 돌아가기</button>
             </form>
           )}
         </div>
-        <footer className="forgot-page__footer"><a href="#terms">이용약관</a><a href="#privacy">개인정보처리방침</a><a href="#support">고객센터</a><span>ⓒ 2026 WayLog</span></footer>
+        <footer className="forgot-page__footer"><span>ⓒ 2026 WayLog</span></footer>
       </section>
     </main>
   )

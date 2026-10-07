@@ -1,0 +1,76 @@
+.feed-confirm-dialog__overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.feed-confirm-dialog {
+  width: min(420px, 100%);
+  padding: 28px 26px;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.22);
+}
+
+.feed-confirm-dialog__title {
+  margin: 0 0 10px;
+  color: #1f1f1f;
+  font-size: 19px;
+  font-weight: 700;
+}
+
+.feed-confirm-dialog__description {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.feed-confirm-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.feed-confirm-dialog__button {
+  min-width: 84px;
+  height: 42px;
+  padding: 0 18px;
+  border: 1px solid #d7dee6;
+  border-radius: 10px;
+  color: #334155;
+  background: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.feed-confirm-dialog__button:hover:not(:disabled) {
+  background: #f1f5f9;
+}
+
+.feed-confirm-dialog__button--danger {
+  border-color: transparent;
+  color: #fff;
+  background: #ef4444;
+}
+
+.feed-confirm-dialog__button--danger:hover:not(:disabled) {
+  background: #dc2626;
+}
+
+.feed-confirm-dialog__button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.feed-confirm-dialog__button:focus-visible {
+  outline: 3px solid #93c5fd;
+  outline-offset: 2px;
+}

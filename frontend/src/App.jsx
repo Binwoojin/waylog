@@ -17,12 +17,34 @@ import DestinationsPage from './pages/DestinationsPage'
 import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
 import ForgotPasswordPage from './pages/ForgotPasswordPage'
-import DestinationCatalogPage from './pages/DestinationCatalogPage'
 import DestinationSearchResultsPage from './pages/DestinationSearchResultsPage'
+import TourCatalogPage from './pages/TourCatalogPage'
+import TourCourseCatalogPage from './pages/TourCourseCatalogPage'
+import TourCourseDetailPage from './pages/TourCourseDetailPage'
 import TravelDetailPage from './pages/TravelDetailPage'
 import EnjoyCategoryPage from './pages/EnjoyCategoryPage'
 import EnjoyDetailPage from './pages/EnjoyDetailPage'
 import EnjoySearchResultsPage from './pages/EnjoySearchResultsPage'
+import FeedPage from './pages/FeedPage'
+import FeedDetailPage from './pages/FeedDetailPage'
+import FeedUserProfilePage from './pages/FeedUserProfilePage'
+import MyPage from './pages/MyPage'
+import BookmarksPage from './pages/BookmarksPage'
+import ComingSoonPage from './pages/ComingSoonPage'
+import NotFoundPage from './pages/NotFoundPage'
+import ErrorBoundary from './components/common/ErrorBoundary'
+import ScrollToTop from './components/common/ScrollToTop'
+import RequireAdmin from './components/admin/RequireAdmin'
+import AdminLayout from './components/admin/AdminLayout'
+import AdminDashboardHome from './pages/admin/AdminDashboardHome'
+import AdminNoticeListPage from './pages/admin/AdminNoticeListPage'
+import AdminNoticeFormPage from './pages/admin/AdminNoticeFormPage'
+import AdminUserListPage from './pages/admin/AdminUserListPage'
+import AdminUserDetailPage from './pages/admin/AdminUserDetailPage'
+import AdminFeedListPage from './pages/admin/AdminFeedListPage'
+import AdminFeedDetailPage from './pages/admin/AdminFeedDetailPage'
+import AdminCourseListPage from './pages/admin/AdminCourseListPage'
+import AdminCourseFormPage from './pages/admin/AdminCourseFormPage'
 
 /**
  * 홈 API 요청 Promise를 저장합니다.
@@ -263,26 +285,95 @@ function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<HomePage mainRef={mainRef} />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/signup" element={<SignupPage />} />
-          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        {/* Design Ref: §5.4 — 경로가 바뀌면 새 화면을 맨 위부터 보여 줍니다. Layout 밖(홈·로그인)도 포함하려고 여기 둡니다. */}
+        <ScrollToTop />
+        {/*
+          Design Ref: §2.1 — 최상위 오류 경계입니다. Layout 밖의 홈·로그인 화면이나
+          헤더 자체의 렌더 오류처럼 페이지 영역 경계가 잡지 못하는 오류를 받아 전체 오류 화면을 보여 줍니다.
+          링크를 쓰는 오류 화면이 있으므로 BrowserRouter 안에 둡니다.
+        */}
+        <ErrorBoundary variant="app">
+          <Routes>
+            <Route path="/" element={<HomePage mainRef={mainRef} />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/signup" element={<SignupPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
-          <Route element={<Layout />}>
-            <Route path="/enjoy" element={<TravelEnjoyPage />} />
-            <Route path="/enjoy/search" element={<EnjoySearchResultsPage />} />
-            <Route path="/enjoy/:category/:id" element={<EnjoyDetailPage />} />
-            <Route path="/enjoy/:category" element={<EnjoyCategoryPage />} />
+            {/*
+              Design Ref: admin-dashboard.design.md §2.1 — 관리자 화면은 사용자용 Layout(헤더·푸터)과
+              완전히 분리된 트리다. RequireAdmin이 인증·등급을 판단해 로그인 화면·접근 거부·AdminLayout 중 하나로 보낸다.
+              공지·회원·피드·여행코스 4개 리소스가 모두 구현되어 계획 9장 구현 순서가 끝났다.
+            */}
+            <Route
+              path="/admin/*"
+              element={(
+                <RequireAdmin>
+                  <AdminLayout />
+                </RequireAdmin>
+              )}
+            >
+              <Route index element={<AdminDashboardHome />} />
+              <Route path="notices" element={<AdminNoticeListPage />} />
+              <Route path="notices/new" element={<AdminNoticeFormPage />} />
+              <Route path="notices/:id/edit" element={<AdminNoticeFormPage />} />
+              <Route path="courses" element={<AdminCourseListPage />} />
+              <Route path="courses/new" element={<AdminCourseFormPage />} />
+              <Route path="courses/:id/edit" element={<AdminCourseFormPage />} />
+              <Route path="users" element={<AdminUserListPage />} />
+              <Route path="users/:id" element={<AdminUserDetailPage />} />
+              <Route path="feed" element={<AdminFeedListPage />} />
+              <Route path="feed/:id" element={<AdminFeedDetailPage />} />
+              {/* Design Ref: app-safety-net §2.2와 같은 이유 — "/admin/*"이 이미 상위에서 매칭돼 아래로 내려오므로, 정의되지 않은 하위 경로도 이 안에서 404를 처리해야 빈 화면이 남지 않는다. */}
+              <Route path="*" element={<NotFoundPage />} />
+            </Route>
 
-            <Route path="/destinations" element={<DestinationsPage />} />
-            <Route path="/destinations/search" element={<DestinationSearchResultsPage />} />
-            <Route path="/destinations/detail/:id" element={<TravelDetailPage />} />
-            <Route path="/destinations/attractions" element={<DestinationCatalogPage kind="attraction" />} />
-            <Route path="/destinations/culture" element={<DestinationCatalogPage kind="culture" />} />
-            <Route path="/destinations/courses" element={<DestinationCatalogPage kind="course" />} />
-          </Route>
-        </Routes>
+            <Route element={<Layout />}>
+              <Route path="/enjoy" element={<TravelEnjoyPage />} />
+              <Route path="/enjoy/search" element={<EnjoySearchResultsPage />} />
+              <Route path="/enjoy/:category/:id" element={<EnjoyDetailPage />} />
+              <Route path="/enjoy/:category" element={<EnjoyCategoryPage />} />
+
+              <Route path="/destinations" element={<DestinationsPage />} />
+              <Route path="/destinations/search" element={<DestinationSearchResultsPage />} />
+              <Route path="/destinations/detail/:id" element={<TravelDetailPage />} />
+              {/* 관광지·문화시설·여행코스 모두 실제 API 목록입니다. key로 유형 전환 시 이전 유형의 카드를 남기지 않습니다. */}
+              <Route path="/destinations/attractions" element={<TourCatalogPage key="attraction" kind="attraction" />} />
+              <Route path="/destinations/culture" element={<TourCatalogPage key="culture" kind="culture" />} />
+              {/*
+                Design Ref: tour-course-list-integration.design.md §6.1 (D-5) — 코스 ID(작은 정수)가
+                /destinations/detail/:id의 TourAPI contentId 숫자 판정과 겹치는 것을 막기 위해
+                완전히 분리된 라우트를 씁니다.
+              */}
+              <Route path="/destinations/courses" element={<TourCourseCatalogPage />} />
+              <Route path="/destinations/courses/:id" element={<TourCourseDetailPage />} />
+
+              {/*
+                Design Ref: feed-integration.design.md §10 — 사이클 1(feed-integration) 구현으로
+                "여행 피드" 메뉴가 실제 화면과 연결됩니다. 댓글 UI는 이번 사이클 범위 밖이라 상세
+                화면에는 포함되지 않습니다(후속 feed-comment-integration).
+              */}
+              <Route path="/feed" element={<FeedPage />} />
+              <Route path="/feed/posts/:id" element={<FeedDetailPage />} />
+              <Route path="/feed/users/:userId" element={<FeedUserProfilePage />} />
+
+              {/*
+                Design Ref: mypage-bookmarks.design.md §8 — "메뉴는 있는데 화면이 없다" 패턴이던
+                두 라우트를 실제 화면으로 교체합니다. 비로그인 접근은 각 화면이 자신의 훅에서
+                401(login-required)을 구분해 안내합니다(별도 RequireAuth 래퍼 없음).
+              */}
+              <Route path="/bookmarks" element={<BookmarksPage />} />
+              <Route path="/mypage" element={<MyPage />} />
+              {/* Design Ref: §3.2 — 메뉴는 있지만 아직 구현되지 않은 기능은 "준비 중" 화면으로 연결합니다. */}
+              <Route path="/notices" element={<ComingSoonPage title="공지사항" />} />
+
+              {/*
+                Design Ref: §2.2 — 정의되지 않은 경로는 헤더·푸터가 있는 404 화면으로 보냅니다.
+                React Router는 경로 점수로 매칭하므로 명시한 라우트(/login 등 Layout 밖 포함)가 항상 우선합니다.
+              */}
+              <Route path="*" element={<NotFoundPage />} />
+            </Route>
+          </Routes>
+        </ErrorBoundary>
       </BrowserRouter>
     </AuthProvider>
   )

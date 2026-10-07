@@ -1,6 +1,7 @@
 package kr.co.mycom.travel_korea.feed.service;
 
 import kr.co.mycom.travel_korea.board.storage.StorageService;
+import kr.co.mycom.travel_korea.board.storage.StoredObject;
 import kr.co.mycom.travel_korea.user.entity.UserEntity;
 import kr.co.mycom.travel_korea.feed.domain.FeedLike;
 import kr.co.mycom.travel_korea.feed.domain.FeedPost;
@@ -19,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -67,12 +69,57 @@ public class FeedProfileService {
     }
 
     /**
-     * SNS 전용 @아이디를 변경합니다.
+     * feed-integration 설계 §4.4(P-6): 다른 사용자의 SNS 프로필과 그가 작성한
+     * PUBLIC 게시물만 조회합니다(본인 프로필과 달리 PRIVATE 게시물은 노출하지 않음).
+     *
+     * liked/bookmarked는 조회자와 무관하게 항상 false로 단순화합니다(설계 §4.4
+     * 노출 범위 결정 — "둘러보기" 목적이 우선이라, 로그인 사용자 기준 좋아요 여부
+     * 계산이 필요해지면 getFeed의 조회 로직을 그대로 옮겨오면 된다).
+     */
+    public FeedProfileResponse getUserProfile(Long userId, int page, int size) {
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("회원 정보를 찾을 수 없습니다."));
+        FeedProfile profile = findOrCreateProfile(user);
+
+        int pageIndex = Math.max(page - 1, 0);
+        int pageSize = Math.min(Math.max(size, 1), 30);
+
+        Pageable pageable = PageRequest.of(pageIndex, pageSize, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        // 타인 프로필은 PUBLIC 게시물만 노출한다(getMyProfile은 본인 것이라 전부 보여주는 것과 대비).
+        Page<FeedPost> postPage = feedPostRepository.findByAuthor_IdAndVisibilityAndDeletedAtIsNull(userId, "PUBLIC", pageable);
+
+        List<FeedPostResponse> posts = postPage.getContent().stream()
+                .map(post -> FeedPostResponse.from(post, false, false, this::toReadableImageUrl)).toList();
+
+        long receivedLikeCount = feedLikeRepository.countByFeedPost_Author_Id(userId);
+
+        return FeedProfileResponse.of(user, profile, postPage.getTotalElements(), receivedLikeCount, posts,
+                postPage.getNumber() + 1, postPage.getTotalPages(), postPage.hasNext());
+    }
+
+    /**
+     * 마이페이지 프로필(닉네임·소개·@피드아이디·프로필이미지)을 한 번에 수정합니다.
+     *
+     * mypage-bookmarks 설계 §4.2(Q-2~Q-4): 기존 updateMyHandle을 대체한다. 닉네임·@핸들
+     * 둘 다 "값이 실제로 바뀐 경우에만" 중복확인하므로, 본인의 기존 값을 그대로 다시
+     * 제출해도 중복 에러가 나지 않는다.
      */
     @Transactional
-    public FeedProfileResponse updateMyHandle(String loginEmail, FeedProfileUpdateRequest request) {
+    public FeedProfileResponse updateMyProfile(String loginEmail, FeedProfileUpdateRequest request, MultipartFile profileImage) {
         UserEntity user = findUser(loginEmail);
         FeedProfile profile = findOrCreateProfile(user);
+
+        String normalizedNickname = request.nickname().trim();
+
+        /*
+         * Q-4: 값이 실제로 바뀐 경우에만 중복확인 — 아래 feedHandle 처리와 동일한 원칙.
+         * 본인의 기존 닉네임을 그대로 다시 제출해도 "사용 중"으로 걸리지 않는다.
+         */
+        boolean isNicknameChanged = !normalizedNickname.equals(user.getNickname());
+        if (isNicknameChanged && userRepository.existsByNickname(normalizedNickname)) {
+            throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
+        }
 
         String normalizedHandle = normalizeHandle(request.feedHandle());
 
@@ -80,13 +127,32 @@ public class FeedProfileService {
          * 내 기존 아이디와 같은 값으로 저장하는 것은 허용합니다.
          * 다른 회원이 사용 중인 경우에만 막습니다.
          */
-        boolean isChanged = !normalizedHandle.equals(profile.getFeedHandle());
+        boolean isHandleChanged = !normalizedHandle.equals(profile.getFeedHandle());
 
-        if (isChanged && feedProfileRepository.existsByFeedHandle(normalizedHandle)) {
+        if (isHandleChanged && feedProfileRepository.existsByFeedHandle(normalizedHandle)) {
             throw new IllegalArgumentException("이미 사용 중인 피드 아이디입니다.");
         }
 
+        user.updateProfile(normalizedNickname, request.introduce());
         profile.updateHandle(normalizedHandle);
+
+        /*
+         * Q-3: 이미지는 "저장" 시점에 텍스트 필드와 함께 한 번에 반영한다
+         * (FeedController.create()와 동일한 멀티파트 패턴). 보내지 않으면 기존 이미지를 유지한다.
+         */
+        if (profileImage != null && !profileImage.isEmpty()) {
+            String previousImageKey = user.getProfileImageUrl();
+            StoredObject stored = storageService.upload(profileImage);
+            user.updateProfileImage(stored.objectKey());
+
+            /*
+             * 기존 이미지가 S3 objectKey였던 경우에만 정리한다(완성된 http(s) URL이면
+             * 외부 리소스이므로 삭제하지 않음 — toReadableImageUrl이 이미 같은 구분을 쓰고 있다).
+             */
+            if (previousImageKey != null && !previousImageKey.isBlank() && !previousImageKey.startsWith("http")) {
+                storageService.delete(previousImageKey);
+            }
+        }
 
         /*
          * 프론트는 수정 후 프로필 관련 필드만 사용하지만,

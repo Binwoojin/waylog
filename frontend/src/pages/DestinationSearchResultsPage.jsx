@@ -1,22 +1,101 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 import TravelSearchModal from '../components/search/TravelSearchModal'
-import { destinationItems } from '../data/destinationMocks'
+import ListFilterBar from '../components/tour-list/ListFilterBar'
+import ListStatus from '../components/tour-list/ListStatus'
+import TourListView from '../components/tour-list/TourListView'
+import { findListCategory, getListConfigByContentType } from '../data/tourListConfigs'
+import { useListSearchParams } from '../hooks/useListSearchParams'
+import { useDistricts, useRegions } from '../hooks/useRegionOptions'
+import '../pages/DestinationCatalogPage.css'
 import './DestinationSearchResultsPage.css'
 
+/**
+ * 여행지 검색 결과 (FR-11)
+ *
+ * Design Ref: §5.3 — window.location.search를 직접 읽지 않고 useListSearchParams(검색 모드)를 씁니다.
+ * URL의 contentTypeId가 없거나 허용값이 아니면(Q-6) API를 호출하지 않고 조건 선택 안내만 보여 줍니다.
+ * 카드·건수·페이지네이션은 카탈로그와 같은 TourListView를 씁니다(D-7). 카드 마크업도 catalog-card로 같습니다.
+ */
 export default function DestinationSearchResultsPage() {
   const [isSearchOpen, setIsSearchOpen] = useState(false)
-  const params = new URLSearchParams(window.location.search)
-  const location = [params.get('region'), params.get('district')].filter(Boolean).join(' ') || '전체 지역'
-  const type = params.get('type') || '관광지'
-  const detail = params.get('detail')
-  const selectedConditions = [`지역 ${location}`, `유형 ${type}`, detail && `상세 ${detail}`].filter(Boolean)
-  const items = Array.from({ length: 8 }, (_, index) => destinationItems[index % destinationItems.length])
-  return <div className="search-results-page"><main className="search-results-main">
-    <section className="search-results-banner"><div className="search-results-banner__summary"><strong>선택한 조건으로 여행지를 찾았어요</strong><p>{selectedConditions.map(condition => <span key={condition}>{condition}</span>)}</p></div><div className="search-results-banner__actions"><button type="button" onClick={() => setIsSearchOpen(true)}>조건 변경</button><button type="button" onClick={() => setIsSearchOpen(true)}>다시 검색</button></div></section>
-    <h1>{location} {type} 검색 결과</h1><p>선택한 조건에 맞는 한국관광공사 TourAPI 관광정보입니다.</p><div className="search-results-count">총 <b>{items.length}</b>건</div>
-    <div className="search-results-grid">{items.map((item,index) => <Link to={`/destinations/detail/${item.id}`} key={`${item.id}-${index}`}><img src={item.image} alt="" /><div><span>{item.tag}관광지</span><h2>{item.title}</h2><small>📍 {item.address}</small><p>{item.description}</p><div><b>☎ 문의 정보</b><b>🅿 주차 가능</b><b>🕘 운영 정보</b></div></div></Link>)}</div>
-    <nav className="catalog-pagination"><button>‹</button><button className="is-active">1</button><button>2</button><button>3</button><button>4</button><button>5</button><button>›</button></nav>
-    <p className="search-results-notice">ⓘ 운영시간, 휴무일 등 일부 정보는 제공되지 않을 수 있습니다.</p>
-  </main><TravelSearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} /></div>
+  // 검색 모드: contentTypeId 옵션을 주지 않아 parseTourListQuery가 URL에서 직접 읽습니다(카탈로그와 반대).
+  // Design Ref: §5.1 — 검색 결과의 empty·invalid 주 버튼은 조건을 초기화하지 않고 모달을 엽니다(카탈로그와 다름).
+  const { query, updateQuery } = useListSearchParams({ contentTypeId: undefined })
+  const regions = useRegions()
+  const districts = useDistricts(query?.lDongRegnCd ?? null)
+
+  const openSearch = () => setIsSearchOpen(true)
+  const closeSearch = () => setIsSearchOpen(false)
+  const handlePageChange = (page, options) => updateQuery({ page }, options)
+
+  if (!query) {
+    // Design Ref: Q-6 — 조건 없는 전국 조회를 막습니다. /api/v1/search를 호출하지 않습니다.
+    return (
+      <div className="search-results-page">
+        <main className="search-results-main">
+          <ListStatus variant="no-query" onAction={openSearch} />
+        </main>
+        <TravelSearchModal isOpen={isSearchOpen} onClose={closeSearch} />
+      </div>
+    )
+  }
+
+  const config = getListConfigByContentType(query.contentTypeId)
+  const regionName = getRegionDisplayName(query, regions, districts)
+  const detailLabel = findListCategory(config, query.category)?.fullLabel ?? null
+
+  const conditionChips = [
+    `지역 ${regionName}`,
+    `유형 ${config.typeLabel}`,
+    detailLabel && `상세 ${detailLabel}`,
+  ].filter(Boolean)
+
+  return (
+    <div className="search-results-page">
+      <main className="search-results-main">
+        <section className="search-results-banner">
+          <div className="search-results-banner__summary">
+            <strong>선택한 조건으로 여행지를 찾았어요</strong>
+            <p>{conditionChips.map(chip => <span key={chip}>{chip}</span>)}</p>
+          </div>
+          {/* Design Ref: §5.3 — 기존 "조건 변경"·"다시 검색" 두 버튼은 같은 동작이라 하나로 합쳤습니다. */}
+          <div className="search-results-banner__actions">
+            <button type="button" onClick={openSearch}>조건 변경</button>
+          </div>
+        </section>
+
+        <h1>{regionName} {config.typeLabel} 검색 결과</h1>
+        <p>선택한 조건에 맞는 한국관광공사 TourAPI 관광정보입니다.</p>
+
+        <div className="catalog-toolbar">
+          <ListFilterBar fields={['arrange']} query={query} onChange={updateQuery} />
+        </div>
+
+        <TourListView
+          query={query}
+          onPageChange={handlePageChange}
+          onReset={openSearch}
+          resetLabel="조건 변경"
+          onRequestConditions={openSearch}
+        />
+
+        <p className="search-results-notice">ⓘ 운영시간, 휴무일 등 일부 정보는 제공되지 않을 수 있습니다.</p>
+      </main>
+      <TravelSearchModal isOpen={isSearchOpen} onClose={closeSearch} />
+    </div>
+  )
+}
+
+// Design Ref: §5.3 — 코드 → 이름(useRegions·useDistricts). 로딩 중에는 "선택한 지역", 지역 조건이 없으면 "전국"
+function getRegionDisplayName(query, regions, districts) {
+  if (!query.lDongRegnCd) return '전국'
+  if (regions.status !== 'ready') return '선택한 지역'
+
+  const regionLabel = regions.options.find(option => option.value === query.lDongRegnCd)?.label
+  if (!regionLabel) return '선택한 지역'
+  if (!query.lDongSignguCd) return regionLabel
+
+  if (districts.status !== 'ready') return regionLabel
+  const districtLabel = districts.options.find(option => option.value === query.lDongSignguCd)?.label
+  return districtLabel ? `${regionLabel} ${districtLabel}` : regionLabel
 }

@@ -15,6 +15,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -93,6 +97,52 @@ public class TourBookmarkService {
                         pageable
                 )
                 .map(TourBookmarkResponse::from);
+    }
+
+    /**
+     * 상세 조회 화면에서 현재 로그인 사용자의 북마크 여부를 단건 확인합니다.
+     *
+     * 비로그인 사용자(loginEmail == null)는 항상 false입니다. 상세 조회 자체는 인증 없이도
+     * 가능해야 하므로(SecurityConfig permitAll), 이 메서드는 로그인 여부로 분기만 하고
+     * 예외를 던지지 않습니다.
+     */
+    public boolean isBookmarked(String loginEmail, String contentId, Integer contentTypeId) {
+        if (loginEmail == null || loginEmail.isBlank()) {
+            return false;
+        }
+
+        return userRepository.findByEmail(loginEmail)
+                .map(user -> tourBookmarkRepository.existsByUser_IdAndContentIdAndContentTypeId(
+                        user.getId(), contentId, contentTypeId
+                ))
+                .orElse(false);
+    }
+
+    /**
+     * 목록 조회 화면에서 여러 콘텐츠의 북마크 여부를 한 번에 확인합니다(N+1 방지).
+     *
+     * 반환값은 {@link #bookmarkKey}로 만든 "contentId:contentTypeId" 키 집합입니다.
+     * 비로그인 사용자이거나 조회할 콘텐츠가 없으면 빈 집합을 돌려줍니다.
+     */
+    public Set<String> findBookmarkedKeys(String loginEmail, List<String> contentIds) {
+        if (loginEmail == null || loginEmail.isBlank() || contentIds == null || contentIds.isEmpty()) {
+            return Set.of();
+        }
+
+        return userRepository.findByEmail(loginEmail)
+                .map(user -> tourBookmarkRepository.findByUser_IdAndContentIdIn(user.getId(), contentIds)
+                        .stream()
+                        .map(bookmark -> bookmarkKey(bookmark.getContentId(), bookmark.getContentTypeId()))
+                        .collect(Collectors.toSet()))
+                .orElse(Set.of());
+    }
+
+    /**
+     * findBookmarkedKeys가 돌려주는 키와 같은 형식으로 비교용 키를 만듭니다.
+     * 호출하는 쪽(컨트롤러)이 콘텐츠의 contentId·contentTypeId로 같은 키를 만들어 contains로 비교합니다.
+     */
+    public static String bookmarkKey(String contentId, Integer contentTypeId) {
+        return contentId + ":" + contentTypeId;
     }
 
     /**

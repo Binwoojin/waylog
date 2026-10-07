@@ -1,0 +1,90 @@
+.admin-feed-detail {
+  max-width: 640px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.admin-feed-detail__status {
+  padding: 60px 16px;
+  color: #64748b;
+  text-align: center;
+}
+
+.admin-feed-detail__status p {
+  margin-bottom: 16px;
+}
+
+.admin-feed-detail__summary h1 {
+  margin: 0 0 4px;
+  font-size: 20px;
+}
+
+.admin-feed-detail__meta {
+  margin: 0 0 8px;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.admin-feed-detail__card {
+  padding: 20px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.admin-feed-detail__card h2 {
+  margin: 0 0 12px;
+  font-size: 16px;
+}
+
+.admin-feed-detail__content {
+  margin: 0 0 10px;
+  color: #1f1f1f;
+  white-space: pre-line;
+  line-height: 1.6;
+}
+
+.admin-feed-detail__location {
+  margin: 0 0 10px;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.admin-feed-detail__course {
+  margin: 0 0 10px;
+  color: #2563eb;
+  font-size: 13px;
+}
+
+.admin-feed-detail__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.admin-feed-detail__tags li {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #2563eb;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.admin-feed-detail__images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.admin-feed-detail__images img {
+  width: 110px;
+  height: 110px;
+  border-radius: 10px;
+  object-fit: cover;
+  border: 1px solid #e2e8f0;
+}

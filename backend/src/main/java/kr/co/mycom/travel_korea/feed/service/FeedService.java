@@ -1,11 +1,13 @@
 package kr.co.mycom.travel_korea.feed.service;
 
 import kr.co.mycom.travel_korea.board.storage.StorageService;
+import kr.co.mycom.travel_korea.common.exception.ForbiddenException;
 import kr.co.mycom.travel_korea.board.storage.StoredObject;
 import kr.co.mycom.travel_korea.user.entity.UserEntity;
 import kr.co.mycom.travel_korea.feed.domain.*;
+import kr.co.mycom.travel_korea.feed.dto.FeedBookmarkPageResponse;
 import kr.co.mycom.travel_korea.feed.dto.FeedCreateRequest;
-import kr.co.mycom.travel_korea.feed.dto.FeedPageResponse;
+import kr.co.mycom.travel_korea.feed.dto.FeedTimelineResponse;
 import kr.co.mycom.travel_korea.feed.dto.FeedPostResponse;
 import kr.co.mycom.travel_korea.feed.dto.FeedUpdateRequest;
 import kr.co.mycom.travel_korea.feed.repository.FeedBookMarkRepository;
@@ -16,7 +18,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
@@ -35,6 +36,7 @@ public class FeedService {
     private final FeedBookMarkRepository feedBookMarkRepository;
     private final UserRepository userRepository;
     private final StorageService storageService;
+    private final CourseLinkResolver courseLinkResolver;
 
     // 피드 게시글 하나에 등록할 수 있는 최대 이미지 수
     private static final int MAX_IMAGE_COUNT = 5;
@@ -73,6 +75,21 @@ public class FeedService {
         post.replaceTags(request.tags());
 
         /*
+         * 여행코스 참조(tour-course-feed-linking 설계 §4.2). CourseLinkResolver가
+         * dayId→course 체인을 검증하고 스냅샷을 만든 뒤, post.linkCourse()로 생성자
+         * 밖에서 별도로 붙인다(§3.1 "replaceTags와 같은 레벨" 원칙). 유효하지 않은
+         * dayId/stopId 조합이면 여기서 IllegalArgumentException(400)이 던져진다.
+         */
+        CourseLinkResolver.CourseLinkSnapshot courseLinkSnapshot =
+                courseLinkResolver.resolve(request.linkedCourseDayId(), request.linkedCourseStopId());
+
+        post.linkCourse(
+                courseLinkSnapshot.courseId(), courseLinkSnapshot.courseTitle(),
+                courseLinkSnapshot.dayId(), courseLinkSnapshot.dayNumber(),
+                courseLinkSnapshot.stopId(), courseLinkSnapshot.stopName()
+        );
+
+        /*
          * S3 업로드 도중 오류가 생기면
          * 이번 요청에서 업로드한 파일만 정리합니다.
          */
@@ -109,18 +126,49 @@ public class FeedService {
     }
 
 
-    public FeedPageResponse getFeed(String loginEmail, int page, int size) {
-        /*
-         * 프론트엔드는 1페이지부터 사용하지만 Spring Data는 0페이지부터 사용합니다.
-         */
-        int pageIndex = Math.max(page - 1, 0);
+    /*
+     * feed-integration 설계 §4.2(P-3): 오프셋(page/size) 대신 id 기준 커서로 타임라인을 조회한다.
+     * id는 IDENTITY 채번이라 생성 순서와 항상 일치하므로, "cursor보다 오래된 것만" 조회하면
+     * 스크롤 도중 새 글이 추가돼도 이미 본 항목이 중복되거나 건너뛰어지지 않는다.
+     *
+     * 이 API를 현재 호출하는 프론트 코드가 없음을 grep으로 확인했으므로
+     * page 파라미터를 cursor로 대체하는 것은 하위 호환을 깨지 않는다.
+     */
+    public FeedTimelineResponse getFeed(String loginEmail, Long cursor, int size) {
+        return getFeed(loginEmail, cursor, size, null);
+    }
+
+    /*
+     * tour-course-feed-linking 설계 §4.4(D-4): linkedCourseId가 있으면 그 코스를
+     * 참조한(일자/경유지 어느 단위든) 게시물만 커서 페이지네이션으로 조회한다.
+     * linkedCourseId가 null일 때의 분기는 기존 쿼리·동작을 한 글자도 바꾸지 않는다
+     * (메인 피드 회귀 방지).
+     */
+    public FeedTimelineResponse getFeed(String loginEmail, Long cursor, int size, Long linkedCourseId) {
         int pageSize = Math.min(Math.max(size, 1), 30);
 
-        Pageable pageable = PageRequest.of(pageIndex, pageSize, Sort.by(Sort.Direction.DESC, "createdAt"));
+        /*
+         * COUNT 쿼리 없이 다음 페이지 존재 여부를 알기 위해 1개를 더 조회한다
+         * (tour-course-list-integration의 N+1 회피 집계 쿼리와 같은 원칙).
+         */
+        Pageable pageable = PageRequest.of(0, pageSize + 1);
 
-        Page<FeedPost> postPage = feedPostRepository.findByVisibility("PUBLIC", pageable);
+        List<FeedPost> fetched;
 
-        List<Long> postIds = postPage.getContent().stream()
+        if (linkedCourseId != null) {
+            fetched = (cursor == null)
+                    ? feedPostRepository.findByLinkedCourseIdAndVisibilityAndDeletedAtIsNullOrderByIdDesc(linkedCourseId, "PUBLIC", pageable)
+                    : feedPostRepository.findByLinkedCourseIdAndVisibilityAndDeletedAtIsNullAndIdLessThanOrderByIdDesc(linkedCourseId, "PUBLIC", cursor, pageable);
+        } else {
+            fetched = (cursor == null)
+                    ? feedPostRepository.findByVisibilityAndDeletedAtIsNullOrderByIdDesc("PUBLIC", pageable)
+                    : feedPostRepository.findByVisibilityAndDeletedAtIsNullAndIdLessThanOrderByIdDesc("PUBLIC", cursor, pageable);
+        }
+
+        boolean hasNext = fetched.size() > pageSize;
+        List<FeedPost> pageItems = hasNext ? fetched.subList(0, pageSize) : fetched;
+
+        List<Long> postIds = pageItems.stream()
                 .map(FeedPost::getId).toList();
 
         Set<Long> likedPostIds = new HashSet<>();
@@ -140,18 +188,20 @@ public class FeedService {
                     .forEach(bookmark -> bookmarkedPostIds.add(bookmark.getFeedPost().getId()));
         }
 
-        List<FeedPostResponse> responses = postPage.getContent().stream()
+        List<FeedPostResponse> responses = pageItems.stream()
                 .map(post -> toResponse(
                         post,
                         likedPostIds.contains(post.getId()),
                         bookmarkedPostIds.contains(post.getId())
                 )).toList();
 
-        return FeedPageResponse.from(postPage, responses);
+        Long nextCursor = pageItems.isEmpty() ? null : pageItems.get(pageItems.size() - 1).getId();
+
+        return new FeedTimelineResponse(responses, nextCursor, hasNext);
     }
 
     public FeedPostResponse getOne(Long postId, String loginEmail) {
-        FeedPost post = findPost(postId);
+        FeedPost post = findVisiblePost(postId);
         validateVisibility(post, loginEmail);
 
         boolean liked = false;
@@ -259,6 +309,38 @@ public class FeedService {
         return true;
     }
 
+    /**
+     * 내 피드 북마크 목록을 북마크한 시각(createdAt) 내림차순으로 조회합니다.
+     *
+     * mypage-bookmarks 설계 §4.5(Q-5, Q-7): 이 화면의 게시물은 전부 "내가 북마크한 것"이므로
+     * bookmarked는 상수 true로 고정한다. liked만 getFeed와 동일한 배치 조회 원칙으로
+     * 계산한다(N+1 방지).
+     */
+    public FeedBookmarkPageResponse getMyBookmarks(String loginEmail, int page, int size) {
+        UserEntity user = findUser(loginEmail);
+        int pageIndex = Math.max(page - 1, 0);
+        int pageSize = Math.min(Math.max(size, 1), 30);
+        Pageable pageable = PageRequest.of(pageIndex, pageSize);
+
+        Page<FeedBookMark> bookmarkPage = feedBookMarkRepository
+                .findByUser_IdAndFeedPost_DeletedAtIsNullOrderByCreatedAtDesc(user.getId(), pageable);
+
+        List<Long> postIds = bookmarkPage.getContent().stream()
+                .map(bookmark -> bookmark.getFeedPost().getId()).toList();
+
+        Set<Long> likedPostIds = new HashSet<>();
+        if (!postIds.isEmpty()) {
+            feedLikeRepository.findByUser_IdAndFeedPost_IdIn(user.getId(), postIds)
+                    .forEach(like -> likedPostIds.add(like.getFeedPost().getId()));
+        }
+
+        List<FeedPostResponse> posts = bookmarkPage.getContent().stream()
+                .map(bookmark -> toResponse(bookmark.getFeedPost(), likedPostIds.contains(bookmark.getFeedPost().getId()), true))
+                .toList();
+
+        return new FeedBookmarkPageResponse(posts, bookmarkPage.getNumber() + 1, bookmarkPage.getTotalPages(), bookmarkPage.hasNext());
+    }
+
     private UserEntity findUser(String email) {
         if (email == null || email.isBlank()) {
             throw new IllegalArgumentException("로그인이 필요합니다.");
@@ -270,6 +352,15 @@ public class FeedService {
     private FeedPost findPost(Long postId) {
 
         return feedPostRepository.findWithDetailsById(postId).orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+    }
+
+    /*
+     * 공개 상세 조회 전용(admin-dashboard 설계 §3.4.2). 소프트 삭제된 게시물은
+     * 일반 사용자에게 "게시글을 찾을 수 없습니다"로 보인다(관리자 상세는 findPost를 그대로 사용).
+     */
+    private FeedPost findVisiblePost(Long postId) {
+        return feedPostRepository.findWithDetailsByIdAndDeletedAtIsNull(postId)
+                .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
     }
 
     /**
@@ -287,7 +378,7 @@ public class FeedService {
 
     private void validateAuthor(FeedPost post, String loginEmail) {
         if (!post.getAuthor().getEmail().equals(loginEmail)) {
-            throw new IllegalArgumentException("게시글 작성자만 수정하거나 삭제할 수 있습니다.");
+            throw new ForbiddenException("게시글 작성자만 수정하거나 삭제할 수 있습니다.");
         }
     }
 

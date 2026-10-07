@@ -1,0 +1,107 @@
+/*
+ * FeedDeleteDialog 전용 스타일. 오버레이·카드 자체는 admin-common.css의
+ * .admin-confirm-dialog*를 재사용하고, 폼 요소만 여기서 추가한다.
+ */
+.admin-feed-delete-dialog {
+  width: min(480px, 100%);
+}
+
+.admin-feed-delete-dialog__form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-feed-delete-dialog__type {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.admin-feed-delete-dialog__type legend {
+  padding: 0;
+  margin-bottom: 4px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.admin-feed-delete-dialog__type label {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 14px;
+  color: #334155;
+}
+
+.admin-feed-delete-dialog__reason-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.admin-feed-delete-dialog__form textarea {
+  padding: 10px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 14px;
+  resize: vertical;
+}
+
+.admin-feed-delete-dialog__suspend {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  background: #fff1f2;
+}
+
+.admin-feed-delete-dialog__suspend > label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #7f1d1d;
+}
+
+.admin-feed-delete-dialog__presets {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-feed-delete-dialog__presets .admin-button.is-active {
+  border-color: transparent;
+  color: #fff;
+  background: #2563eb;
+}
+
+.admin-feed-delete-dialog__custom-days {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #334155;
+}
+
+.admin-feed-delete-dialog__custom-days input {
+  width: 70px;
+  height: 36px;
+  padding: 0 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font: inherit;
+}
+
+.admin-feed-delete-dialog__error {
+  margin: 0;
+  color: #b91c1c;
+  font-size: 13px;
+}

@@ -71,7 +71,7 @@
   height: 170px;
   object-fit: cover;
 }
-.enjoy-card > a > div:lanpst-child { padding: 19px 18px 22px; }
+.enjoy-card > a > div:last-child { padding: 19px 18px 22px; }
 .enjoy-card h3 { font-size: 18px; }
 /*
  * 즐길거리 카드의 주소 영역입니다.
@@ -138,8 +138,6 @@
 .notice-section li a { color: #333; text-decoration: none; }
 .notice-section time { color: #999; font-size: 14px; }
 .notice-badge { padding: 6px 10px; border-radius: 14px; background: #edf3ff; color: #3b82f6; font-size: 13px; text-align: center; }
-.notice-badge--중요 { color: #e05252; background: #fff0f0; }
-.notice-badge--정책 { color: #666; background: #eee; }
 .footer { padding: 72px max(24px, calc((100vw - 1480px) / 2)) 26px; color: rgba(255,255,255,.74); background: #14345f; }
 .footer__inner { display: flex; justify-content: space-between; gap: 70px; padding-bottom: 54px; }
 .footer__brand img { width: 70px; height: 54px; object-fit: contain; }
@@ -148,6 +146,10 @@
 .footer__links div { display: flex; flex-direction: column; gap: 12px; min-width: 115px; }
 .footer__links strong { margin-bottom: 7px; color: #fff; font-size: 17px; }
 .footer__links a { color: rgba(255,255,255,.68); font-size: 14px; text-decoration: none; }
+/* 아직 목적지가 없는 푸터 항목: 링크 색보다 흐리게, 커서도 기본값으로 두어 누를 수 없음을 드러냅니다.
+ * 불투명도 .6은 배경 #14345f 위에서 약 5.5:1로 WCAG AA(4.5:1)를 넘기면서, 링크(.68, 약 6.6:1)보다는 흐립니다. */
+.footer__pending { display: inline-flex; align-items: center; gap: 8px; color: rgba(255,255,255,.6); font-size: 14px; }
+.footer__pending-badge { padding: 2px 7px; border: 1px solid rgba(255,255,255,.25); border-radius: 99px; color: rgba(255,255,255,.6); font-size: 11px; line-height: 1.4; white-space: nowrap; }
 .footer__bottom { display: flex; justify-content: space-between; gap: 20px; padding-top: 25px; border-top: 1px solid rgba(255,255,255,.15); font-size: 13px; }
 
 /*

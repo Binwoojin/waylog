@@ -2,8 +2,22 @@ import { Link } from 'react-router-dom'
 import logo from '../../assets/figma/logo.png'
 import '../home/HomeSections.css'
 
+/*
+ * 목적지가 아직 없는 푸터 항목입니다.
+ * Design Ref: §3.2 — 누를 수 있는 것처럼 보이지만 반응이 없는 링크를 없애기 위해
+ * 링크가 아닌 일반 텍스트로 두고 "준비 중" 표시를 붙입니다. (포커스 대상에서도 제외)
+ * 페이지가 생기면 해당 항목만 <Link>로 바꿉니다.
+ */
+function PendingFooterItem({ children }) {
+  return (
+    <span className="footer__pending">
+      {children}
+      <small className="footer__pending-badge">준비 중</small>
+    </span>
+  )
+}
+
 // 서비스 소개, 고객지원, 정책 링크를 모든 콘텐츠 페이지 하단에 공통으로 제공합니다.
-// 백엔드/라우터 연결 후 각 #앵커를 실제 공지·약관 페이지 경로로 교체할 수 있습니다.
 export default function Footer() {
   return (
   <footer className="footer">
@@ -17,22 +31,20 @@ export default function Footer() {
           <strong>서비스</strong>
           <Link to="/destinations">여행지</Link>
           <Link to="/destinations/courses">여행 코스</Link>
-          {/* 여행 피드 페이지가 생기면 실제 경로로 변경합니다. */}
-          <a href="#feed">여행 피드</a>
+          {/* 기능 메뉴는 "준비 중" 페이지로 연결합니다. 피드가 완성되면 같은 경로를 그대로 사용합니다. */}
+          <Link to="/feed">여행 피드</Link>
         </div>
         <div>
           <strong>고객지원</strong>
-          {/* 아직 각각의 페이지가 없으므로 현재는 메인의 공지 영역으로 이동합니다. */}
-          <a href="#notice">공지사항</a>
-          <a href="#faq">자주 묻는 질문</a>
-          <a href="#contact">문의하기</a>
+          <Link to="/notices">공지사항</Link>
+          <PendingFooterItem>자주 묻는 질문</PendingFooterItem>
+          <PendingFooterItem>문의하기</PendingFooterItem>
         </div>
         <div>
           <strong>약관 및 정책</strong>
-          {/* 약관 페이지 구현 후 /terms 등의 실제 경로로 변경합니다. */}
-          <a href="#terms">이용약관</a>
-          <a href="#privacy">개인정보처리방침</a>
-          <a href="#location">위치기반서비스</a>
+          <PendingFooterItem>이용약관</PendingFooterItem>
+          <PendingFooterItem>개인정보처리방침</PendingFooterItem>
+          <PendingFooterItem>위치기반서비스</PendingFooterItem>
         </div>
       </div>
     </div>

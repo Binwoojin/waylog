@@ -63,6 +63,26 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     );
 
             /*
+             * 체크포인트 3: 회원 조회 성공 직후 정지 여부를 확인한다.
+             * 정지 중이면 인증 정보를 설정하지 않고, 아래 catch 블록과 같은 경로(잘못된 토큰 분기)를 타서
+             * SecurityContextHolder.clearContext() 후 401로 이어지게 한다.
+             */
+            // Design Ref: §4.2 체크포인트 3
+            if (user.isSuspended()) {
+                throw new IllegalArgumentException("정지된 계정입니다.");
+            }
+
+            /*
+             * 체크포인트 3: 탈퇴한 회원은 인증 정보를 설정하지 않는다(401로 이어짐).
+             * 이미 발급된 Access Token도 다음 요청부터 즉시 무효화된다(별도 토큰
+             * 블랙리스트 불필요 — 매 요청 DB 재확인 구조를 그대로 재사용).
+             */
+            // Design Ref: mypage-bookmarks 설계 §4.4 체크포인트 3
+            if (user.isWithdrawn()) {
+                throw new IllegalArgumentException("탈퇴한 계정입니다.");
+            }
+
+            /*
              * GRADE 컬럼 값과 권한 문자열을 맞춰야 합니다.
              *
              * 예: DB의 grade 값이 ADMIN이면 ROLE_ADMIN으로 변환합니다.

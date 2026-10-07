@@ -1,0 +1,75 @@
+.feed-image-editor {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 10px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.feed-image-editor__item {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #f1f5f9;
+  cursor: grab;
+}
+
+.feed-image-editor__item:active {
+  cursor: grabbing;
+}
+
+.feed-image-editor__thumb {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.feed-image-editor__badge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  padding: 2px 8px;
+  border-radius: 99px;
+  color: #fff;
+  background: rgba(37, 99, 235, 0.85);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.feed-image-editor__controls {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  left: 4px;
+  display: flex;
+  gap: 4px;
+}
+
+.feed-image-editor__controls button {
+  flex: 1;
+  height: 26px;
+  border: 0;
+  border-radius: 6px;
+  color: #fff;
+  background: rgba(15, 23, 42, 0.6);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.feed-image-editor__controls button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.feed-image-editor__controls button:not(:disabled):hover {
+  background: rgba(15, 23, 42, 0.85);
+}
+
+.feed-image-editor__controls button:focus-visible {
+  outline: 2px solid #93c5fd;
+  outline-offset: 2px;
+}

@@ -5,16 +5,73 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface FeedPostRepository extends JpaRepository<FeedPost, Long> {
+
+    /*
+     * code-review Must Fix 2 — commentCount 필드 증감(+ dirty checking) 대신 원자적 UPDATE로 처리한다.
+     * 동시에 댓글이 작성/삭제되어도 lost update 없이 DB 레벨에서 안전하게 증감된다.
+     *
+     * clearAutomatically는 일부러 켜지 않는다: FeedCommentService.delete()는 이 메서드를 호출하기
+     * 직전에 feedCommentRepository.delete(comment)로 댓글을 영속성 컨텍스트에서 제거 예약만 해둔
+     * 상태(아직 flush 전)다. clearAutomatically = true를 쓰면 이 bulk UPDATE 실행 직후 영속성
+     * 컨텍스트를 통째로 비워버려, 아직 flush되지 않은 그 삭제 예약까지 함께 사라져 댓글이 실제로는
+     * 지워지지 않는 문제가 있었다(로컬 테스트로 확인). 이 UPDATE 자체는 이미 DB 레벨 단일 문장이라
+     * clearAutomatically 없이도 원자성에는 영향이 없다.
+     */
+    @Modifying
+    @Query("UPDATE FeedPost p SET p.commentCount = p.commentCount + :delta WHERE p.id = :postId")
+    void adjustCommentCount(@Param("postId") Long postId, @Param("delta") long delta);
     /*
      * 작성자 정보가 LAZY이므로 피드 목록 조회 시 author를 함께 가져옵니다.
      * 사진과 태그는 컬렉션이므로 서비스 트랜잭션 안에서 조회합니다.
+     *
+     * admin-dashboard 설계 §3.4.2: 공개 목록에서 소프트 삭제된 게시물을 제외하기 위해
+     * 기존 findByVisibility(String, Pageable)를 이 메서드로 대체한다.
      */
     @EntityGraph(attributePaths = "author")
-    Page<FeedPost> findByVisibility(String  visibility, Pageable pageable);
+    Page<FeedPost> findByVisibilityAndDeletedAtIsNull(String  visibility, Pageable pageable);
+
+    /*
+     * feed-integration 설계 §4.2(P-3): 무한 스크롤 타임라인용 커서 기반 조회.
+     * id는 GenerationType.IDENTITY라 생성 순서와 항상 일치하므로, id 하나만으로
+     * "이미 본 항목보다 오래된 것만" 안전하게 조회할 수 있다(복합 커서 불필요).
+     *
+     * 첫 페이지(cursor 없음) 조회용.
+     */
+    @EntityGraph(attributePaths = "author")
+    List<FeedPost> findByVisibilityAndDeletedAtIsNullOrderByIdDesc(String visibility, Pageable pageable);
+
+    /*
+     * 다음 페이지(cursor 있음) 조회용. cursor보다 id가 작은(=더 오래된) 게시물만 가져온다.
+     */
+    @EntityGraph(attributePaths = "author")
+    List<FeedPost> findByVisibilityAndDeletedAtIsNullAndIdLessThanOrderByIdDesc(String visibility, Long cursorId, Pageable pageable);
+
+    /*
+     * tour-course-feed-linking 설계 §4.4(D-4) — 코스 상세의 "참조 피드 목록"용.
+     * 신규 엔드포인트 대신 기존 커서 페이지네이션 메서드와 같은 패턴으로 linkedCourseId
+     * 조건만 추가한다. 일자/경유지 어느 단위로 참조했든(linkedCourseId만 일치하면) 모두
+     * 포함한다 — 코스 단위 집계이므로 day/stop별로 나누지 않는다(설계 §7.2).
+     */
+    @EntityGraph(attributePaths = "author")
+    List<FeedPost> findByLinkedCourseIdAndVisibilityAndDeletedAtIsNullOrderByIdDesc(Long linkedCourseId, String visibility, Pageable pageable);
+
+    @EntityGraph(attributePaths = "author")
+    List<FeedPost> findByLinkedCourseIdAndVisibilityAndDeletedAtIsNullAndIdLessThanOrderByIdDesc(Long linkedCourseId, String visibility, Long cursorId, Pageable pageable);
+
+    /*
+     * feed-integration 설계 §4.4(P-6): 타인 프로필 조회는 PUBLIC 게시물만 노출한다
+     * (본인 프로필의 findByAuthor_Id는 공개/비공개 모두 보여주는 것과 대비).
+     */
+    @EntityGraph(attributePaths = "author")
+    Page<FeedPost> findByAuthor_IdAndVisibilityAndDeletedAtIsNull(Long userId, String visibility, Pageable pageable);
 
     /*
      * photos와 tags를 동시에 fetch join하면
@@ -22,10 +79,19 @@ public interface FeedPostRepository extends JpaRepository<FeedPost, Long> {
      *
      * photos만 함께 조회하고, tags는 FeedService의 트랜잭션 안에서
      * 필요한 시점에 별도 조회하도록 합니다.
+     *
+     * 관리자 상세(삭제된 게시물도 조회 가능해야 함)용으로 그대로 남겨둔다(설계 §3.4.2).
      */
 
     @EntityGraph(attributePaths = {"author", "photos"})
     Optional<FeedPost> findWithDetailsById(Long id);
+
+    /*
+     * 공개 상세(GET /api/v1/feed/posts/{id})에서 소프트 삭제된 게시물을 제외하기 위해
+     * 추가한다(설계 §3.4.2). 기존 findWithDetailsById는 관리자 상세용으로 유지한다.
+     */
+    @EntityGraph(attributePaths = {"author", "photos"})
+    Optional<FeedPost> findWithDetailsByIdAndDeletedAtIsNull(Long id);
 
     /**
      * 로그인한 회원이 작성한 게시글을 조회합니다.
@@ -34,4 +100,11 @@ public interface FeedPostRepository extends JpaRepository<FeedPost, Long> {
      */
     @EntityGraph(attributePaths = "author")
     Page<FeedPost> findByAuthor_Id(Long userId, Pageable pageable);
+
+    /*
+     * 관리자 목록 조회용(설계 §3.4.2). deletedAt 조건 없이 전체를 최신순으로 조회한다
+     * (소프트 삭제된 글도 상태와 사유를 보여주기 위해 그대로 포함해야 하므로).
+     */
+    @EntityGraph(attributePaths = "author")
+    Page<FeedPost> findAllByOrderByCreatedAtDesc(Pageable pageable);
 }

@@ -7,8 +7,10 @@ import kr.co.mycom.travel_korea.feed.dto.FeedProfileUpdateRequest;
 import kr.co.mycom.travel_korea.feed.service.FeedProfileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequiredArgsConstructor
@@ -29,13 +31,37 @@ public class FeedProfileController {
     }
 
     /**
-     * SNS 전용 @아이디를 수정합니다.
+     * feed-integration 설계 §4.4(P-6): 타인의 SNS 프로필과 그가 작성한 PUBLIC 게시물만 조회합니다.
+     *
+     * 비로그인 사용자도 조회할 수 있는 공개 API입니다("둘러보기" 목적). 좋아요·북마크 여부는
+     * 조회자와 무관하게 항상 false로 고정합니다(설계 §4.4 노출 범위 결정).
+     *
+     * 경로 세그먼트 수가 위 getMyProfile("/api/v1/feed/profile")과 다르므로
+     * 스프링이 두 매핑을 올바르게 구분합니다(라우팅 충돌 없음).
      */
-    @PatchMapping
-    public ResponseEntity<FeedProfileResponse> updateMyHandle(
+    @GetMapping("/{userId}")
+    public ResponseEntity<FeedProfileResponse> getUserProfile(
+            @PathVariable Long userId,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "12") int size) {
+        return ResponseEntity.ok(feedProfileService.getUserProfile(userId, page, size));
+    }
+
+    /**
+     * 마이페이지 프로필(닉네임·소개·@피드아이디·프로필이미지)을 한 번에 수정합니다.
+     *
+     * mypage-bookmarks 설계 §4.2(Q-2, Q-3): 기존 "SNS 전용 @아이디 수정"에서 범위를 넓혀
+     * FeedController.create()와 동일한 멀티파트(@RequestPart JSON Blob + 파일) 패턴을 쓴다.
+     * 프로필 이미지는 선택값이며, 보내지 않으면 기존 이미지를 유지한다.
+     */
+    @PatchMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<FeedProfileResponse> updateMyProfile(
             @RequestHeader(HttpHeaders.AUTHORIZATION) String authorization,
-            @Valid @RequestBody FeedProfileUpdateRequest request) {
-        return ResponseEntity.ok(feedProfileService.updateMyHandle(extractRequiredEmail(authorization), request));
+            @Valid @RequestPart("profile") FeedProfileUpdateRequest request,
+            @RequestPart(value = "profileImage", required = false) MultipartFile profileImage) {
+        return ResponseEntity.ok(
+                feedProfileService.updateMyProfile(extractRequiredEmail(authorization), request, profileImage)
+        );
     }
 
     private String extractRequiredEmail(String authorization) {

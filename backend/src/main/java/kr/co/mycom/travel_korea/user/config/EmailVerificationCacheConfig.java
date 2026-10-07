@@ -29,9 +29,10 @@ public class EmailVerificationCacheConfig {
      * 강제합니다.
      */
     @Bean
-    public Cache<String, String> emailVerificationTicketCache() {
+    public Cache<String, String> emailVerificationTicketCache(
+            @Value("${auth.ticket-expiration-millis:600000}") long ticketExpirationMillis) {
         return Caffeine.newBuilder()
-                .expireAfterWrite(Duration.ofMinutes(10))
+                .expireAfterWrite(Duration.ofMillis(ticketExpirationMillis))
                 .maximumSize(10_000)
                 .build();
     }

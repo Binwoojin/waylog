@@ -1,0 +1,192 @@
+/*
+ * 북마크 화면 레이아웃
+ *
+ * Design Ref: mypage-bookmarks.design.md §6.1 — 탭(role="tablist") + 탭별 목록(피드는 세로 리스트,
+ * 투어는 카드 그리드)이라는 두 가지 콘텐츠 모양을 한 화면 안에서 지원한다.
+ */
+
+.bookmarks-page {
+  min-width: 320px;
+  color: #1f1f1f;
+  background: #f7f9fc;
+}
+
+.bookmarks-page__main {
+  width: min(960px, calc(100% - 48px));
+  margin: 0 auto;
+  padding: 135px 0 110px;
+}
+
+.bookmarks-page__title {
+  margin: 0 0 24px;
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.bookmarks-page__tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 28px;
+  border-bottom: 1px solid #e5e9ef;
+}
+
+.bookmarks-page__tabs button {
+  padding: 12px 20px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: #64748b;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.bookmarks-page__tabs button:hover {
+  color: #2563eb;
+}
+
+.bookmarks-page__tabs button.is-active {
+  border-bottom-color: #2563eb;
+  color: #2563eb;
+}
+
+.bookmarks-page__empty {
+  margin: 40px auto;
+}
+
+.bookmarks-page__feed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin: 0 0 32px;
+  padding: 0;
+  list-style: none;
+  max-width: 720px;
+}
+
+.bookmarks-page__tour-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin: 0 0 32px;
+  padding: 0;
+  list-style: none;
+}
+
+.bookmarks-page__tour-card {
+  position: relative;
+  border: 1px solid #eef1f4;
+  border-radius: 16px;
+  background: #fff;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+}
+
+.bookmarks-page__tour-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.bookmarks-page__tour-link--static {
+  cursor: default;
+}
+
+.bookmarks-page__tour-image {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  background: #e5e7eb;
+}
+
+.bookmarks-page__tour-info {
+  padding: 14px 16px 16px;
+}
+
+.bookmarks-page__tour-tag {
+  display: inline-block;
+  margin-bottom: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #4338ca;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.bookmarks-page__tour-info h3 {
+  margin: 0 0 6px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.bookmarks-page__tour-address {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.bookmarks-page__tour-remove {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.55);
+  color: #fff;
+  cursor: pointer;
+}
+
+.bookmarks-page__tour-remove:hover {
+  background: rgba(15, 23, 42, 0.75);
+}
+
+.bookmarks-page__pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 8px;
+  color: #475569;
+  font-size: 14px;
+}
+
+.bookmarks-page__pagination button {
+  height: 40px;
+  padding: 0 20px;
+  border: 1px solid #d7dee6;
+  border-radius: 10px;
+  color: #334155;
+  background: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.bookmarks-page__pagination button:hover:not(:disabled) {
+  border-color: #8bb6ed;
+  color: #2563eb;
+}
+
+.bookmarks-page__pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 860px) {
+  .bookmarks-page__tour-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 620px) {
+  .bookmarks-page__main { width: calc(100% - 32px); padding-top: 105px; }
+  .bookmarks-page__tour-grid { grid-template-columns: 1fr; }
+  .bookmarks-page__tabs { overflow-x: auto; }
+}

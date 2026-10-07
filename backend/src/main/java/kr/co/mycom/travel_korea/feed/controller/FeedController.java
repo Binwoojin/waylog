@@ -3,7 +3,7 @@ package kr.co.mycom.travel_korea.feed.controller;
 import jakarta.validation.Valid;
 import kr.co.mycom.travel_korea.config.JwtConfig;
 import kr.co.mycom.travel_korea.feed.dto.FeedCreateRequest;
-import kr.co.mycom.travel_korea.feed.dto.FeedPageResponse;
+import kr.co.mycom.travel_korea.feed.dto.FeedTimelineResponse;
 import kr.co.mycom.travel_korea.feed.dto.FeedPostResponse;
 import kr.co.mycom.travel_korea.feed.dto.FeedUpdateRequest;
 import kr.co.mycom.travel_korea.feed.service.FeedService;
@@ -15,7 +15,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.swing.*;
 import java.util.List;
 
 @RestController
@@ -26,18 +25,27 @@ public class FeedController {
     private final FeedService feedService;
     private final JwtConfig jwtConfig;
 
+    /*
+     * feed-integration 설계 §4.2(P-3): 무한 스크롤용 커서 기반 목록.
+     * cursor가 없으면 최신 게시물부터, 있으면 그 id보다 오래된 게시물만 반환한다.
+     */
     @GetMapping
-    public ResponseEntity<FeedPageResponse> getFeed(@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization,
-                                                    @RequestParam(defaultValue = "1") int page,
-                                                    @RequestParam(defaultValue = "10") int size) {
+    public ResponseEntity<FeedTimelineResponse> getFeed(@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization,
+                                                    @RequestParam(required = false) Long cursor,
+                                                    @RequestParam(defaultValue = "10") int size,
+                                                    @RequestParam(required = false) Long linkedCourseId) {
         /*
          * 피드 조회는 비로그인 사용자도 가능하므로
          * 토큰이 없으면 email을 null로 전달합니다.
+         *
+         * linkedCourseId(tour-course-feed-linking 설계 §4.4/D-4)는 코스 상세의
+         * "참조 피드 목록" 조회용 선택 파라미터다. 쿼리 파라미터는 SecurityConfig의
+         * 경로 매처 대상이 아니므로 별도 보안 설정 변경이 필요 없다(설계 §9).
          */
 
         String email = extractOptionalEmail(authorization);
 
-        return ResponseEntity.ok(feedService.getFeed(email, page, size));
+        return ResponseEntity.ok(feedService.getFeed(email, cursor, size, linkedCourseId));
     }
 
     @GetMapping("/{postId}")

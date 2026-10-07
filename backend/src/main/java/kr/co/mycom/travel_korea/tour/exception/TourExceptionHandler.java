@@ -50,6 +50,27 @@ public class TourExceptionHandler {
     }
 
     /**
+     * 존재하지 않는 관광 콘텐츠 조회를 404로 반환합니다.
+     *
+     * Design Ref: §4.3 BE-2 — 외부 API 장애(502)와 데이터 없음(404)을 구분해
+     * 프론트가 상태 코드만으로 not-found와 error 화면을 나눌 수 있게 합니다.
+     */
+    @ExceptionHandler(TourContentNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleContentNotFound(
+            TourContentNotFoundException exception
+    ) {
+        ErrorResponse response = new ErrorResponse(
+                "TOUR_CONTENT_NOT_FOUND",
+                exception.getMessage(),
+                LocalDateTime.now()
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(response);
+    }
+
+    /**
      * WayLog 관광 API의 공통 오류 응답 형식입니다.
      */
     public record ErrorResponse(

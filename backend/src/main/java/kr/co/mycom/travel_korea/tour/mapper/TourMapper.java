@@ -37,7 +37,9 @@ public class TourMapper {
                 item.lclsSystm2(),
                 classification == null ? null : classification.lclsSystm2Nm(),
                 item.lclsSystm3(),
-                classification == null ? null : classification.lclsSystm3Nm()
+                classification == null ? null : classification.lclsSystm3Nm(),
+                // TourService가 결과를 캐시하므로 여기서는 항상 false(TourSummaryResponse.withBookmarked 참고).
+                false
         );
     }
 

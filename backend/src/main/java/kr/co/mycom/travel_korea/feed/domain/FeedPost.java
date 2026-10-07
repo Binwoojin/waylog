@@ -66,6 +66,42 @@ public class FeedPost {
     @Column(name = "tour_content_type_id")
     private Integer tourContentTypeId;
 
+    /*
+     * 여행코스 참조(tour-course-feed-linking 설계 §3). TourAPI 참조(tourContentId)와
+     * 완전히 독립된 필드다 — 한 게시물이 TourAPI 위치와 코스 참조를 모두 가질 수도,
+     * 하나만 가질 수도, 둘 다 없을 수도 있다.
+     *
+     * "코스 전체만" 가리키는 상태는 허용하지 않는다(설계 §3.2) — linkedCourseDayId가
+     * null이 아니면 linkedCourseId도 항상 함께 채워진다(서버가 일자→코스 체인으로 직접
+     * 채우므로 둘이 따로 노는 상태 자체가 만들어지지 않는다). linkedCourseStopId는
+     * linkedCourseDayId가 있을 때만 추가로 설정될 수 있다.
+     *
+     * ON DELETE SET NULL(DB 레벨, 마이그레이션 backend/db/migrations/2026-10-01-tour-course-feed-linking.sql)로
+     * 코스/일자/경유지가 삭제되면 이 세 id는 자동으로 null이 된다. 스냅샷 컬럼(제목/일자
+     * 번호/경유지명)은 FK가 아니라 일반 컬럼이라 삭제의 영향을 받지 않고 그대로 남는다 —
+     * "참조했던 코스가 이후 삭제/변경됨"을 사용자에게 보여줄 수 있는 근거가 된다.
+     *
+     * @ManyToOne이 아니라 단순 @Column인 이유는 설계 §3.1 참고 — feed 모듈이 tourcourse
+     * 모듈의 엔티티 클래스를 몰라도 되게 하기 위함(모듈 결합 최소화).
+     */
+    @Column(name = "linked_course_id")
+    private Long linkedCourseId;
+
+    @Column(name = "linked_course_title", length = 200)
+    private String linkedCourseTitle;
+
+    @Column(name = "linked_course_day_id")
+    private Long linkedCourseDayId;
+
+    @Column(name = "linked_course_day_number")
+    private Integer linkedCourseDayNumber;
+
+    @Column(name = "linked_course_stop_id")
+    private Long linkedCourseStopId;
+
+    @Column(name = "linked_course_stop_name", length = 150)
+    private String linkedCourseStopName;
+
     @Column(name = "visibility", nullable = false, length = 20)
     private String visibility = "PUBLIC";
 
@@ -83,6 +119,14 @@ public class FeedPost {
     private List<FeedPhoto> photos = new ArrayList<>();
 
     /*
+     * feed-comment-integration 설계 §3.1 — 게시물 삭제 시 댓글·답글도 함께 정리되도록
+     * cascade + orphanRemoval을 photos와 동일한 방식으로 연결한다. FeedService.delete()는
+     * 이 연관관계 덕분에 코드 변경 없이 댓글까지 하드 삭제한다.
+     */
+    @OneToMany(mappedBy = "feedPost", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<FeedComment> comments = new ArrayList<>();
+
+    /*
      * 태그는 별도 엔티티 동작이 필요하지 않아 ElementCollection으로 관리합니다.
      */
     @ElementCollection
@@ -95,6 +139,18 @@ public class FeedPost {
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    /*
+     * 관리자 소프트 삭제(admin-dashboard 설계 §3.4.1).
+     *
+     * null이면 정상 노출, 값이 있으면 소프트 삭제됨. 정책위반(하드) 삭제는 행 자체가
+     * 사라지므로 이 두 컬럼에 값이 남지 않는다(설계 §3.4.1, 의도된 트레이드오프).
+     */
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
+    @Column(name = "delete_reason", length = 255)
+    private String deleteReason;
 
     public FeedPost(UserEntity author, String content, String locationName, String address, BigDecimal latitude, BigDecimal longitude, String tourContentId, Integer tourContentTypeId, String visibility) {
         this.author = author;
@@ -119,6 +175,31 @@ public class FeedPost {
         this.tourContentId = tourContentId;
         this.tourContentTypeId = tourContentTypeId;
         this.visibility = visibility == null ? "PUBLIC" : visibility;
+    }
+
+    /*
+     * 여행코스 참조를 붙인다(tour-course-feed-linking 설계 §3.1 — replaceTags/replacePhotos와
+     * 같은 레벨의 post-construction mutator). 생성자에 더 얹지 않고 생성 직후 별도 호출로
+     * 분리한다. 전부 null을 넘기면 "미태그" 상태가 된다(CourseLinkResolver.resolve가 둘 다
+     * null일 때 반환하는 empty() 스냅샷과 대응).
+     */
+    public void linkCourse(Long courseId, String courseTitle, Long dayId, Integer dayNumber, Long stopId, String stopName) {
+        this.linkedCourseId = courseId;
+        this.linkedCourseTitle = courseTitle;
+        this.linkedCourseDayId = dayId;
+        this.linkedCourseDayNumber = dayNumber;
+        this.linkedCourseStopId = stopId;
+        this.linkedCourseStopName = stopName;
+    }
+
+    /*
+     * 스냅샷 컬럼(linkedCourseTitle) 기준으로 판단한다. 코스/일자/경유지가 각각
+     * ON DELETE SET NULL로 사라져도 linkedCourseTitle 등 스냅샷 텍스트는 남아있으므로,
+     * dayId 같은 FK 컬럼을 게이트로 쓰면 코스 삭제 시 스냅샷 전체가 응답에서 사라진다
+     * (design §5.3 — 삭제된 참조는 스냅샷 텍스트로 표시되어야 한다).
+     */
+    public boolean hasCourseLink() {
+        return linkedCourseTitle != null;
     }
 
     public void replaceTags(List<String> tagNames) {
@@ -168,6 +249,20 @@ public class FeedPost {
                         sortOrder
                 )
         );
+    }
+
+    /**
+     * 관리자 일반(소프트) 삭제를 적용한다. DB 행은 유지하고 노출만 막는다.
+     *
+     * Design Ref: admin-dashboard 설계 §3.4.3 — type=NORMAL
+     */
+    public void softDelete(String reason) {
+        this.deletedAt = LocalDateTime.now();
+        this.deleteReason = reason;
+    }
+
+    public boolean isDeleted() {
+        return deletedAt != null;
     }
 
     public void increaseLikeCount() {

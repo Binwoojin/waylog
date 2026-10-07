@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import fallbackImage from '../../assets/figma/destination-jeju.png'
 import PlacePinIcon from '../icons/PlacePinIcon'
+import { DESTINATION_CONTENT_TYPES, getTourDetailPath } from '../../data/tourContentTypes'
 import './HomeSections.css'
 
 /**
@@ -42,19 +43,17 @@ export default function RecommendedDestinationSection({
       {destinations.map((item) => (
         <article className="destination-card" key={item.contentId}>
           {/*
-              TourAPI 상세 조회가 아직 연결되지 않았으므로
-              우선 관광지 목록 페이지로 이동시킵니다.
-
-              detailCommon2 연결이 완료되면 href를 다음처럼 변경할 수 있습니다.
-              href={`/destinations/detail/${item.contentId}`}
+              Design Ref: §5.3 D-3 — 상세 API(detailCommon2)와 연결된 여행지 상세로 이동합니다.
+              추천 여행지는 관광지(12)가 기본이므로 contentTypeId가 없으면 12로 봅니다.
+              contentId 형식이 맞지 않으면 관광지 목록으로 보냅니다.
             */}
-          <a href='/destinations/attractions'>
+          <Link to={getTourDetailPath(item.contentId, item.contentTypeId ?? DESTINATION_CONTENT_TYPES.attraction) ?? '/destinations/attractions'}>
             <img src={item.image || item.thumbnail || fallbackImage} alt={item.title} />
             <div className="destination-card__body">
               <h3>{item.title}</h3>
               <p className="card-location"><PlacePinIcon />{item.address || '주소 정보 없음'}</p>
             </div>
-          </a>
+          </Link>
         </article>
       ))}
       </div>

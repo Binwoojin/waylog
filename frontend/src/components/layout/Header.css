@@ -149,6 +149,76 @@
 .site-header--scrolled .site-header__member-button { color: #1f1f1f; border-color: #cbd5e1; background: #fff; }
 .site-header--scrolled .site-header__member-button:hover { color: #2563eb; border-color: #93c5fd; background: #eff6ff; }
 
+/* 세션 복원 중 로그인/회원가입 버튼 자리를 같은 크기로 비워 둡니다. */
+.site-header__placeholder { visibility: hidden; pointer-events: none; }
+
+/* 로그아웃 서버 호출 실패 알림 (회원 메뉴와 같은 카드 스타일) */
+.site-header__actions { position: relative; }
+.site-header__notice { position: absolute; top: calc(100% + 12px); right: 0; z-index: 1; width: min(300px, calc(100vw - 32px)); padding: 14px; border: 1px solid #fecaca; border-radius: 14px; color: #1f1f1f; background: #fff; box-shadow: 0 14px 34px rgba(15,23,42,.2); }
+.site-header__notice p { margin: 0 0 12px; font-size: 14px; line-height: 1.5; }
+.site-header__notice-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.site-header__notice-actions button { min-height: 36px; padding: 0 14px; border: 1px solid #cbd5e1; border-radius: 18px; color: #1f1f1f; background: #fff; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.site-header__notice-actions button:first-child { border-color: transparent; color: #fff; background: #3b82f6; }
+.site-header__notice-actions button:disabled { opacity: .6; cursor: default; }
+
+/*
+ * 모바일 햄버거 버튼 (760px 이하에서만 표시)
+ * Design Ref: §5.1 — 홈의 투명 헤더에서는 흰 아이콘, 흰 헤더(스크롤·forceLight)에서는 어두운 아이콘을 씁니다.
+ */
+.site-header__menu-button { display: none; width: 44px; height: 44px; align-items: center; justify-content: center; padding: 0; border: 0; border-radius: 12px; color: #f9f9f9; background: transparent; cursor: pointer; transition: background 160ms ease; }
+.site-header__menu-button:hover { background: rgba(255,255,255,.14); }
+.site-header__menu-button:focus-visible { outline: 3px solid #93c5fd; outline-offset: 2px; }
+.site-header--scrolled .site-header__menu-button { color: #1f1f1f; }
+.site-header--scrolled .site-header__menu-button:hover { background: #eff6ff; }
+.site-header__menu-icon { display: grid; gap: 5px; width: 22px; }
+.site-header__menu-icon span { display: block; height: 2px; border-radius: 2px; background: currentColor; }
+
+/*
+ * 모바일 드로어 (MobileNav)
+ * body로 포털되므로 .site-header 아래가 아닌 최상위 선택자로 작성합니다. 헤더(z-index 1000)보다 위에 표시합니다.
+ */
+.mobile-nav { position: fixed; inset: 0; z-index: 1100; }
+.mobile-nav__backdrop { position: absolute; inset: 0; background: rgba(15,23,42,.45); animation: mobile-nav-fade 180ms ease; }
+.mobile-nav__panel { position: absolute; top: 0; right: 0; bottom: 0; display: flex; flex-direction: column; width: min(320px, 86vw); padding: 18px 20px 28px; overflow-y: auto; color: #1f1f1f; background: #fff; box-shadow: -12px 0 32px rgba(15,23,42,.2); animation: mobile-nav-slide 220ms ease; }
+.mobile-nav__top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.mobile-nav__top strong { font-size: 17px; font-weight: 700; }
+.mobile-nav__close { width: 44px; height: 44px; margin-right: -10px; border: 0; border-radius: 12px; color: #1f1f1f; background: transparent; font: inherit; font-size: 28px; line-height: 1; cursor: pointer; }
+.mobile-nav__close:hover { background: #f1f5f9; }
+.mobile-nav__list { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.mobile-nav__list a,
+.mobile-nav__list button { display: flex; width: 100%; min-height: 48px; align-items: center; padding: 0 14px; border: 0; border-radius: 10px; color: #1f1f1f; background: transparent; font: inherit; font-size: 17px; font-weight: 600; text-align: left; text-decoration: none; cursor: pointer; }
+.mobile-nav__list a:hover,
+.mobile-nav__list button:hover { color: #2563eb; background: #eff6ff; }
+.mobile-nav__list a.is-active { color: #2563eb; background: #eff6ff; }
+.mobile-nav__list--sub a,
+.mobile-nav__list--sub button { min-height: 44px; font-size: 15px; font-weight: 500; }
+.mobile-nav__list a:focus-visible,
+.mobile-nav__list button:focus-visible,
+.mobile-nav__close:focus-visible,
+.mobile-nav__auth a:focus-visible { outline: 3px solid #93c5fd; outline-offset: 2px; }
+.mobile-nav__divider { width: 100%; margin: 18px 0; border: 0; border-top: 1px solid #e2e8f0; }
+.mobile-nav__member-name { margin: 0 0 8px; padding: 0 14px; color: #475569; font-size: 15px; }
+.mobile-nav__member-name strong { color: #1f1f1f; font-weight: 700; }
+.mobile-nav__auth { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.mobile-nav__auth a { display: inline-flex; height: 46px; align-items: center; justify-content: center; border-radius: 23px; font-size: 15px; font-weight: 600; text-decoration: none; }
+.mobile-nav__auth-login { border: 1px solid #1f1f1f; color: #1f1f1f; }
+.mobile-nav__auth-signup { color: #fff; background: #3b82f6; }
+/* 세션 복원 중에는 로그인 영역을 같은 높이의 빈 자리로 둡니다. */
+.mobile-nav__account-placeholder { height: 46px; }
+
+@keyframes mobile-nav-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes mobile-nav-slide { from { transform: translateX(100%); } to { transform: translateX(0); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-nav__backdrop,
+  .mobile-nav__panel { animation: none; }
+}
+
+/* 데스크톱 폭에서는 드로어를 쓰지 않습니다. (열린 채 창을 넓히면 MobileNav가 상태도 닫음) */
+@media (min-width: 761px) {
+  .mobile-nav { display: none; }
+}
+
 @media (max-width: 1100px) {
   .site-header { grid-template-columns: 42px 1fr auto; gap: 42px; min-height: 78px; }
   .site-header__logo { width: 42px; height: 33px; }
@@ -165,8 +235,14 @@
   .site-header__logo { width: 35px; height: 27px; }
   .site-header__nav { display: none; }
   .site-header__actions { justify-self: end; gap: 8px; }
+  /*
+   * Design Ref: §5.1 — 모바일에서는 로그인·회원가입·회원 메뉴를 드로어로 옮기고 햄버거 버튼만 둡니다.
+   * 320px 폭에서 로고 + 버튼 두 개 + 햄버거가 한 줄에 들어가지 않기 때문입니다.
+   * 로그아웃 실패 알림(.site-header__notice)은 그대로 헤더에 표시됩니다.
+   */
   .site-header__login,
-  .site-header__signup { width: 82px; height: 42px; font-size: 13px; }
-  .site-header__member-button { min-width: 128px; height: 42px; padding: 0 15px; font-size: 13px; }
+  .site-header__signup,
+  .site-header__member { display: none; }
+  .site-header__menu-button { display: inline-flex; }
   .site-header--scrolled { min-height: 60px; }
 }

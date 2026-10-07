@@ -1,0 +1,142 @@
+/*
+ * 타인 피드 프로필 스타일
+ *
+ * Design Ref: feed-integration.design.md §9 — feed-page/feed-card와 같은 톤을 이어받는다.
+ */
+
+.feed-user-profile-page {
+  min-width: 320px;
+  color: #1f1f1f;
+  background: #f7f9fc;
+}
+
+.feed-user-profile-page__main {
+  width: min(720px, calc(100% - 48px));
+  margin: 0 auto;
+  padding: 135px 0 110px;
+}
+
+.feed-user-profile-page__breadcrumb {
+  display: flex;
+  gap: 8px;
+  margin: 0 0 20px;
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+.feed-user-profile-page__breadcrumb a {
+  color: #64748b;
+  text-decoration: none;
+}
+
+.feed-user-profile-page__breadcrumb a:hover {
+  color: #2563eb;
+}
+
+.feed-user-profile-page__header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 32px;
+  padding: 28px;
+  border: 1px solid #eef1f4;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+}
+
+.feed-user-profile-page__avatar {
+  flex: 0 0 auto;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #e5e7eb;
+}
+
+.feed-user-profile-page__info h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.feed-user-profile-page__handle {
+  margin: 4px 0 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.feed-user-profile-page__stats {
+  display: flex;
+  gap: 24px;
+  margin: 14px 0 0;
+}
+
+.feed-user-profile-page__stats div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.feed-user-profile-page__stats dt {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.feed-user-profile-page__stats dd {
+  margin: 0;
+  color: #1f1f1f;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.feed-user-profile-page__empty {
+  margin: 40px auto;
+}
+
+.feed-user-profile-page__list {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.feed-user-profile-page__pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 32px;
+  color: #475569;
+  font-size: 14px;
+}
+
+.feed-user-profile-page__pagination button {
+  height: 40px;
+  padding: 0 20px;
+  border: 1px solid #d7dee6;
+  border-radius: 10px;
+  color: #334155;
+  background: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.feed-user-profile-page__pagination button:hover:not(:disabled) {
+  border-color: #8bb6ed;
+  color: #2563eb;
+}
+
+.feed-user-profile-page__pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 620px) {
+  .feed-user-profile-page__main { width: calc(100% - 32px); padding-top: 105px; }
+  .feed-user-profile-page__header { flex-direction: column; align-items: flex-start; text-align: left; }
+  .feed-user-profile-page__stats { gap: 18px; }
+}

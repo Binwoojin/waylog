@@ -1,0 +1,179 @@
+/*
+ * 피드 타임라인 카드 스타일
+ *
+ * catalog-card와 같은 톤(둥근 모서리, 은은한 그림자, #3b82f6 포인트)을 따르되,
+ * SNS 피드 특유의 세로 카드 목록 레이아웃은 이 파일에서 새로 정의한다.
+ */
+
+.feed-card {
+  overflow: hidden;
+  border: 1px solid #eef1f4;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+}
+
+.feed-card__author {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+}
+
+.feed-card__author-link {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.feed-card__avatar {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #e5e7eb;
+}
+
+.feed-card__nickname {
+  overflow: hidden;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.feed-card__author-link:hover .feed-card__nickname {
+  color: #2563eb;
+}
+
+.feed-card__time {
+  flex: 0 0 auto;
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.feed-card__body {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.feed-card__image-wrap {
+  position: relative;
+}
+
+.feed-card__image {
+  display: block;
+  width: 100%;
+  height: 320px;
+  object-fit: cover;
+  background: #f1f5f9;
+}
+
+.feed-card__image-count {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 4px 10px;
+  border-radius: 99px;
+  color: #fff;
+  background: rgba(15, 23, 42, 0.6);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.feed-card__content {
+  margin: 16px 20px 0;
+  color: #1f1f1f;
+  font-size: 15px;
+  line-height: 1.6;
+  word-break: break-word;
+  white-space: pre-line;
+}
+
+.feed-card__location {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 10px 20px 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.feed-card__course-tag {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 6px 20px 0;
+  color: #2563eb;
+  font-size: 13px;
+}
+
+.feed-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 20px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.feed-card__tags li {
+  color: #2563eb;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.feed-card__actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 14px 20px 18px;
+}
+
+.feed-card__action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #475569;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.feed-card__action:hover {
+  color: #2563eb;
+}
+
+.feed-card__action.is-active {
+  color: #ef4444;
+}
+
+.feed-card__action--bookmark.is-active {
+  color: #2563eb;
+}
+
+.feed-card__action--comment {
+  cursor: default;
+}
+
+.feed-card__action--comment:hover {
+  color: #475569;
+}
+
+.feed-card__action--bookmark {
+  margin-left: auto;
+}
+
+@media (max-width: 620px) {
+  .feed-card__image { height: 240px; }
+}

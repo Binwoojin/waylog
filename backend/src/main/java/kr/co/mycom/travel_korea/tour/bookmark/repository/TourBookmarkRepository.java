@@ -6,6 +6,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -39,5 +41,14 @@ public interface TourBookmarkRepository extends JpaRepository<TourBookmark, Long
             Long userId,
             String contentId,
             Integer contentTypeId
+    );
+
+    /**
+     * 상세/목록 조회 화면에서 여러 콘텐츠의 북마크 여부를 한 번에 확인할 때 사용합니다.
+     * (N+1 방지용 배치 조회)
+     */
+    List<TourBookmark> findByUser_IdAndContentIdIn(
+            Long userId,
+            Collection<String> contentIds
     );
 }

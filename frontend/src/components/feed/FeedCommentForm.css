@@ -1,0 +1,90 @@
+/*
+ * 댓글/답글 입력 폼 스타일
+ *
+ * Design Ref: feed-comment-integration.design.md §6.3 — feed-composer의 톤(#2563eb 포인트,
+ * 둥근 입력창)을 그대로 이어받는다.
+ */
+
+.feed-comment-form__sr-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.feed-comment-form__input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #d7dee6;
+  border-radius: 12px;
+  resize: vertical;
+  color: #1f1f1f;
+  background: #fff;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.feed-comment-form__input:focus {
+  outline: 2px solid #93c5fd;
+  outline-offset: 1px;
+}
+
+.feed-comment-form__input:disabled {
+  background: #f1f5f9;
+  color: #94a3b8;
+}
+
+.feed-comment-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.feed-comment-form__cancel,
+.feed-comment-form__submit {
+  height: 34px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.feed-comment-form__cancel {
+  color: #475569;
+  background: #f1f5f9;
+}
+
+.feed-comment-form__cancel:hover {
+  background: #e2e8f0;
+}
+
+.feed-comment-form__submit {
+  color: #fff;
+  background: #2563eb;
+}
+
+.feed-comment-form__submit:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.feed-comment-form__submit:disabled,
+.feed-comment-form__cancel:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.feed-comment-form__error {
+  margin: 6px 0 0;
+  color: #b91c1c;
+  font-size: 13px;
+}

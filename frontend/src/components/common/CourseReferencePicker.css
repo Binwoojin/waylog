@@ -1,0 +1,168 @@
+.course-reference-picker {
+  width: min(560px, 100%);
+  max-height: min(80vh, 720px);
+  display: flex;
+  flex-direction: column;
+}
+
+.course-reference-picker__search {
+  margin-bottom: 14px;
+}
+
+.course-reference-picker__search input {
+  width: 100%;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+.course-reference-picker__results {
+  flex: 1;
+  min-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+}
+
+.course-reference-picker__message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 32px 16px;
+  color: #64748b;
+  text-align: center;
+}
+
+/* 검색/상세 로딩 상태 전용 스피너. 새 라이브러리 없이 테두리 회전만으로 구현한다. */
+.course-reference-picker__spinner {
+  width: 22px;
+  height: 22px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #2563eb;
+  border-radius: 50%;
+  animation: course-reference-picker-spin 0.7s linear infinite;
+}
+
+@keyframes course-reference-picker-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .course-reference-picker__spinner {
+    animation: none;
+  }
+}
+
+.course-reference-picker__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.course-reference-picker__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.course-reference-picker__item:last-child {
+  border-bottom: none;
+}
+
+.course-reference-picker__item img,
+.course-reference-picker__item-placeholder {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  object-fit: cover;
+  background: #f1f5f9;
+}
+
+.course-reference-picker__item-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.course-reference-picker__item-title {
+  margin: 0 0 2px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f1f1f;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.course-reference-picker__item-meta {
+  margin: 0;
+  font-size: 12px;
+  color: #64748b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.course-reference-picker__detail {
+  flex: 1;
+  min-height: 200px;
+  overflow-y: auto;
+}
+
+.course-reference-picker__back {
+  margin-bottom: 12px;
+}
+
+.course-reference-picker__course-title {
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #1f1f1f;
+}
+
+.course-reference-picker__hint {
+  margin: 0 0 12px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.course-reference-picker__day {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+}
+
+.course-reference-picker__day-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f1f1f;
+}
+
+.course-reference-picker__stops {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 10px 0 0;
+  border-top: 1px dashed #e2e8f0;
+}
+
+.course-reference-picker__stop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 13px;
+  color: #334155;
+}

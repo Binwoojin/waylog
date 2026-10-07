@@ -1,0 +1,151 @@
+/*
+ * 댓글+답글 목록 스타일
+ *
+ * Design Ref: feed-comment-integration.design.md §6.2 — 답글은 1단 들여쓰기로 구분하고
+ * 별도 카드 없이 목록 안에서 톤을 이어간다(feed-detail-card와 같은 색상 팔레트).
+ */
+
+.feed-comment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.feed-comment-list__empty {
+  margin: 4px 0 16px;
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+.feed-comment-list__items {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+
+.feed-comment__row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.feed-comment__author {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  color: inherit;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.feed-comment__author:hover {
+  color: #2563eb;
+}
+
+.feed-comment__avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #e5e7eb;
+}
+
+.feed-comment__nickname {
+  font-size: 13px;
+}
+
+.feed-comment__content {
+  margin: 0;
+  color: #1f1f1f;
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-line;
+  word-break: break-word;
+}
+
+.feed-comment__meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.feed-comment__action {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #64748b;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.feed-comment__action:hover {
+  color: #2563eb;
+}
+
+.feed-comment__action--danger:hover {
+  color: #b91c1c;
+}
+
+.feed-comment__reply-form {
+  margin: 8px 0 0 36px;
+}
+
+/* Q-3: 답글은 1단 들여쓰기로 항상 펼쳐서 보여준다(토글 UI 없음). */
+.feed-comment__replies {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 12px 0 0 36px;
+  padding: 12px 0 0 16px;
+  border-left: 2px solid #eef1f4;
+  list-style: none;
+}
+
+.feed-comment--reply .feed-comment__avatar {
+  width: 24px;
+  height: 24px;
+}
+
+.feed-comment-list__more {
+  align-self: flex-start;
+  height: 34px;
+  padding: 0 14px;
+  border: 1px solid #d7dee6;
+  border-radius: 10px;
+  color: #475569;
+  background: #fff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.feed-comment-list__more:hover:not(:disabled) {
+  background: #f1f5f9;
+}
+
+.feed-comment-list__more:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.feed-comment-list__more-error {
+  margin: 8px 0 0;
+  color: #b91c1c;
+  font-size: 13px;
+}
+
+@media (max-width: 620px) {
+  .feed-comment__reply-form,
+  .feed-comment__replies {
+    margin-left: 20px;
+  }
+}

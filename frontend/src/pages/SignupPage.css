@@ -534,6 +534,19 @@
   margin-top: 29px;
 }
 
+.signup-terms__complete:disabled {
+  background: #9cc3f7;
+  cursor: default;
+}
+
+.signup-terms__error {
+  margin: 20px 0 0;
+  color: #d93025;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
+}
+
 .signup-page__panel--step-2 .signup-page__login-copy {
   margin-top: 32px;
   margin-bottom: 20px;

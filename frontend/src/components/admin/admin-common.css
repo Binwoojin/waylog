@@ -1,0 +1,289 @@
+/*
+ * 관리자 공용 UI 스타일 (AdminTable, AdminPagination, AdminSearchBar, ConfirmDialog, AdminToast)
+ *
+ * Design Ref: admin-dashboard.design.md §2.2 FR-D04 — 리소스 4곳이 공유하는 컴포넌트라
+ * 스타일도 한 파일에 모읍니다. index.css/StatusPage.css의 팔레트(#2563eb, #64748b, #e2e8f0 등)를 재사용합니다.
+ */
+
+/*
+ * 상태 배지 (회원 정지 상태, 피드 삭제 상태가 공유)
+ *
+ * Design Ref: admin-dashboard.design.md §3.2.1, §3.4.4 — 두 리소스 모두 "정상 vs 위험 상태"를
+ * 같은 모양의 배지로 보여준다. 처음 회원 화면에서만 썼을 때는 AdminUserListPage.css에 있었지만,
+ * 피드 화면이 같은 패턴을 필요로 해 공용 파일로 옮겼다(두 번째 사용처가 생기면 공용화한다).
+ */
+.admin-status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.admin-status-badge--normal {
+  color: #15803d;
+  background: #f0fdf4;
+}
+
+.admin-status-badge--alert {
+  color: #b91c1c;
+  background: #fef2f2;
+}
+
+.admin-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.admin-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  padding: 0 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #fff;
+  color: #1f1f1f;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.admin-button:hover {
+  border-color: #93c5fd;
+  color: #2563eb;
+  background: #eff6ff;
+}
+
+.admin-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/*
+ * <label>로 감싼 파일 입력(예: 여행코스 이미지 업로드)은 <button disabled>를 쓸 수 없어
+ * 클래스로 같은 시각 효과만 준다. 실제 클릭 차단은 안쪽 <input disabled>가 한다.
+ */
+.admin-button--disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.admin-button--primary {
+  border-color: transparent;
+  color: #fff;
+  background: #2563eb;
+}
+
+.admin-button--primary:hover {
+  color: #fff;
+  background: #1d4ed8;
+}
+
+.admin-button--danger {
+  border-color: transparent;
+  color: #fff;
+  background: #dc2626;
+}
+
+.admin-button--danger:hover {
+  color: #fff;
+  background: #b91c1c;
+}
+
+/* AdminSearchBar */
+.admin-search-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.admin-search-bar input {
+  flex: 1;
+  max-width: 320px;
+  height: 40px;
+  padding: 0 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 14px;
+}
+
+.admin-search-bar input:focus-visible {
+  outline: 3px solid #93c5fd;
+  outline-offset: 1px;
+}
+
+/* AdminTable */
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.admin-table th,
+.admin-table td {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 14px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.admin-table th {
+  color: #64748b;
+  font-weight: 600;
+  background: #f8fafc;
+}
+
+.admin-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-table__skeleton-row td {
+  color: transparent;
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 37%, #f1f5f9 63%);
+  background-size: 400% 100%;
+  animation: admin-table-shimmer 1.4s ease infinite;
+}
+
+@keyframes admin-table-shimmer {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+
+.admin-table__empty {
+  padding: 40px 16px;
+  color: #64748b;
+  text-align: center;
+}
+
+.admin-table__row--refreshing {
+  opacity: 0.6;
+}
+
+.admin-table__status {
+  padding: 32px 16px;
+  border: 1px solid #fee2e2;
+  border-radius: 12px;
+  background: #fef2f2;
+  color: #b91c1c;
+  text-align: center;
+}
+
+.admin-table__status button {
+  margin-top: 12px;
+}
+
+/* AdminPagination */
+.admin-pagination {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 20px;
+}
+
+.admin-pagination button {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  color: #1f1f1f;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.admin-pagination button:hover:not(:disabled) {
+  border-color: #93c5fd;
+  color: #2563eb;
+}
+
+.admin-pagination button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.admin-pagination button.is-active {
+  border-color: transparent;
+  color: #fff;
+  background: #2563eb;
+}
+
+/* ConfirmDialog */
+.admin-confirm-dialog__overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(15, 23, 42, 0.45);
+  z-index: 1000;
+}
+
+.admin-confirm-dialog {
+  width: min(420px, 100%);
+  padding: 28px;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.2);
+}
+
+.admin-confirm-dialog__title {
+  margin: 0 0 10px;
+  font-size: 18px;
+  color: #1f1f1f;
+}
+
+.admin-confirm-dialog__description {
+  margin: 0 0 20px;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.admin-confirm-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* AdminToast */
+.admin-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 12px 20px;
+  border-radius: 999px;
+  background: #1f1f1f;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.25);
+  z-index: 1100;
+}
+
+@media (max-width: 640px) {
+  .admin-search-bar input {
+    max-width: none;
+  }
+}
