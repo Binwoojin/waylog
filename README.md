@@ -4,8 +4,10 @@ WayLog는 국내 여행지를 탐색하고 기록하는 서비스입니다. 이 
 
 ```
 waylog/
-├── backend/    Spring Boot 4 (Java 25) REST API
-└── frontend/   React 19 + Vite 웹 클라이언트
+├── backend/    Spring Boot 4 (Java 25) REST API, DB 마이그레이션(db/)
+├── frontend/   React 19 + Vite 웹 클라이언트
+├── docs/       기능별 계획·설계·분석·보고서, 검증 기록, 포트폴리오 자료
+└── .claude/    프로젝트 공용 Claude Code 에이전트·스킬 정의
 ```
 
 ## 서비스 소개
