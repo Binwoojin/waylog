@@ -52,6 +52,13 @@ public class AuthService {
         requireText(userInput.getNickname(), "닉네임을 입력해 주세요.");
         // 약관 거부는 인증 티켓을 소모하기 전에 해야, 사용자가 같은 티켓으로 동의를 바로잡아 재요청할 수 있습니다.
         requireRequiredTerms(userInput.getAgreements());
+        // 프론트의 중복 확인은 우회될 수 있으므로 저장 직전에 서버에서도 확인합니다. 티켓은 소모하기 전에 검사해, 실패해도 재사용할 수 있게 둡니다.
+        if (repo.existsByEmail(userInput.getEmail())) {
+            throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+        }
+        if (repo.existsByNickname(userInput.getNickname())) {
+            throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
+        }
         consumeVerificationTicket(userInput.getEmail(), userInput.getVerificationToken());
         UserEntity rep = new UserEntity(
                 userInput.getEmail(),
