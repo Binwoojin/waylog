@@ -6,6 +6,9 @@
 # Claude Code personal settings (shared config lives in .claude/agents and .claude/skills)
 .claude/settings.local.json
 
+# Personal IDE settings
+.vscode/
+
 # OS files
 .DS_Store
 Thumbs.db
