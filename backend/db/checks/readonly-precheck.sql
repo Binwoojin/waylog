@@ -134,3 +134,21 @@ WHERE table_schema = DATABASE()
   AND table_name = 'users'
   AND non_unique = 0
 GROUP BY index_name;
+
+
+-- ------------------------------------------------------------
+-- 9. 가입 식별자 비교 정책 확인 (콜레이션)
+--    서버 중복 검사(existsByEmail, existsByNickname)와 유니크 제약은 컬럼 콜레이션에 따라 비교한다.
+--    대소문자·악센트 무시 여부, 끝 공백 처리(NO PAD)가 여기서 결정된다.
+--    결과를 docs/development/users-unique-keys.md 의 비교 정책과 대조한다.
+-- ------------------------------------------------------------
+SELECT table_name, table_collation
+FROM information_schema.TABLES
+WHERE table_schema = DATABASE()
+  AND table_name = 'users';
+
+SELECT column_name, collation_name, character_maximum_length
+FROM information_schema.COLUMNS
+WHERE table_schema = DATABASE()
+  AND table_name = 'users'
+  AND column_name IN ('EMAIL', 'NICKNAME');

@@ -53,7 +53,8 @@ class FeedCourseLinkIntegrationTest {
     private TourCourseRepository tourCourseRepository;
 
     private UserEntity createUser(String email, String nickname) {
-        UserEntity user = new UserEntity(email, passwordEncoder.encode("Passw0rd!1"), nickname, "user");
+        String suffix = java.util.UUID.randomUUID().toString().substring(0, 8);
+        UserEntity user = new UserEntity(email.replace("@test.com", "-" + suffix + "@test.com"), passwordEncoder.encode("Passw0rd!1"), nickname + "-" + suffix, "user");
         return userRepository.save(user);
     }
 

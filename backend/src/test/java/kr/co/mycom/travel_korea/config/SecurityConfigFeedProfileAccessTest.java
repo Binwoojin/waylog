@@ -59,7 +59,7 @@ class SecurityConfigFeedProfileAccessTest {
     @Test
     void otherUserProfileWithoutAuthIsNotUnauthorized() throws Exception {
         UserEntity user = userRepository.save(
-                new UserEntity("security-profile-check@test.com", passwordEncoder.encode("Passw0rd!1"), "보안테스트유저", "user")
+                new UserEntity("security-profile-check-" + java.util.UUID.randomUUID() + "@test.com", passwordEncoder.encode("Passw0rd!1"), "보안프로필" + java.util.UUID.randomUUID().toString().substring(0, 8), "user")
         );
 
         HttpResponse<String> response = getWithoutAuth("/api/v1/feed/profile/" + user.getId());

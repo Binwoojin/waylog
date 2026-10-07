@@ -49,7 +49,7 @@ class SecurityConfigFeedCommentAccessTest {
 
     private FeedPost createPost() {
         UserEntity author = userRepository.save(
-                new UserEntity("security-comment-check@test.com", passwordEncoder.encode("Passw0rd!1"), "보안댓글테스트유저", "user")
+                new UserEntity("security-comment-check-" + java.util.UUID.randomUUID() + "@test.com", passwordEncoder.encode("Passw0rd!1"), "보안댓글" + java.util.UUID.randomUUID().toString().substring(0, 8), "user")
         );
         return feedPostRepository.save(new FeedPost(author, "보안 검증용 게시물", null, null, null, null, null, null, "PUBLIC"));
     }
